@@ -60,7 +60,7 @@ if (formularioRegistro) {
         console.log("Enviando datos de registro:", nuevoUsuarioWeb);
 
         // 4. Despachamos la petición POST hacia el nuevo endpoint de registro
-        fetch('http://localhost:3000/api/register', {
+        fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json' // Le avisamos a Node que viaja un JSON

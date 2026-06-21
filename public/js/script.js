@@ -13,7 +13,7 @@ function cargarEtiquetas(filtro) {
     listaEtiquetasWeb.innerHTML = '<li>Cargando datos desde el Ministerio...</li>';
 
     // Le pegamos a Node pasándole el filtro en la URL (ej: http://localhost:3000/api/etiquetas?estado=activas)
-    fetch(`http://localhost:3000/api/etiquetas?estado=${filtro}`, {
+    fetch(`/api/etiquetas?estado=${filtro}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

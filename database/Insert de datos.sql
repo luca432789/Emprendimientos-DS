@@ -45,7 +45,10 @@ values ('Los bombitos de TUCUMAN', 'T78-PO-09', 'San martin del Prado', 256, 'Lo
 ('Los ponchos ponchin', 2, 'Pellegrini', 300, 'Jerarquizado Nacional', 'Jimenez', 'Pozo Hondo', false, 'Fabricacion de ponchos', 'Fabricar artesanalmente ponchos de multiples colores', '574QRGQ2+272', 5), -- 2
 ('Taller El Nogal', 3, 'Ruta 34', 15, 'El Algarrobo', 'Atamisqui', 'Estación Atamisqui', true, 'Carpintería de Arte', 'Elaboración de tallas, marcos y pequeños muebles de madera de algarrobo y nogal', '574R7V4G+X64', 6), -- 3
 ('Tapicería La Esmeralda', 4, 'Calle Maipú', 55, 'Centro Termal', 'Río Hondo', 'Las Termas de Río Hondo', true, 'Servicios de Tapicería', 'Restauración y retapizado de muebles antiguos y tapizado de vehículos', '575R8X4M+C23', 7), -- 4
-
+*/
+insert into Emprendedor (Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, idEmprendimiento)
+values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com', 1);-- 1
+/*
 insert into Emprendedor (Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, idEmprendimiento)
 values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com', 1);-- 1
 ('Sofia', 'Carrizo', '35123456', 'Jiménez', 'Pozo Hondo, Barrio Centro, Gral. Güemes 123', '3856554433', 'sofia.carrizo@mail.com', 2), -- 2
@@ -55,10 +58,10 @@ values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los p
 ('Mónica', 'Juárez', '30405060', 'Robles', 'Fernández, Calle San Juan 45, B° Este', '3855678901', 'monica.juarez@mail.com', 6), -- 6
 ('Esteban', 'Vega', '25876543', 'Guasayán', 'Villa Guasayán, Ruta 9 Km 15, Casa 3', '3856789012', 'esteban.vega@mail.com', 7), -- 7
 ('Valeria', 'Nieva', '42345678', 'Loreto', 'Loreto, B. Centro, Calle 9 de Julio 50', '3855234567', 'valeria.nieva@mail.com', 8); -- 8
-
-insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
-values ('AlbertoSanche@gmail.com', '1234sANCHE--', 'Emprendedor', true, 2, null); -- Emprendedor 1
-
+*/
+-- insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
+-- values ('AlbertoSanche@gmail.com', '1234sANCHE--', 'Emprendedor', true, 2, null); -- Emprendedor 1
+/*
 insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
 values ('empleadonum1@gmail.com', '1234567890', 'Empleado', true, null, 1), -- empleado 1
 ('marta.gomez@gmail.com', '1234567890', 'Empleado', true, null, 2), -- empleado 2
