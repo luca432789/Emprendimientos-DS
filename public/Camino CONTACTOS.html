@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Camino de los emprendedores </title>
+    <link rel="stylesheet" href="CSS/CdE CONTACTOS.css">
+
+    <link rel="stylesheet" href="CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script><!-- token para barra de nav-->
+    <script src="js/navbar.js" defer></script>
+
+</head>
+
+<Body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="#">Publicaciones</a></li>
+            <li><a href="#">Mapa</a></li>
+            <li><a href="Camino FORMULARIOS.html">Formularios</a></li>
+            <li><a href="Camino CONTACTOS.html" class="active">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="Camino LOG IN.html">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <main>
+
+        <!--INFORMACION PRINCIPAL -->
+        <div class="contenedor-imagen">
+            <!-- CANALES DE COMUNICACION -->
+            <section class="contacto">
+                <h2>Canales de comunicación</h2>
+
+                <div class="contacto-contenido">
+
+                    <div class="contacto-texto">
+                        <h3>Dirección</h3>
+                        <p>AREA DE ECONOMIA SOCIAL: <b>CALLE SAENZ PEÑA Nº 340 - SANTIAGO DEL ESTERO</b></p>
+
+                        <h3>Horarios de atención</h3>
+                        <p>HORARIO: <b>7:30 HS A 12:30 HS</b></p>
+
+                        <h3>Contactos</h3>
+                        <p><i class="fa-solid fa-phone"></i>Teléfono: (385)-428-3140 Interno 146</p>
+                        <p><i class="fa-solid fa-envelope"></i>Email: economiasocialsgo2017@gmail.com</p>
+                    </div>
+
+                    <div class="contacto-mapa">
+                        <iframe src="https://www.google.com/maps?q=Santiago+del+Estero&output=embed" width="100%"
+                            height="250" style="border:0;" allowfullscreen="" loading="lazy">
+                        </iframe>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!--FOOTER-->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <!-- LINKS -->
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y
+                                Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <!--FALTA ESTE LINK-->
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aquí]
+        </div>
+
+    </footer>
+
+
+</Body>
+
+</html>

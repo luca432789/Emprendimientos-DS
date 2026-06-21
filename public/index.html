@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title> Camino de los emprendedores </title>
+    <link rel="stylesheet" href="CSS/index CSS.css">
+    <link rel="stylesheet" href="CSS/CdE Navbar.css">
+    <script src="js/script.js" defer></script>
+    <script src="js/registro-usuario.js" defer></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <script src="js/navbar.js" defer></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<Body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html" class="active">Inicio</a></li>
+            <li><a href="#">Publicaciones</a></li>
+            <li><a href="#">Mapa</a></li>
+            <li><a href="Camino FORMULARIOS.html">Formularios</a></li>
+            <li><a href="Camino CONTACTOS.html">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="Camino LOG IN.html">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <main>
+
+        <!--INFORMACION PRINCIPAL -->
+
+    <div class="contenedor-imagen">
+        <div class="contenedor-texto">
+            <h1>Quienes somos?</h1>
+            <p>Nosotros, el area de Economía Social del Ministerio de Desarrollo social....
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore 
+                et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut 
+                aliquip ex ea commodo consequat.</p>
+            <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Commodi quasi nihil aut tempore, 
+                cupiditate facilis quae doloremque quaerat impedit animi ex quidem nobis minima voluptate nisi
+                libero sint ipsum ab.</p>
+        </div>
+    </div>
+    <div>
+        <h2>Gestión de Etiquetas</h2>
+            <div class="filtros-container">
+                <button onclick="cargarEtiquetas('todas')">Ver Todas</button>
+                <button onclick="cargarEtiquetas('activas')">Solo Activas</button>
+                <button onclick="cargarEtiquetas('inactivas')">Solo Inactivas</button>
+            </div>
+            <ul id="lista-etiquetas">
+                <li>Hacé clic en alguno de los botones para cargar las etiquetas...</li>
+            </ul>
+    </div>
+
+    <div>
+        <form id="formulario-registro-usuario">
+    
+            <label>Correo Electrónico:</label>
+            <input type="email" id="reg-correo" required placeholder="Debe ser el mismo de tu legajo o ficha">
+
+            <label>Contraseña de Acceso:</label>
+            <input type="password" id="reg-password" required placeholder="Escriba su contraseña">
+
+            <label>Tipo de Rol en el Sistema:</label>
+            <select id="reg-tipo-usuario" required>
+                <option value="" disabled selected>-- Seleccione su Rol --</option>
+                <option value="Emprendedor">Emprendedor</option>
+                <option value="Empleado de Mesa">Empleado de Mesa</option>
+                <option value="Empleado de Area">Empleado de Area</option>
+                <option value="Administrador">Administrador</option>
+            </select>
+
+            <button type="submit">Crear Usuario Web</button>
+
+            <small style="color: gray; display: block; margin-top: 5px;">
+                Requisito: Mínimo 12 caracteres, incluir combinaciones de Mayúsculas, Minúsculas, Números (0-9) y símbolos (@, $, !, %, *, &, etc).
+            </small>
+        </form>
+
+    </div>
+ </main>
+
+
+ <!--FOOTER-->
+ <footer>
+  <div class="footer-top">
+    <div class="footer-logo">
+        <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+        <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
+    </div>
+<!-- LINKS -->
+    <div class="footer-links">
+      <h3>Ministerios</h3>
+      <div class="columnas">
+        <ul>
+            
+          <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+          <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+          <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+        </ul>
+        <ul>
+          <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li> <!--FALTA ESTE LINK-->
+          <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+          <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    © 2026 Desarrollado por [nombre aquí]
+  </div>
+
+</footer>
+  
+
+</Body>
+</html>

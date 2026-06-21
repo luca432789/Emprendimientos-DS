@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title> Camino de los emprendedores </title>
+    <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="../index.html" class="active">Inicio</a></li>
+            <li><a href="#">Publicaciones</a></li>
+            <li><a href="#">Mapa</a></li>
+            <li><a href="../Camino FORMULARIOS.html">Formularios</a></li>
+            <li><a href="../Camino CONTACTOS.html CONTACTOS.html">Contactos</a></li>
+            
+            <li class="nav-usuario-container">
+                <div class="dropdown-container">
+                    <button class="nav-btn" id="btn-crear">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="dropdown-menu menu-derecha" id="menu-crear">
+                        <ul>
+                            <li><a href="#">• Crear Publicación</a></li>
+                            <li><a href="#">• Nueva opción</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="dropdown-container">
+                    <button class="nav-btn" id="btn-notificaciones">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge-alerta">1</span>
+                    </button>
+                    <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
+                        <div class="dropdown-header">Notificaciones</div>
+                        <ul>
+                            <li><a href="#">• Solicitud de cambios en publ...</a></li>
+                            <li><a href="#">• Solicitud de Actualización de...</a></li>
+                            <li><a href="#">• Notificación 3</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <a href="Perfil Emprendimiento.html" class="nav-perfil-link">
+                    <div class="avatar-nav">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="contenedor-imagen">
+            <div class="contenedor-texto">
+                <h1>Quienes somos?</h1>
+                <p>Nosotros, el area de Economía Social del Ministerio de Desarrollo social....
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore 
+                    et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut 
+                    aliquip ex ea commodo consequat.</p>
+                <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Commodi quasi nihil aut tempore, 
+                    cupiditate facilis quae doloremque quaerat impedit animi ex quidem nobis minima voluptate nisi
+                    libero sint ipsum ab.</p>
+            </div>
+        </div>       
+    </main>
+
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="/Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="/Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aquí]
+        </div>
+    </footer>
+
+    <script>
+        const btnCrear = document.getElementById('btn-crear');
+        const menuCrear = document.getElementById('menu-crear');
+        const btnNotif = document.getElementById('btn-notificaciones');
+        const menuNotif = document.getElementById('menu-notificaciones');
+
+        // Abrir/Cerrar menú de Creación
+        btnCrear.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuCrear.classList.toggle('mostrar');
+            menuNotif.classList.remove('mostrar'); // Cierra el otro menú
+        });
+
+        // Abrir/Cerrar menú de Notificaciones
+        btnNotif.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuNotif.classList.toggle('mostrar');
+            menuCrear.classList.remove('mostrar'); // Cierra el otro menú
+        });
+
+        // Cerrar todos los menús si haces clic en cualquier otra parte del sitio
+        document.addEventListener('click', () => {
+            menuCrear.classList.remove('mostrar');
+            menuNotif.classList.remove('mostrar');
+        });
+    </script>
+
+</body>
+</html>
