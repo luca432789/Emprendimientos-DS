@@ -5,15 +5,19 @@ import 'dotenv/config'
 let poolConfig;
 
 if (process.env.DATABASE_URL) {
-    // Si estamos en Render, usamos la URL de Railway combinada con tus límites del pool
+    // En Render: Forzamos el uso de las variables individuales para asegurar la conexión externa
     poolConfig = {
-        url: process.env.DATABASE_URL,
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASS,
+        database: process.env.DB_NAME, // Esto lo obliga a usar ProyectoEmprendimientos2026
+        port: process.env.DB_PORT || 3306,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
     };
 } else {
-    // Si estás en tu localhost, usa la configuración tradicional
+    // En tu localhost: Configuración tradicional
     poolConfig = {
         host: process.env.DB_HOST || 'localhost',
         user: process.env.DB_USER,
