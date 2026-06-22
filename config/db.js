@@ -7,7 +7,7 @@ let poolConfig;
 if (process.env.DATABASE_URL) {
     // Si estamos en Render, usamos la URL de Railway combinada con tus límites del pool
     poolConfig = {
-        uri: process.env.DATABASE_URL,
+        url: process.env.DATABASE_URL,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
