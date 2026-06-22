@@ -20,8 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. SI NO HAY SESIÓN: Frenamos el script acá. 
     if (!tipoUsuario || !contenedorLogin) return;
 
+    const rolesEmpleados = ['Empleado de Mesa', 'Empleado de Area', 'Administrador'];
+
     // 4. SI HAY SESIÓN: Recién acá adentro alteramos el contenedor para los iconos.
-    if (tipoUsuario === 'Emprendedor' || tipoUsuario === 'Empleado') {
+    if (tipoUsuario === 'Emprendedor' || rolesEmpleados.includes(tipoUsuario)) {
         // Quitamos el fondo marrón de la clase .login para que no tape los dropdowns negros
         contenedorLogin.style.backgroundColor = 'transparent';
     }
@@ -66,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // CASO 2: SE LOGUEÓ UN EMPLEADO (Técnico / Administrativo)
     // ==========================================
-    else if (tipoUsuario === 'Empleado') {
+    else if (rolesEmpleados.includes(tipoUsuario)) {
         // Al empleado quizás no le mostrás el botón "+" de crear publicación, 
         // sino accesos directos a la gestión interna del Ministerio.
         contenedorLogin.innerHTML = `
@@ -142,7 +144,7 @@ function inicializarDropdowns() {
             sessionStorage.removeItem('token_ministerio');
             // 2. Redirigimos a la página de inicio común / refrescamos la actual
             alert("Sesión cerrada correctamente");
-            window.location.href = "index.html"; 
+            window.location.href = "/index.html"; 
         });
     }
 

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control Interno - Ministerio</title>
+    
+    <link rel="stylesheet" href="../CSS/index CSS.css">
+    <link rel="stylesheet" href="../CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="view empleado css/panel-empleado.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="../js/navbar.js" defer></script>
+    <script src="view empleado contr/panel-controlador.js" defer></script>
+    <script src="view empleado js/etiquetas-panel.js" defer></script>
+    <script src="view empleado js/usuarios-panel.js" defer></script>
+</head>
+<body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="../index.html">Inicio</a></li>
+            <li><a href="#">Publicaciones</a></li>
+            <li><a href="#">Mapa</a></li>
+            <li><a href="../Camino FORMULARIOS.html">Formularios</a></li>
+            <li><a href="../Camino CONTACTOS.html">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="../Camino LOG IN.html">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <main class="dashboard-container">
+        
+        <aside class="sidebar" id="sidebar-empleado">
+            <ul class="sidebar-menu" id="contenedor-menu-lateral">
+                </ul>
+        </aside>
+
+        <section class="main-content">
+            <div class="content-header">
+                <h2 id="dinamico-titulo-seccion">Cargando Sección...</h2>
+                <div id="badge-empleado-rol" class="badge-rol">Cargando Rol...</div>
+            </div>
+
+            <div class="tabla-filtros" id="bloque-filtros-tabla">
+                <button class="btn-filtro">Tipo de usuario... <i class="fa-solid fa-caret-down"></i></button>
+                <button class="btn-filtro">Ordenar por... <i class="fa-solid fa-arrow-down-wide-short"></i></button>
+            </div>
+
+            <div id="zona-render-contenido">
+                <table class="tabla-datos">
+                    <thead>
+                        <tr id="tabla-cabecera-dinamica">
+                            </tr>
+                    </thead>
+                    <tbody id="tabla-cuerpo-dinamico">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="../Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="../Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la...</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            © 2026 Desarrollado por el Equipo de Desarrollo
+        </div>
+    </footer>
+</body>
+</html>

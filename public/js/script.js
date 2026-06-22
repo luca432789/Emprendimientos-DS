@@ -1,71 +1,71 @@
 // Dentro de js/script.js (JavaScript del Cliente/Navegador)
 
-// 1. Capturamos el contenedor del HTML usando su ID
-const listaEtiquetasWeb = document.getElementById('lista-etiquetas');
+// // 1. Capturamos el contenedor del HTML usando su ID
+// const listaEtiquetasWeb = document.getElementById('lista-etiquetas');
 
-// Esta función se ejecuta cada vez que apretás un botón
-function cargarEtiquetas(filtro) {
+// // Esta función se ejecuta cada vez que apretás un botón
+// function cargarEtiquetas(filtro) {
     
-    // 1. Extraemos el token que guardamos en el sessionStorage durante el Login
-    const tokenSeguro = sessionStorage.getItem('token_ministerio');
+//     // 1. Extraemos el token que guardamos en el sessionStorage durante el Login
+//     const tokenSeguro = sessionStorage.getItem('token_ministerio');
 
-    // Mostramos un mensaje de carga temporal para mejorar la experiencia de usuario
-    listaEtiquetasWeb.innerHTML = '<li>Cargando datos desde el Ministerio...</li>';
+//     // Mostramos un mensaje de carga temporal para mejorar la experiencia de usuario
+//     listaEtiquetasWeb.innerHTML = '<li>Cargando datos desde el Ministerio...</li>';
 
-    // Le pegamos a Node pasándole el filtro en la URL (ej: http://localhost:3000/api/etiquetas?estado=activas)
-    fetch(`/api/etiquetas?estado=${filtro}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            // 🔒 LE MOSTRAMOS EL PASE AL POLICÍA DEL BACKEND (Formato estándar Bearer)
-            'Authorization': `Bearer ${tokenSeguro}`
-        }
-    })
+//     // Le pegamos a Node pasándole el filtro en la URL (ej: http://localhost:3000/api/etiquetas?estado=activas)
+//     fetch(`/api/etiquetas?estado=${filtro}`, {
+//         method: 'GET',
+//         headers: {
+//             'Content-Type': 'application/json',
+//             // 🔒 LE MOSTRAMOS EL PASE AL POLICÍA DEL BACKEND (Formato estándar Bearer)
+//             'Authorization': `Bearer ${tokenSeguro}`
+//         }
+//     })
     
-    .then(respuesta => {
-        //CONTROL DE OBSOLESCENCIA (5min)
-        if (respuesta.status === 401 || respuesta.status === 403) {
+//     .then(respuesta => {
+//         //CONTROL DE OBSOLESCENCIA (5min)
+//         if (respuesta.status === 401 || respuesta.status === 403) {
             
-            // Limpiamos el sessionStorage para borrar los datos viejos/undefined
-            sessionStorage.clear(); 
+//             // Limpiamos el sessionStorage para borrar los datos viejos/undefined
+//             sessionStorage.clear(); 
 
-            // Si tienen SweetAlert2 pueden usar Swal.fire, si no, este alert clásico cumple la función:
-            alert("Su sesión ha expirado por inactividad (5 minutos) o no tiene autorización. Por favor, ingrese nuevamente.");
+//             // Si tienen SweetAlert2 pueden usar Swal.fire, si no, este alert clásico cumple la función:
+//             alert("Su sesión ha expirado por inactividad (5 minutos) o no tiene autorización. Por favor, ingrese nuevamente.");
             
-            // Redireccionamos inmediatamente al Login o Index para que se vuelva a autenticar
-            window.location.href = 'index.html'; 
+//             // Redireccionamos inmediatamente al Login o Index para que se vuelva a autenticar
+//             window.location.href = 'index.html'; 
             
-            // Cortamos la ejecución de la promesa lanzando un error intencional
-            throw new Error("Sesión inválida o token expirado.");
-        }
+//             // Cortamos la ejecución de la promesa lanzando un error intencional
+//             throw new Error("Sesión inválida o token expirado.");
+//         }
         
-        // Si el estado es 200 OK, convertimos la respuesta a JSON normalmente
-        return respuesta.json();
-    })
+//         // Si el estado es 200 OK, convertimos la respuesta a JSON normalmente
+//         return respuesta.json();
+//     })
     
-    .then(etiquetas => {
-        listaEtiquetasWeb.innerHTML = ''; // Limpiamos el contenedor
+//     .then(etiquetas => {
+//         listaEtiquetasWeb.innerHTML = ''; // Limpiamos el contenedor
 
-        if (etiquetas.length === 0) {
-            listaEtiquetasWeb.innerHTML = '<li>No se encontraron etiquetas para este filtro.</li>';
-            return;
-        }
+//         if (etiquetas.length === 0) {
+//             listaEtiquetasWeb.innerHTML = '<li>No se encontraron etiquetas para este filtro.</li>';
+//             return;
+//         }
 
-        // Recorremos los datos que devolvió la API
-        etiquetas.forEach(etiqueta => {
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>ID:</strong> ${etiqueta.idEtiqueta} | <strong>Nombre:</strong> ${etiqueta.Nombre} | <strong>Estado:</strong> ${etiqueta.Activa === 1 ? 'Activa' : 'Inactiva'}`;
-            listaEtiquetasWeb.appendChild(li);
-        });
-    })
-    .catch(error => {
-        console.error("Error al conectar con el backend:", error);
-        // El error de expiracion de token se maneja arriba, por falla de conexión se mostrará el siguiente
-        if (error.message !== "Sesión inválida o token expirado.") {
-            listaEtiquetasWeb.innerHTML = '<li>Error crítico al cargar las etiquetas.</li>';
-        };
-    });
-}
+//         // Recorremos los datos que devolvió la API
+//         etiquetas.forEach(etiqueta => {
+//             const li = document.createElement('li');
+//             li.innerHTML = `<strong>ID:</strong> ${etiqueta.idEtiqueta} | <strong>Nombre:</strong> ${etiqueta.Nombre} | <strong>Estado:</strong> ${etiqueta.Activa === 1 ? 'Activa' : 'Inactiva'}`;
+//             listaEtiquetasWeb.appendChild(li);
+//         });
+//     })
+//     .catch(error => {
+//         console.error("Error al conectar con el backend:", error);
+//         // El error de expiracion de token se maneja arriba, por falla de conexión se mostrará el siguiente
+//         if (error.message !== "Sesión inválida o token expirado.") {
+//             listaEtiquetasWeb.innerHTML = '<li>Error crítico al cargar las etiquetas.</li>';
+//         };
+//     });
+// }
 
 
 /*

@@ -4,7 +4,7 @@ use ProyectoEmprendimientos2026;
 SET @usuario_id = 10; -- El ID del empleado que está logueado en ese momento
 SET @usuario_ip = '222.555.33.4';
 -- select * from auditoria;
-
+select * from empleado;
  -- -----------------------------------------------------------------------------------------------------------
 -- INSERTANDO DATOS --------------------------------------------------------------------------------
 -- -----------------------------------------------------------------------------------------------------------
@@ -59,8 +59,12 @@ values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los p
 ('Esteban', 'Vega', '25876543', 'Guasayán', 'Villa Guasayán, Ruta 9 Km 15, Casa 3', '3856789012', 'esteban.vega@mail.com', 7), -- 7
 ('Valeria', 'Nieva', '42345678', 'Loreto', 'Loreto, B. Centro, Calle 9 de Julio 50', '3855234567', 'valeria.nieva@mail.com', 8); -- 8
 */
--- insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
--- values ('AlbertoSanche@gmail.com', '1234sANCHE--', 'Emprendedor', true, 2, null); -- Emprendedor 1
+insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
+values ('AlbertoSanche@gmail.com', '$2b$10$dZcQwXODcXg.o0Pz.XdWDuHMthBjFyGMCojygNN/Wf.gYbb.EoJ/i', 'Emprendedor', true, 2, null); -- Emprendedor 1 contra: 1234sANCHE--
+insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
+values ('empleaSebas.santill@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfGfIcnq180L0036NaxCgymhO', 'Emprendedor', true, null, 2), -- Empleado 1 (admin) contra: 1234sEBASss--
+('empleadoriosnum1@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 1), -- Empleado 2 (Técnico) contra: 1234rIOSss--
+('AriCorreoItse@gmail.com', '$2b$10$yfy6kvzMAlLMXZ7OIL2UH.gp1YNY9L6RU7swuAUy.tgg6cLbWKVtK', 'Empleado de Mesa', true, null, 5); -- Empleado 3 (de Mesa) contra: 1234AriItse--
 /*
 insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
 values ('empleadonum1@gmail.com', '1234567890', 'Empleado', true, null, 1), -- empleado 1
