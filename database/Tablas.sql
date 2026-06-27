@@ -86,7 +86,7 @@ CONSTRAINT fk_Solicitud_EmpleadoSoc
 create table Emprendimiento (
 idEmprendimiento int auto_increment primary key,
 Nombre varchar (50) not null,
-NroProyecto varchar(50) unique not null, -- Estructura Desconocida
+NroProyecto varchar(50) unique not null, -- Estructura: año - interior jusn felipe ibarra (codigo de departamento) - numero correlativo
 Calle varchar(30) not null,
 NúmeroCalle int not null,
 Barrio varchar (50) not null,
