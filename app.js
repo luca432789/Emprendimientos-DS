@@ -30,13 +30,41 @@ app.use('/api', etiquetasRouter); // Todo lo de etiquetas colgará de /api/etiqu
 app.use('/api', loginRouter);      // Todo lo de login colgará de /api/login
 app.use('/api', mapaRouter);       // Todo lo de mapa colgará de /api/emprendimientos mapa
 
+// ==========================================
+// VISTAS FRONTEND (RUTAS DE PÁGINAS)
+// ==========================================
+
+// 1. Ruta para la página de Inicio (raíz)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 2. Ruta para la vista del Mapa (esta ya la tenías)
 app.get('/mapa', (req, res) => {
     console.log("ENTRÉ A /MAPA"); // 👈 DEBUG
     res.sendFile(path.join(__dirname, 'public', 'mapa.html'));
 });
 
+// 3. Ruta para Formularios (agregada aquí)
+app.get('/formularios', (req, res) => {
+    console.log("ENTRÉ A /FORMULARIOS"); // 👈 DEBUG
+    res.sendFile(path.join(__dirname, 'public', 'Camino FORMULARIO DE INSCRIPCION.html'));
+});
+
+// 4. Ruta para Contactos
+app.get('/contactos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Camino CONTACTOS.html'));
+});
+
+// 5. Ruta para Inicio de sesión
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Camino LOG IN.html'));
+});
+
+// ==========================================
+
 // Encendido del servidor
-const PORT = process.env.PORT ||3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor API corriendo en http://localhost:${PORT}`);
 });
