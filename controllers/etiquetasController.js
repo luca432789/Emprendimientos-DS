@@ -2,12 +2,12 @@ import { ModelObtenerEtiquetas, ModelActualizarEtiqueta } from '../models/etique
 
 export const obtenerEtiquetas = async (req, res) => {
     try {
-        const filtroEstado = req.query.estado;
+        let filtroEstado = req.query.estado;
 
         const idUsuarioLogueado = req.usuarioLogueado.idUsuario;
         const rolUsuario = req.usuarioLogueado.tipoUsuario;
 
-        const ipCliente = req.ip || '127.0.0.1';
+        const ipCliente = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
 
         // REGLA DE NEGOCIO EN EL BACKEND:
         // Si es Emprendedor, se le fuerza el filtro a "activas", eliminando acceso a las inactivas.

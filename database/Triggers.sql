@@ -602,13 +602,25 @@ FOR EACH ROW
 BEGIN
     INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
     VALUES (
-        @usuario_id, 'INSERT', 'Expediente', NEW.NroExpediente, 
+        @usuario_id, 'INSERT', 'Expediente', NEW.idExpediente, 
         CONCAT('Expediente generado para Solicitud ID: ', NEW.idSolicitudInicio, ' por Empleado ID: ', NEW.idEmpleadoCargo),
         @usuario_ip
     );
 END;
 //
 DELIMITER ;
-
+-- Trigger AfterInsert_SolicitudInicio_Expediente
+DELIMITER //
+CREATE TRIGGER after_expediente_insert
+AFTER INSERT ON Expediente
+FOR EACH ROW
+BEGIN
+    -- Cuando se inserta el expediente, actualizamos la solicitud asignándole la fecha del día actual
+    UPDATE SolicitudInicio 
+    SET FechaRecibidoArea = CURRENT_DATE()
+    WHERE idSolicitudInicio = NEW.idSolicitudInicio;
+END;
+//
+DELIMITER ;
 
 

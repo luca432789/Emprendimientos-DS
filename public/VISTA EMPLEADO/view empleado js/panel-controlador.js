@@ -9,8 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-        const payload = jwtDecode(token);
-        const rolReal = payload.tipoUsuario; // "Empleado de Mesa", "Empleado de Area", "Administrador"
+        // 🚀 ADAPTACIÓN PARA LA VERSIÓN 4 EN NAVEGADOR:
+        // Intentamos grabarlo desde el objeto global que genera la v4 en cjs/umd
+        const deodificar = window.jwtDecode || jwt_decode; 
+        const payload = deodificar(token);
+        
+        const rolReal = payload.tipoUsuario; // "Empleado de Area", etc.
+        
+        // Almacenamos con seguridad previniendo que rompa si no vienen en el JWT
+        sessionStorage.setItem('empleado_cargo', payload.cargo || '');
+        sessionStorage.setItem('empleado_id', payload.idEmpleado || '');
         
         document.getElementById('badge-empleado-rol').innerText = rolReal;
         
@@ -19,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
         console.error("Error crítico de permisos en panel:", err);
-        window.location.href = "../Camino LOG IN.html";
+        // Comentamos temporalmente la redirección para que puedas ver el error real en F12 si falla
+        // window.location.href = "../Camino LOG IN.html";
     }
 });
 
@@ -256,10 +265,11 @@ function cargarSección(codigoSeccion, tituloSeccion) {
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo-dinamico">
-                    <tr><td>#0024</td><td>Carlos Alberto Perez</td><td>22/06/2026</td><td style="text-align:center;"><button class="btn-filtro" style="padding: 4px 10px; background-color:#2f4e78;"><i class="fa-solid fa-plus-square"></i> Cargar Exp.</button></td></tr>
+                    <tr><td colspan="4" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando solicitudes desde el Ministerio...</td></tr>
                 </tbody>
             </table>
         `;
+        fetchSolicitudesMesaEntrada();
     }
     // ======================================================================
     // CASO 4: REGISTRAR usuario (FORMULARIO DINÁMICO)
@@ -302,6 +312,30 @@ function cargarSección(codigoSeccion, tituloSeccion) {
 
         // 🚀 Inicializamos de inmediato la escucha del Submit que estará en el script satélite
         inicializarEscuchaRegistro();
+    }
+// ======================================================================
+    // CASO 5: SOLICITUDES DE INICIO SIN REVISAR (Para Empleados de Área / Admin)
+    // ======================================================================
+    else if (codigoSeccion === 'inicio-sin-revisar') {
+        filtrosTabla.style.display = 'flex'; // Muestra la barra con "Ordenar por..."
+        
+        zonaRender.innerHTML = `
+            <table class="tabla-datos">
+                <thead>
+                    <tr>
+                        <th>ID Solicitud</th>
+                        <th>Nro Expediente</th>
+                        <th>Fecha Entrada Área</th>
+                        <th style="text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo-dinamico">
+                    <tr><td colspan="4" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando expedientes en bandeja de entrada...</td></tr>
+                </tbody>
+            </table>
+        `;
+        // 🚀 LLAMADA A LA NUEVA FUNCIÓN DEL SATÉLITE:
+        fetchSolicitudesAreaSinRevisar();
     }
     // ======================================================================
     // CASO GENERAL: CUALQUIER OTRA SECCIÓN (Mockup genérico para futuros sprints)

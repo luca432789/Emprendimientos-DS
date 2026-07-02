@@ -274,14 +274,15 @@ CONSTRAINT fk_Garante_Credito
 
 -- Expediente (NroExpediente (PK), idSolicitudInicio, FechaCarga, idEmpleadoCargo)
 create table Expediente (
-NroExpediente varchar(50) primary key,
+idExpediente int auto_increment primary key,
+NroExpediente varchar(50) unique,
 idSolicitudInicio int not null unique,
 FechaCarga timestamp default current_timestamp,
 idEmpleadoCargo int not null, -- cargo = Mesa de Entrada
 CONSTRAINT fk_Expediente_SolicitudInicio
 	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio (idSolicitudInicio),
-CONSTRAINT fk_Expediente_Empleado 
-	FOREIGN KEY (idEmpleadoCargo) REFERENCES Empleado (idEmpleado)
+CONSTRAINT fk_Expediente_Usuario 
+FOREIGN KEY (idEmpleadoCargo) REFERENCES Usuario (idUsuario)
 );
 
 -- Auditoria (idLog (PK), idUsuario (FK), Accion, Tabla_Afectada, idRegistroAfectado, Detalle, Fecha_Hora, DirecciónIP)

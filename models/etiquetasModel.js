@@ -1,9 +1,11 @@
+// etiquetasModel.js
+
 import { pool } from '../config/db.js';
 
 // El modelo solo se encarga de tirar la query a la base de datos
 export const ModelObtenerEtiquetas = async (filtroEstado, idUsuario, ipCliente) => {
-    await pool.query("SET @usuario_id = ?;", [idUsuario]);
-    await pool.query("SET @usuario_ip = ?;", [ipCliente]);
+    /*await pool.query("SET @usuario_id = ?;", [idUsuario]);
+    await pool.query("SET @usuario_ip = ?;", [ipCliente]);*/
     
     let querySQL = 'SELECT * FROM Etiqueta';
     
