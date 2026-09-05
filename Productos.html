@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title> Camino de los emprendedores </title>
+    <link rel="stylesheet" href="CSS/index CSS.css">
+    <link rel="stylesheet" href="CSS/CdE Navbar.css">
+     <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <script src="js/script.js" defer></script>
+    <script src="js/registro-usuario.js" defer></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <script src="js/navbar.js" defer></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="../index.html" class="active">Inicio</a></li>
+            <li><a href="#">Publicaciones</a></li>
+            <li><a href="#">Mapa</a></li>
+            <li><a href="../Camino FORMULARIOS.html">Formularios</a></li>
+            <li><a href="../Camino CONTACTOS.html CONTACTOS.html">Contactos</a></li>
+            
+            <li class="nav-usuario-container">
+                <div class="dropdown-container">
+                    <button class="nav-btn" id="btn-crear">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="dropdown-menu menu-derecha" id="menu-crear">
+                        <ul>
+                            <li><a href="#">• Crear Publicación</a></li>
+                            <li><a href="#">• Nueva opción</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="dropdown-container">
+                    <button class="nav-btn" id="btn-notificaciones">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge-alerta">1</span>
+                    </button>
+                    <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
+                        <div class="dropdown-header">Notificaciones</div>
+                        <ul>
+                            <li><a href="#">• Solicitud de cambios en publ...</a></li>
+                            <li><a href="#">• Solicitud de Actualización de...</a></li>
+                            <li><a href="#">• Notificación 3</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <a href="/public/VISTA USUARIO/CdE-Perfil Emprendedor.html" class="nav-perfil-link">
+                    <div class="avatar-nav">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="perfil-container">
+
+    <!-- BANNER Y CABECERA DEL PERFIL -->
+    <section class="portada-section">
+        <div class="portada-banner">
+            <div class="portada-info">
+                <!-- El backend inyectará aquí el nombre y rubro desde la BD -->
+                <h2 id="emprendimiento-nombre">Nombre Emprendimiento</h2>
+                <span id="emprendimiento-rubro" class="rubro-tag">Rubro</span>
+            </div>
+        </div>
+        
+        <!-- SUB-NAVEGACIÓN DEL PERFIL -->
+        <nav class="perfil-subnav">
+            <ul>
+                <li><a href="../VISTA USUARIO/CdE-Perfil Emprendedor.html" class="active">Acerca de</a></li>
+                <li><a href="../VISTA USUARIO/Publicaciones.html">Publicaciones</a></li>
+                <li><a href="../VISTA USUARIO/Productos.html">Productos</a></li>
+                <li><a href="../VISTA USUARIO/Fotos.html">Fotos</a></li>
+                <li><a href="../VISTA USUARIO/Contacto.html">Contacto</a></li>
+            </ul>
+        </nav>
+    </section>
+
+    <main>   
+    <div class="perfil-content">
+
+        <!-- COLUMNA IZQUIERDA: INTRODUCCIÓN Y DESCRIPCIÓN -->
+        
+
+    </div>
+    </main>
+
+
+
+
+ <!--FOOTER-->
+ <footer>
+  <div class="footer-top">
+    <div class="footer-logo">
+        <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+        <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
+    </div>
+<!-- LINKS -->
+    <div class="footer-links">
+      <h3>Ministerios</h3>
+      <div class="columnas">
+        <ul>
+            
+          <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+          <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+          <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+        </ul>
+        <ul>
+          <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li> <!--FALTA ESTE LINK-->
+          <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+          <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    © 2026 Desarrollado por [nombre aquí]
+  </div>
+
+</footer>
+  
+
+</Body>
+</html>
