@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Almacenamos con seguridad previniendo que rompa si no vienen en el JWT
         sessionStorage.setItem('empleado_cargo', payload.cargo || '');
-        sessionStorage.setItem('empleado_id', payload.idEmpleado || '');
         
         document.getElementById('badge-empleado-rol').innerText = rolReal;
         

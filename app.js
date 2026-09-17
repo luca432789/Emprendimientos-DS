@@ -1,6 +1,6 @@
 // Configuracion inicial del sistema
 import 'dotenv/config'; // 👈 ESTA LÍNEA DEBE SER LA PRIMERA DEL ARCHIVO
-console.log("REVISANDO CLAVE JWT:", process.env.JWT_SECRET);
+// console.log("REVISANDO CLAVE JWT:", process.env.JWT_SECRET);
 
 // Librerias del sistema
 import express from 'express';
@@ -57,7 +57,7 @@ app.get('/mapa', (req, res) => {
 // 3. Ruta para Formularios (agregada aquí)
 app.get('/formularios', (req, res) => {
     console.log("ENTRÉ A /FORMULARIOS"); // 👈 DEBUG
-    res.sendFile(path.join(__dirname, 'public', 'Camino FORMULARIO DE INSCRIPCION.html'));
+    res.sendFile(path.join(__dirname, 'public', 'Camino FORMULARIOS.html'));
 });
 
 // 4. Ruta para Contactos

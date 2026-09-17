@@ -8,16 +8,37 @@ SET @usuario_ip = '222.555.33.4';
  -- -----------------------------------------------------------------------------------------------------------
 -- INSERTANDO DATOS --------------------------------------------------------------------------------
 -- -----------------------------------------------------------------------------------------------------------
--- EMPLEADOS
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- EMPLEADO ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Empleado (idEmpleado (PK), Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo (Mesa de Entrada - Técnico - Social - Administrador), Activo (Si-No))
- insert into Empleado (Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo, Activo)
-values ('Luca', 'Rios', '12354678', 'Barrio la pampuna entre pellegrini y san martin', '3846892734', 'empleadoriosnum1@gmail.com', 'Técnico', true), -- Empleado 1
-('Sebastian', 'Santillan', '20987654', 'Av. Belgrano 550, Edificio A, Piso 3', '3855112233', 'empleaSebas.santill@gmail.com', 'Administrador', true), -- Empleado 2
-('Victor', 'Ibañes', '20372234', 'Barrio la Puñalada, entre av san martin y rojas', '3854321223', 'IbaVictor123@gmail.com', 'Técnico', False), -- Empleado 3
-('Miguel', 'Stefanici', '43567213', 'Barrio Centro', '3856789034', 'stefaniMiguel@gmail.com', 'Social', true), -- Empleado 4
-('Ari', 'Vasquez', '43567214', 'Barrio Centro', '3856789034', 'AriCorreoItse@gmail.com', 'Mesa de Entrada', true); -- Empleado 5
+ /*insert into Empleado (Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo, Activo)
+values ('Sebastian', 'Santillan', '20987654', 'Av. Belgrano 550, Edificio A, Piso 3', '3855112233', 'empleaSebas.santill@gmail.com', 'Administrador', true), -- Empleado 1 admin
+('Admin2', 'Santillan', '20100001', 'Barrio domicilio admin 1', '3856000001', 'admin2@gmail.com', 'Administrador', true), -- Empleado 2 admin
+-- 
+('Luca', 'Rios', '12354678', 'Barrio la pampuna entre pellegrini y san martin', '3846892734', 'empleadoriosnum1@gmail.com', 'Técnico', true), -- Empleado 3 tecnico
+('Tecnico2', 'Ibañes2', '20100002', 'Barrio domicilio tecnico 2', '3856000002', 'tecnico2@gmail.com', 'Técnico', False), -- Empleado 4 tecnico
+('Tecnico3', 'Ibañes3', '20100003', 'Barrio domicilio tecnico 3', '3856000003', 'tecnico3@gmail.com', 'Técnico', False), -- Empleado 5 tecnico
+('Tecnico4', 'Ibañes4', '20100004', 'Barrio domicilio tecnico 4', '3856000004', 'tecnico4@gmail.com', 'Técnico', False), -- Empleado 6 tecnico
+('Tecnico5', 'Ibañes5', '20100005', 'Barrio domicilio tecnico 5', '3856000005', 'tecnico5@gmail.com', 'Técnico', False), -- Empleado 7 tecnico
+('Tecnico6', 'Ibañes6', '20100006', 'Barrio domicilio tecnico 6', '3856000006', 'tecnico6@gmail.com', 'Técnico', False), -- Empleado 8 tecnico
+-- 
+('Miguel', 'Stefanici', '43567213', 'Barrio Centro', '3856789034', 'stefaniMiguel@gmail.com', 'Social', true), -- Empleado 9 social
+('Social2', 'Stefanici2', '20100007', 'Barrio domicilio social 2', '3856000007', 'social2@gmail.com', 'Social', true), -- Empleado 10 social
+('Social3', 'Stefanici3', '20100008', 'Barrio domicilio social 3', '3856000008', 'social3@gmail.com', 'Social', true), -- Empleado 11 social
+('Social4', 'Stefanici4', '20100009', 'Barrio domicilio social 4', '3856000009', 'social4@gmail.com', 'Social', true), -- Empleado 12 social
+('Social5', 'Stefanici5', '20100010', 'Barrio domicilio social 5', '3856000010', 'social5@gmail.com', 'Social', true), -- Empleado 13 social
+--
+('Ari', 'Vasquez', '43567214', 'Barrio Centro', '3856789034', 'AriCorreoItse@gmail.com', 'Mesa de Entrada', true), -- Empleado 14 Mesa
+('Mesa2', 'Vasquez2', '20100011', 'Barrio domicilio Mesa 2', '3856000011', 'Mesa2@gmail.com', 'Mesa de Entrada', true), -- Empleado 15 Mesa
+('Mesa3', 'Vasquez3', '20100012', 'Barrio domicilio Mesa 3', '3856000012', 'Mesa3@gmail.com', 'Mesa de Entrada', true), -- Empleado 16 Mesa
+('Mesa4', 'Vasquez4', '20100013', 'Barrio domicilio Mesa 4', '3856000013', 'Mesa4@gmail.com', 'Mesa de Entrada', true), -- Empleado 17 Mesa
+('Mesa5', 'Vasquez5', '20100014', 'Barrio domicilio Mesa 5', '3856000014', 'Mesa5@gmail.com', 'Mesa de Entrada', true); -- Empleado 18 Mesa
+*/
 
-
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- SolicitudInicio -----------------------------------------------------------------------------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, DirectorioFotos, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
 -- SolicitudInicio (DireccionPDF, DirectorioFotos, FechaRecibidoMesa)
 insert into SolicitudInicio (DireccionPDF, DirectorioFotos, FechaRecibidoMesa)
@@ -36,6 +57,9 @@ values ('C:\Solicitudes\SolicitudInicial\FormIni06.pdf', 'C:\Fotos\FotosSolicitu
 2, '2010-01-29', '2010-01-30', 4, 1, 1, '2010-01-30', 'TE ACEPTAMOS, EN ESTE LINK INGRESA LA CONTRASEÑA DE TU USUARIO DEL SISTEMA. PARA INGRESAR EN EL SISTEMA UTILIZA TU CORREO X PARA INICIAR SECION Y LA CONTRASEÑA'); -- 6
 */
 
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- EMPRENDIMIENTO ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- Emprendimiento (idEmprendimiento (PK), Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad, EnMarcha (Si-No), ActividadPrincipal, UbicaciónGM (pluscode), idSolicitudInicio (FK))
 -- QUITAR RUBRO DE LOS INSERT
@@ -46,43 +70,67 @@ values ('Los bombitos de TUCUMAN', 'T78-PO-09', 'San martin del Prado', 256, 'Lo
 ('Taller El Nogal', 3, 'Ruta 34', 15, 'El Algarrobo', 'Atamisqui', 'Estación Atamisqui', true, 'Carpintería de Arte', 'Elaboración de tallas, marcos y pequeños muebles de madera de algarrobo y nogal', '574R7V4G+X64', 6), -- 3
 ('Tapicería La Esmeralda', 4, 'Calle Maipú', 55, 'Centro Termal', 'Río Hondo', 'Las Termas de Río Hondo', true, 'Servicios de Tapicería', 'Restauración y retapizado de muebles antiguos y tapizado de vehículos', '575R8X4M+C23', 7), -- 4
 */
+
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- EMPRENDEDOR ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+select * from emprendedor;
 insert into Emprendedor (Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, idEmprendimiento)
-values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com', 1);-- 1
-/*
-insert into Emprendedor (Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, idEmprendimiento)
-values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com', 1);-- 1
-('Sofia', 'Carrizo', '35123456', 'Jiménez', 'Pozo Hondo, Barrio Centro, Gral. Güemes 123', '3856554433', 'sofia.carrizo@mail.com', 2), -- 2
-('Ramón', 'Díaz', '18765432', 'Atamisqui', 'Estación Atamisqui, Calle Sarmiento 89', '3855776655', 'ramon.diaz@mail.com', 3), -- 3
-('Lucía', 'Giménez', '40567890', 'Río Hondo', 'Las Termas, Av. Juan B. Justo 1050', '3858901234', 'lucia.gimenez@mail.com', 4), -- 4
-('Juan', 'Herrera', '20101202', 'Capital', 'Santiago del Estero, Barrio Gorriti, Pje. Colón 20', '3854123456', 'juan.herrera@mail.com', 5), -- 5
-('Mónica', 'Juárez', '30405060', 'Robles', 'Fernández, Calle San Juan 45, B° Este', '3855678901', 'monica.juarez@mail.com', 6), -- 6
-('Esteban', 'Vega', '25876543', 'Guasayán', 'Villa Guasayán, Ruta 9 Km 15, Casa 3', '3856789012', 'esteban.vega@mail.com', 7), -- 7
-('Valeria', 'Nieva', '42345678', 'Loreto', 'Loreto, B. Centro, Calle 9 de Julio 50', '3855234567', 'valeria.nieva@mail.com', 8); -- 8
+values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com', 1);-- emprendedor fundador 1
+/* insert into Emprendedor (Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, idEmprendimiento)
+values ('Emprendedor2', 'Luca2', '46000001', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '3856000001', 'Emprendedor2prueba@gmail.com', 2),-- 2
+('Emprendedor3', 'rios3', '46000002', 'Banda', 'Chaupi Pozo', 'Chaupi Pozo, B. los pozo entre pellegrini 100 y san jose', '3856000002', 'Emprendedor3prueba@gmail.com', 1),-- 3
+('Emprendedor4', 'iba4', '46000003', 'Juan Felipe Ibarra', 'El Colorado', 'El colorado, B. los colorados entre x y x', '3856000003', 'Emprendedor4prueba@gmail.com', 1),-- 4
+('Emprendedor5', 'Fern5', '46000004', 'Choya', 'Choya', 'Choya, B. los choya entre y x y', '3856000004', 'Emprendedor5prueba@gmail.com', 1),-- 5
+('Emprendedor6', 'sanche6', '46000005', 'Guasayan', 'Guampacha', 'Guampacha, B. los Guampachanos entre g c g', '3856000005', 'Emprendedor6prueba@gmail.com', 1),-- 6
+('Emprendedor7', 'Dias7', '46000006', 'Ojo de Agua', 'Pozo grande', 'Pozo grande, B. los grandes entre s y 7', '3856000006', 'Emprendedor7prueba@gmail.com', 1),-- 7
+('Emprendedor8', 'stefa8', '46000007', 'Rivadavia', 'Colonia Alpina', 'Col. Alpina, B. los alpines entre o u o', '3856000007', 'Emprendedor8prueba@gmail.com', 1),-- 8
+('Emprendedor9', 'juarez9', '46000008', 'Aguirre', 'Casares', 'Casares, B. los casarenses entre c y u', '3856000008', 'Emprendedor9prueba@gmail.com', 1),-- 9
+('Emprendedor10', 'Setfa10', '46000008', 'Jimenez', 'Pozo Hondo', 'Pozo Hondo, B. los xxxxxx', '3856000009', 'Emprendedor10prueba@gmail.com', 1);-- 10
 */
+
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- USUARIO ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Usuario EMPLEADO -----------------------------------------------
+/*
+insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado) -- contraseña de 12 caracteres: 1 mayus, 1 minus, 1 numero, 1 carac especial (ej: @, $, !, %, *, ?, &, -).
+values ('empleaSebas.santill@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfGfIcnq180L0036NaxCgymhO', 'Administrador', true, null, 1), -- Empleado 1 (admin) contra: 1234sEBASss--
+('admin2@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfGfIcnq180L0036NaxCgymhO', 'Administrador', true, null, 2), -- Empleado 2 (admin) contra: admiN1234@-2
+--
+('empleadoriosnum1@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 3), -- Empleado 3 (Técnico) contra: 1234rIOSss--
+('tecnico2@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 4), -- Empleado 4 (Técnico) contra: tecNIco12@-2
+('tecnico3@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 5), -- Empleado 5 (Técnico) contra: tecNIco12@-3
+('tecnico4@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 6), -- Empleado 6 (Técnico) contra: tecNIco12@-4
+('tecnico5@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 7), -- Empleado 7 (Técnico) contra: tecNIco12@-5
+('tecnico6@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 8), -- Empleado 8 (Técnico) contra: tecNIco12@-6
+--
+('stefaniMiguel@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 9), -- Empleado 9 (Social) contra: SOcial10!Fun
+('social2@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 10), -- Empleado 10 (Social) contra: SOcial123@-2
+('social3@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 11), -- Empleado 11 (Social) contra: SOcial123@-3
+('social4@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 12), -- Empleado 12 (Social) contra: SOcial123@-4
+('social5@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 13), -- Empleado 13 (Social) contra: SOcial123@-5
+--
+('AriCorreoItse@gmail.com', '$2b$10$yfy6kvzMAlLMXZ7OIL2UH.gp1YNY9L6RU7swuAUy.tgg6cLbWKVtK', 'Empleado de Mesa', true, null, 14), -- Empleado 14 (de Mesa) contra: 1234AriItse--
+('Mesa2@gmail.com', '$2b$10$yfy6kvzMAlLMXZ7OIL2UH.gp1YNY9L6RU7swuAUy.tgg6cLbWKVtK', 'Empleado de Mesa', true, null, 15), -- Empleado 15 (de Mesa) contra: MesA123!4@-2
+('Mesa3@gmail.com', '$2b$10$yfy6kvzMAlLMXZ7OIL2UH.gp1YNY9L6RU7swuAUy.tgg6cLbWKVtK', 'Empleado de Mesa', true, null, 16), -- Empleado 16 (de Mesa) contra: MesA123!4@-3
+('Mesa4@gmail.com', '$2b$10$yfy6kvzMAlLMXZ7OIL2UH.gp1YNY9L6RU7swuAUy.tgg6cLbWKVtK', 'Empleado de Mesa', true, null, 17), -- Empleado 17 (de Mesa) contra: MesA123!4@-4
+('Mesa5@gmail.com', '$2b$10$yfy6kvzMAlLMXZ7OIL2UH.gp1YNY9L6RU7swuAUy.tgg6cLbWKVtK', 'Empleado de Mesa', true, null, 18); -- Empleado 18 (de Mesa) contra: MesA123!4@-5
+*/
+-- Usuario EMPRENDEDOR --------------------------------------------
 insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
 values ('AlbertoSanche@gmail.com', '$2b$10$dZcQwXODcXg.o0Pz.XdWDuHMthBjFyGMCojygNN/Wf.gYbb.EoJ/i', 'Emprendedor', true, 2, null); -- Emprendedor 1 contra: 1234sANCHE--
-insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
-values ('empleaSebas.santill@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfGfIcnq180L0036NaxCgymhO', 'Administrador', true, null, 2), -- Empleado 1 (admin) contra: 1234sEBASss--
-('empleadoriosnum1@gmail.com', '$2b$10$r0T.pOzD/Z9WJP6xN8L4UeezeUwfROvI9990bC6MEyz5u5nUowp.q', 'Empleado de Area', true, null, 1), -- Empleado 2 (Técnico) contra: 1234rIOSss--
-('AriCorreoItse@gmail.com', '$2b$10$yfy6kvzMAlLMXZ7OIL2UH.gp1YNY9L6RU7swuAUy.tgg6cLbWKVtK', 'Empleado de Mesa', true, null, 5); -- Empleado 3 (de Mesa) contra: 1234AriItse--
 /*
 insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
-values ('empleadonum1@gmail.com', '1234567890', 'Empleado', true, null, 1), -- empleado 1
-('marta.gomez@gmail.com', '1234567890', 'Empleado', true, null, 2), -- empleado 2
-('javi.perez@gmail.com', '1234567890', 'Empleado', true, null, 3), -- empleado 3
-('ana.lopez@gmail.com', '1234567890', 'Empleado', true, null, 4), -- empleado 4
-('carlos.diaz@gmail.com', '1234567890', 'Empleado', true, null, 5), -- empleado 5
-('sofia.juarez@gmail.com', '1234567890', 'Empleado', false, null, 6), -- empleado 6
-('pedro.vera@gmail.com', '1234567890', 'Empleado', true, null, 7), -- empleado 7
-('elena.nunez@gmail.com', '1234567890', 'Empleado', true, null, 8), -- empleado 8
-('AlbertoSanche@gmail.com', '1234567890', 'Emprendedor', true, 1, null), -- Emprendedor 1
-('sofia.carrizo@mail.com', '1234567890', 'Emprendedor', true, 2, null), -- Emprendedor 2
-('ramon.diaz@mail.com', '1234567890', 'Emprendedor', true, 3, null), -- Emprendedor 3
-('lucia.gimenez@mail.com', '1234567890', 'Emprendedor', true, 4, null), -- Emprendedor 4
-('juan.herrera@mail.com', '1234567890', 'Emprendedor', true, 5, null), -- Emprendedor 5
-('monica.juarez@mail.com', '1234567890', 'Emprendedor', false, 6, null), -- Emprendedor 6
-('esteban.vega@mail.com', '1234567890', 'Emprendedor', true, 7, null), -- Emprendedor 7
-('valeria.nieva@mail.com', '1234567890', 'Emprendedor', false, 8, null); -- Emprendedor 8
+values ('Emprendedor2prueba@gmail.com', 'contraseña', 'Emprendedor', true, 2, null), -- Emprendedor 2 1234Empre--2
+('Emprendedor3prueba@gmail.com', 'contraseña', 'Emprendedor', true, 3, null), -- Emprendedor 3 1234Empre--3
+('Emprendedor4prueba@gmail.com', 'contraseña', 'Emprendedor', true, 4, null), -- Emprendedor 4 1234Empre--4
+('Emprendedor5prueba@gmail.com', 'contraseña', 'Emprendedor', true, 5, null), -- Emprendedor 5 1234Empre--5
+('Emprendedor6prueba@gmail.com', 'contraseña', 'Emprendedor', true, 6, null), -- Emprendedor 6 1234Empre--6
+('Emprendedor7prueba@gmail.com', 'contraseña', 'Emprendedor', false, 7, null), -- Emprendedor 7 1234Empre--7
+('Emprendedor8prueba@gmail.com', 'contraseña', 'Emprendedor', true, 8, null), -- Emprendedor 8 1234Empre--8
+('Emprendedor9prueba@gmail.com', 'contraseña', 'Emprendedor', true, 9, null), -- Emprendedor 9 1234Empre--9
+('Emprendedor10prueba@gmail.com', 'contraseña', 'Emprendedor', true, 10, null); -- Emprendedor 10 1234Empre-10
 */
 
 -- Etiqueta (idEtiqueta, nombre, activa) -----------------------------------------------------------------------------------------------------------------------------------------
