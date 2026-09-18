@@ -1,15 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = sessionStorage.getItem('token_ministerio');
-    //const contenedorLogin = document.querySelector('nav ul li:last-child');
     const contenedorLogin = document.getElementById('contenedor-login-dinamico');
 
-    let tipoUsuario = null; // variable para guardar el tipo de usuario
-    // decodificacion de token
-    if (token) {
+    let tipoUsuario = sessionStorage.getItem('tipoUsuario');
+
+    if (!tipoUsuario && token) {
         try {
-            // jwtDecode viene de la librería que añadimos por script en el HTML
             const payload = jwtDecode(token);
-            tipoUsuario = payload.tipoUsuario; // Extraemos el rol real guardado en el backend
+            tipoUsuario = payload.tipoUsuario;
+            sessionStorage.setItem('tipoUsuario', tipoUsuario || '');
         } catch (error) {
             console.error("Error al decodificar un token alterado:", error);
             sessionStorage.clear();
@@ -138,11 +137,20 @@ function inicializarDropdowns() {
     // LÓGICA DE CIERRE DE SESIÓN
     const enlaceLogout = document.getElementById('enlace-logout');
     if (enlaceLogout) {
-        enlaceLogout.addEventListener('click', (e) => {
-            e.preventDefault(); // Evita que la página navegue al "#"
-            
+        enlaceLogout.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.warn('No se pudo cerrar la sesión del servidor:', error);
+            }
+
             sessionStorage.removeItem('token_ministerio');
-            // 2. Redirigimos a la página de inicio común / refrescamos la actual
+            sessionStorage.removeItem('tipoUsuario');
             alert("Sesión cerrada correctamente");
             window.location.href = "/index.html"; 
         });

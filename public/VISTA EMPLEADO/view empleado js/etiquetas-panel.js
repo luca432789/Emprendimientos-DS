@@ -3,7 +3,6 @@
 // ======================================================================
 
 function fetchEtiquetasParaPanel(filtro) {
-    const tokenSeguro = sessionStorage.getItem('token_ministerio');
     const cuerpoEtiquetas = document.getElementById('tabla-cuerpo-etiquetas');
 
     if (!cuerpoEtiquetas) return;
@@ -12,9 +11,9 @@ function fetchEtiquetasParaPanel(filtro) {
 
     fetch(`/api/etiquetas?estado=${filtro}`, {
         method: 'GET',
+        credentials: 'include',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tokenSeguro}`
+            'Content-Type': 'application/json'
         }
     })
     .then(respuesta => {
@@ -79,13 +78,11 @@ function prepararEdicionEtiqueta(id, nombreActual) {
 }
 
 function actualizarEtiquetaEnServidor(id, nombre, activa) {
-    const tokenSeguro = sessionStorage.getItem('token_ministerio');
-
     fetch(`/api/etiquetas/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tokenSeguro}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({ nombre, activa })
     })

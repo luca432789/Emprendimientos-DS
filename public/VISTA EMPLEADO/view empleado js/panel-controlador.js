@@ -1,33 +1,41 @@
 // ======================================================================
 // 1. INICIALIZACIÓN Y VALIDACIÓN DEL TOKEN
 // ======================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    const token = sessionStorage.getItem('token_ministerio');
-    if (!token) {
+document.addEventListener('DOMContentLoaded', async () => {
+    const rolGuardado = sessionStorage.getItem('tipoUsuario');
+
+    if (!rolGuardado) {
+        try {
+            const respuesta = await fetch('/api/me', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!respuesta.ok) {
+                throw new Error('Sesión inválida');
+            }
+
+            const data = await respuesta.json();
+            sessionStorage.setItem('tipoUsuario', data.tipoUsuario || '');
+        } catch (error) {
+            console.error('No hay sesión válida para el panel:', error);
+            window.location.href = "../Camino LOG IN.html";
+            return;
+        }
+    }
+
+    const rolReal = sessionStorage.getItem('tipoUsuario');
+    if (!rolReal) {
         window.location.href = "../Camino LOG IN.html";
         return;
     }
 
     try {
-        // 🚀 ADAPTACIÓN PARA LA VERSIÓN 4 EN NAVEGADOR:
-        // Intentamos grabarlo desde el objeto global que genera la v4 en cjs/umd
-        const deodificar = window.jwtDecode || jwt_decode; 
-        const payload = deodificar(token);
-        
-        const rolReal = payload.tipoUsuario; // "Empleado de Area", etc.
-        
-        // Almacenamos con seguridad previniendo que rompa si no vienen en el JWT
-        sessionStorage.setItem('empleado_cargo', payload.cargo || '');
-        
         document.getElementById('badge-empleado-rol').innerText = rolReal;
-        
-        // Renderizar el menú correspondiente e identificar la sección por defecto
         inicializarPanelPorRol(rolReal);
-
     } catch (err) {
         console.error("Error crítico de permisos en panel:", err);
-        // Comentamos temporalmente la redirección para que puedas ver el error real en F12 si falla
-        // window.location.href = "../Camino LOG IN.html";
+        window.location.href = "../Camino LOG IN.html";
     }
 });
 

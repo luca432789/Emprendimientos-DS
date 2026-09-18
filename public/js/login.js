@@ -27,21 +27,10 @@ if (loginForm) {
             if (data.error) {
                 alert(data.error); // Muestra "Contraseña incorrecta" o "No registrado"
             } else {
-                // Guardamos el tokken creado
-                sessionStorage.setItem('token_ministerio', data.token);
+                sessionStorage.setItem('tipoUsuario', data.tipoUsuario || '');
+                sessionStorage.removeItem('token_ministerio');
 
                 window.location.href = 'index.html';
-
-                // Evaluamos el tipo de usuario para saber a dónde mandarlo
-                /*if (data.tipoUsuario === 'Emprendedor') {
-                    // Como el HTML del login está en la raíz, entramos a la carpeta e ingresamos al view
-                    window.location.href = 'index.html';
-                } else if (['Empleado de Mesa', 'Empleado de Area', 'Administrador', 'Empleado'].includes(data.tipoUsuario)) {
-                    // Preparado para cuando hagas la vista del empleado
-                    window.location.href = 'index.html';
-                } else {
-                    alert('Tipo de usuario desconocido.');
-                }*/
             }
         })
         .catch(error => {

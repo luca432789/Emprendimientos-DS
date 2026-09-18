@@ -10,28 +10,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const estadoSeleccion = document.getElementById("estado-seleccion");
 
     // ========================================================
-    // 2. AUTENTICACIÓN (SESSION STORAGE)
+    // 2. AUTENTICACIÓN (COOKIE HTTPONLY)
     // ========================================================
-    const token = sessionStorage.getItem('token_ministerio');
-
     let esAdmin = false;
 
-    if (token) {
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
+    try {
+        const respuesta = await fetch('/api/me', {
+            method: 'GET',
+            credentials: 'include'
+        });
 
-            const rol = payload.tipoUsuario || payload.rol;
+        if (respuesta.ok) {
+            const datosUsuario = await respuesta.json();
+            const rol = datosUsuario.tipoUsuario || datosUsuario.rol;
 
             esAdmin = (
                 rol === "Administrador" ||
                 rol === "Empleado de Mesa" ||
                 rol === "Empleado de Area"
             );
-
-        } catch (error) {
-            console.warn("⚠️ Token inválido");
-            esAdmin = false;
         }
+    } catch (error) {
+        console.warn("⚠️ No hay sesión válida para editar el mapa:", error);
+        esAdmin = false;
     }
 
     // ========================================================
@@ -99,9 +100,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await fetch(`/api/emprendimientos/${idEmprendimiento}`, {
                     method: "PUT",
+                    credentials: 'include',
                     headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
                         latitud: nuevaUbicacion.lat,
@@ -126,7 +127,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let emprendimientos = [];
 
     try {
-        const res = await fetch('/api/emprendimientos');
+        const res = await fetch('/api/emprendimientos', {
+            method: 'GET',
+            credentials: 'include'
+        });
         emprendimientos = await res.json();
 
     } catch (error) {
@@ -170,9 +174,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         await fetch(`/api/emprendimientos/${emp.idEmprendimiento}`, {
                             method: "PUT",
+                            credentials: 'include',
                             headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${token}`
+                                "Content-Type": "application/json"
                             },
                             body: JSON.stringify({
                                 latitud: pos.lat,

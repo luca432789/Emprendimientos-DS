@@ -5,6 +5,7 @@ import 'dotenv/config'; // 👈 ESTA LÍNEA DEBE SER LA PRIMERA DEL ARCHIVO
 // Librerias del sistema
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,8 +24,12 @@ const app = express();
 
 app.set('trust proxy', true); // para captura de ip
 
-// Middlewares de control (CORS y procesamiento de JSON)
-app.use(cors()); 
+// Middlewares de control (CORS, cookies y procesamiento de JSON)
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
+app.use(cookieParser());
 app.use(express.json());
 
 app.use(express.static(path.resolve('./public')));  // Servirá tus HTMLs, CSS e Imágenes automáticos

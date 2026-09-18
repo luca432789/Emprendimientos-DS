@@ -5,14 +5,11 @@
 // ======================================================================
 async function fetchSolicitudesMesaEntrada() {
     const tablaCuerpo = document.getElementById('tabla-cuerpo-dinamico');
-    const token = sessionStorage.getItem('token_ministerio');
 
     try {
         const respuesta = await fetch('/api/solicitudes/sin-expediente', {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            credentials: 'include'
         });
 
         if (!respuesta.ok) throw new Error("Error al obtener datos del servidor.");
@@ -143,12 +140,11 @@ function verPdfYFormulario(idSolicitud, urlPdf) {
                 }).then(async (confirmacion) => {
                     if (confirmacion.isConfirmed) {
                         try {
-                            const token = sessionStorage.getItem('token_ministerio');
                             const respuesta = await fetch(`/api/solicitudes/${idSolicitud}/asignar-expediente`, {
                                 method: 'PUT',
+                                credentials: 'include',
                                 headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
+                                    'Content-Type': 'application/json'
                                 },
                                 body: JSON.stringify({ nroExpediente: expedienteVal })
                             });
@@ -179,14 +175,11 @@ function verPdfYFormulario(idSolicitud, urlPdf) {
 // ======================================================================
 async function fetchSolicitudesAreaSinRevisar() {
     const tablaCuerpo = document.getElementById('tabla-cuerpo-dinamico');
-    const token = sessionStorage.getItem('token_ministerio');
 
     try {
         const respuesta = await fetch('/api/solicitudes/area/sin-revisar', {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            credentials: 'include'
         });
 
         if (!respuesta.ok) throw new Error("Error al obtener datos del Área desde el servidor.");

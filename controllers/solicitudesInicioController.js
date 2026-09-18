@@ -13,9 +13,13 @@ export const obtenerSinExpediente = async (req, res) => {
 export const asignarExpedienteGED = async (req, res) => {
     const { id } = req.params;
     const { nroExpediente } = req.body;
-    
-    // Datos inyectados automáticamente por tu middleware de login
-    const idUsuario = req.usuarioLogueado.idUsuario || req.usuarioLogueado.id; 
+
+    const usuarioLogueado = req.usuarioLogueado;
+    if (!usuarioLogueado || usuarioLogueado.tipoUsuario !== 'Empleado de Mesa') {
+        return res.status(403).json({ error: 'Solo los empleados de Mesa pueden asignar un número de expediente.' });
+    }
+
+    const idUsuario = usuarioLogueado.idUsuario || usuarioLogueado.id;
     const ipCliente = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
 
     if (!nroExpediente) {
@@ -23,9 +27,8 @@ export const asignarExpedienteGED = async (req, res) => {
     }
 
     try {
-        
         const resultado = await ModelAsignarExpediente(id, nroExpediente, idUsuario, ipCliente);
-        
+
         if (resultado.affectedRows === 0) {
             return res.status(404).json({ error: "La solicitud no existe." });
         }

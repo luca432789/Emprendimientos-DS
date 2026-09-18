@@ -47,10 +47,16 @@ export const loginUsuario = async (req, res) => {
         // Registrar rastro en la tabla auditoría mediante el modelo
         const ipCliente = req.ip || '127.0.0.1';
         await modelRegistrarAuditoriaLogin(usuarioBD.idUsuario, ipCliente);
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 5 * 60 * 1000
+        });
         
         res.json({
             mensaje: "¡Inicio de sesión exitoso!",
-            token: token,
             tipoUsuario: usuarioBD.TipoUsuario
         });
 
@@ -58,6 +64,30 @@ export const loginUsuario = async (req, res) => {
         console.error("Error en el proceso de Login:", error);
         res.status(500).json({ error: "Error interno del servidor al procesar el ingreso" });
     }
+};
+
+export const obtenerUsuarioActual = (req, res) => {
+    const usuario = req.usuarioLogueado;
+
+    if (!usuario) {
+        return res.status(401).json({ error: 'No hay una sesión válida activa.' });
+    }
+
+    return res.status(200).json({
+        idUsuario: usuario.idUsuario,
+        tipoUsuario: usuario.tipoUsuario,
+        correo: usuario.correo
+    });
+};
+
+export const logoutUsuario = (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax'
+    });
+
+    return res.status(200).json({ mensaje: 'Sesión cerrada correctamente.' });
 };
 
 
