@@ -147,6 +147,77 @@ END;
 //
 DELIMITER ;
 
+-- TRIGGERS DE DatosSolicitudInicio - AUDITORIA -------------------------------------------------------------------------------------------------------------------------------
+-- Trigger Insert_Auditoria_DatosSolicitudInicio
+DELIMITER //
+CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_insert
+AFTER INSERT ON DatosSolicitudInicio
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+		@usuario_id, 'INSERT', 'DatosSolicitudInicio', NEW.idDatosSolicitudInicio, 
+		CONCAT('Se cargaron los datos de una nueva solicitud de inicio. Solicitud:', NEW.idSolicitudInicio),
+		@usuario_ip);
+END;
+//
+DELIMITER ;
+-- Trigger Update_Auditoria_DatosSolicitudInicio
+DELIMITER //
+CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_update
+BEFORE UPDATE ON DatosSolicitudInicio
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: La tabla DatosSolicitudInicio es inmutable y no permite modificaciones.';
+END;
+//
+DELIMITER ;
+-- Trigger Delete_Auditoria_DatosSolicitudInicio
+DELIMITER //
+CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_delete
+BEFORE DELETE ON DatosSolicitudInicio
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: No está permitido eliminar registros de DatosSolicitudInicio.';
+END;
+//
+DELIMITER ;
+
+
+-- TRIGGERS DE RUBRO - AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
+-- Trigger Insert_Auditoria_RUBRO
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Rubro_insert
+AFTER INSERT ON Rubro
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+		@usuario_id, 'INSERT', 'Rubro', NEW.idRubro, 
+		CONCAT('Nuevo rubro agregado: ', NEW.Nombre),
+		@usuario_ip);
+END;
+//
+DELIMITER ;
+-- Trigger Update_Auditoria_Rubro
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Rubro_update
+BEFORE UPDATE ON Rubro
+FOR EACH ROW
+BEGIN
+    -- 1. Actualizacion de nombre de rubro
+    IF OLD.Nombre <> NEW.Nombre THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'Rubro', NEW.idRubro, 
+			CONCAT('Se cambiao el nombre de rubro: Anterior -> ', OLD.Nombre, ', Nombre actual -> ', NEW.Nombre),
+			@usuario_ip);
+    END IF;
+END;
+//
+DELIMITER ;
 
 -- TRIGGERS DE EMPRENDIMIENTO - AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
 -- Trigger Insert_Auditoria_Emprendimiento
@@ -172,11 +243,12 @@ BEGIN
     -- 1. Evitar que se modifique el Número de Proyecto
     IF OLD.NroProyecto <> NEW.NroProyecto THEN
         SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Error: El Número de Proyecto no se puede modificar.';
+        SET MESSAGE_TEXT = 'Error de Seguridad: El Número de Proyecto no se permite modificar.';
     END IF;
 END;
 //
 DELIMITER ;
+
 DELIMITER //
 CREATE TRIGGER tg_auditoria_Emprendimiento_update
 AFTER UPDATE ON Emprendimiento
@@ -194,12 +266,12 @@ BEGIN
 
     -- 3. Cambio de ubicacion
     IF OLD.Calle <> NEW.Calle OR OLD.NúmeroCalle <> NEW.NúmeroCalle OR OLD.Barrio <> NEW.Barrio OR OLD.Departamento <> NEW.Departamento 
-    OR OLD.Localidad <> NEW.Localidad OR OLD.UbicaciónGM <> NEW.UbicaciónGM THEN
+    OR OLD.Localidad <> NEW.Localidad OR OLD.Latitud <> NEW.Latitud OR OLD.Longitud <> NEW.Longitud THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Emprendimiento', NEW.idEmprendimiento, 
-			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (', OLD.UbicaciónGM, ') -> Nueva dirección: ',
-				NEW.Calle, ' ', NEW.NúmeroCalle, ' (', NEW.UbicaciónGM, ')'), 
+			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (Latitud: ', OLD.Latitud, '/ Longitud: ', OLD.Longitud, ') -> 
+				Nueva dirección: ', NEW.Calle, ' ', NEW.NúmeroCalle, ' (Latitud: ', NEW.Latitud, '/ Longitud: ', NEW.Longitud, ')'), 
 			@usuario_ip);
     END IF;
 
@@ -354,7 +426,7 @@ BEGIN
     INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
     VALUES (
         @usuario_id, 'INSERT', 'Publicacion', NEW.idPublicacion, 
-        CONCAT('Emprendedor creó postulación de publicación para Emprendimiento ID: ', NEW.idEmprendimiento, '. Título propuesto: "', NEW.TituloPendiente, '"'),
+        CONCAT('Un emprendedor creó postulación de publicación para Emprendimiento ID: ', NEW.idEmprendimiento, '. Título propuesto: "', NEW.TituloPendiente, '"'),
         @usuario_ip);
 END;
 //
@@ -396,7 +468,6 @@ END;
 DELIMITER ;
 
 -- TRIGGERS DE ETIQUETA - AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
--- Etiqueta (idEtiqueta, Nombre)
 -- Trigger Insert_Auditoria_Etiqueta
 DELIMITER //
 CREATE TRIGGER tg_auditoria_etiqueta_insert
@@ -591,7 +662,28 @@ BEGIN
 END;
 //
 DELIMITER ;
-
+-- Trigger Update_Auditoria_Garante
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Garante_update
+BEFORE UPDATE ON Garante
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: La tabla Garante es inmutable y no permite modificaciones.';
+END;
+//
+DELIMITER ;
+-- Trigger Delete_Auditoria_Garante
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Garante_delete
+BEFORE DELETE ON Garante
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: No está permitido eliminar registros de Garante.';
+END;
+//
+DELIMITER ;
 
 -- TRIGGERS DE EXPEDIENTE - AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
 -- Trigger Insert_Auditoria_Expediente
@@ -622,5 +714,51 @@ BEGIN
 END;
 //
 DELIMITER ;
+-- Trigger BeforeUpdate_Auditoria_Expediente
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Expediente_update
+BEFORE UPDATE ON Expediente
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: La tabla Expediente es inmutable y no permite modificaciones.';
+END;
+//
+DELIMITER ;
+-- Trigger BeforeDelete_Auditoria_Expediente
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Expediente_delete
+BEFORE DELETE ON Expediente
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: No está permitido eliminar registros de Expediente.';
+END;
+//
+DELIMITER ;
 
+
+-- TRIGGERS DE AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
+-- Trigger BeforeUpdate_Auditoria
+DELIMITER //
+CREATE TRIGGER tg_auditoria_update
+BEFORE UPDATE ON auditoria
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: La tabla Auditoria es inmutable y no permite modificaciones.';
+END;
+//
+DELIMITER ;
+-- Trigger BeforeDelete_Auditoria
+DELIMITER //
+CREATE TRIGGER tg_auditoria_delete
+BEFORE DELETE ON auditoria
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Error de Seguridad: No está permitido eliminar registros de Auditoria.';
+END;
+//
+DELIMITER ;
 

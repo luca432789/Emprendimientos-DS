@@ -9,9 +9,13 @@ use ProyectoEmprendimientos2026;
 /* Tablas modelo relacional
 -- Empleado (idEmpleado (PK), Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo (Mesa de Entrada - Técnico - Social - Administrador), Activo (Si-No))
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, DirectorioFotos, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
 
--- Emprendimiento (idEmprendimiento (PK), Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad, EnMarcha (Si-No), ActividadPrincipal, UbicaciónGM (pluscode), idSolicitudInicio (FK))
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
+
+-- Rubro (idRubro (PK), Nombre, IconoMapa)
+
+-- Emprendimiento (idEmprendimiento (PK), Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad, EnMarcha (Si-No), ActividadPrincipal, Latitud, Longitud, idSolicitudInicio (FK), idRubro (fk))
 
 -- Emprendedor (idEmprendedor (PK), Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, Antecedentes, DescripcionAntecedente, idEmprendimiento (FK))
 
@@ -54,11 +58,10 @@ CONSTRAINT chk_CargoEmpleado
 	CHECK (Cargo IN ('Mesa de Entrada', 'Técnico', 'Social', 'Administrador')) -- Solo habran esos cargos
 );
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, DirectorioFotos, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
 create table SolicitudInicio (
 idSolicitudInicio int auto_increment primary key,
 DireccionPDF varchar (1024) not null,
-DirectorioFotos varchar(1024) not null,
 FechaRecibidoMesa date not null default (current_date),
 
 -- Trabajo EmpleadosArea
@@ -82,29 +85,63 @@ CONSTRAINT fk_Solicitud_EmpleadoSoc
 	FOREIGN KEY (idEmpleadoSocRevisor) REFERENCES Empleado(idEmpleado)
 );
 
--- Emprendimiento (idEmprendimiento (PK), Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad, EnMarcha (Si-No), ActividadPrincipal, UbicaciónGM (pluscode), idSolicitudInicio (FK))
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
+create table DatosSolicitudInicio (
+idDatosSolicitudInicio int auto_increment primary key,
+PersonaNombre varchar (40) not null, 
+PersonaApellido varchar (40) not null, 
+PersonaDNI varchar (15) not null,
+PersonaDepartamento varchar (20) not null,
+PersonaLocalidad varchar (40) not null,
+PersonaDomicilio varchar(512) not null,
+PersonaTeléfono varchar(25) not null, 
+PersonaCorreo varchar(150) not null,
+EmprendimientoCalle varchar(30) not null,
+EmprendimientoNroCalle varchar(6) not null,
+EmprendimientoBarrio varchar (50) not null,
+EmprendimientoDepto varchar (20) not null,
+EmprendimientoMarcha boolean not null default True,
+EmprendimientoRubro varchar(150) not null,
+EleccionAyuda varchar(10) not null, -- Subsidio o Credito
+idSolicitudInicio int not null unique,
+CONSTRAINT fk_DatosSolicitud_SolicitudInicio
+	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio)
+);
+
+-- Rubro (idRubro (PK), Nombre, IconoMapa)
+create table Rubro (
+idRubro int auto_increment primary key,
+Nombre varchar(50) not null unique, 
+IconoMapa varchar(100) not null
+);
+
+-- Emprendimiento (idEmprendimiento (PK), Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad, EnMarcha (Si-No), ActividadPrincipal, Latitud, Longitud, idSolicitudInicio (FK), idRubro (fk))
 create table Emprendimiento (
 idEmprendimiento int auto_increment primary key,
 Nombre varchar (50) not null,
 NroProyecto varchar(50) unique not null, -- Estructura: año - interior jusn felipe ibarra (codigo de departamento) - numero correlativo
 Calle varchar(30) not null,
-NúmeroCalle int not null,
+NúmeroCalle varchar(6) not null,
 Barrio varchar (50) not null,
 Departamento varchar (20) not null,
 Localidad varchar (40) not null,
 EnMarcha boolean not null default True, -- True/False - Los empleados lo cambian, no emprendedores.
 ActividadPrincipal varchar (400) not null,
-UbicaciónGM varchar (30) not null, -- pluscode
+Latitud decimal(12, 10), -- Datos necesarios para el mapa/ubicacion
+Longitud decimal(13, 10),
 idSolicitudInicio int not null,
+idRubro int not null,
 constraint fk_Emprendimiento_SolicitudI
-	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio)
+	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio),
+constraint fk_Emprendimiento_Rubro 
+	FOREIGN KEY (idRubro) REFERENCES Rubro(idRubro)
 );
 
 -- Emprendedor (idEmprendedor (PK), Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, Antecedentes, DescripcionAntecedente, idEmprendimiento (FK))
 create table Emprendedor (
 idEmprendedor int auto_increment primary key,
-Nombre varchar (30) not null, 
-Apellido varchar (30) not null, 
+Nombre varchar (40) not null, 
+Apellido varchar (40) not null, 
 DNI varchar (15) not null unique,
 Departamento varchar (20) not null,
 Localidad varchar (40) not null,
@@ -272,7 +309,7 @@ CONSTRAINT fk_Garante_Credito
 	FOREIGN KEY (idCredito) REFERENCES Credito (idCredito)
 );
 
--- Expediente (NroExpediente (PK), idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+-- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
 create table Expediente (
 idExpediente int auto_increment primary key,
 NroExpediente varchar(50) unique,
@@ -282,7 +319,7 @@ idEmpleadoCargo int not null, -- cargo = Mesa de Entrada
 CONSTRAINT fk_Expediente_SolicitudInicio
 	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio (idSolicitudInicio),
 CONSTRAINT fk_Expediente_Usuario 
-FOREIGN KEY (idEmpleadoCargo) REFERENCES Usuario (idUsuario)
+	FOREIGN KEY (idEmpleadoCargo) REFERENCES Usuario (idUsuario)
 );
 
 -- Auditoria (idLog (PK), idUsuario (FK), Accion, Tabla_Afectada, idRegistroAfectado, Detalle, Fecha_Hora, DirecciónIP)

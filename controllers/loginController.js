@@ -4,7 +4,8 @@ import {
     modelObtenerUsuarioPorCorreo, 
     modelVerificarPersonaFisica, 
     modelInsertarUsuarioWeb,
-    modelRegistrarAuditoriaLogin
+    modelRegistrarAuditoriaLogin,
+    modelListarUsuariosAdministracion
 } from '../models/loginModel.js';
 
 // CONTROLADOR DE LOG IN
@@ -102,6 +103,21 @@ export const registrarUsuario = async (req, res) => {
 
         const idPersonaFisica = persona[columnaId];
 
+        if (tipoUsuario !== 'Emprendedor') {
+            const cargosPermitidosPorRol = {
+                'Empleado de Area': ['Técnico', 'Social'],
+                'Empleado de Mesa': ['Mesa de Entrada'],
+                'Administrador': ['Administrador']
+            };
+            const cargosPermitidos = cargosPermitidosPorRol[tipoUsuario];
+
+            if (!cargosPermitidos?.includes(persona.Cargo)) {
+                return res.status(400).json({
+                    error: `El cargo ${persona.Cargo} no puede registrarse con el rol ${tipoUsuario}.`
+                });
+            }
+        }
+
         // 5. 🚀 LLAMADA AL MODELO: Evitar que el correo tenga dos usuarios web duplicados
         const usuarioExistente = await modelObtenerUsuarioPorCorreo(correo);
         if (usuarioExistente) {
@@ -140,6 +156,20 @@ export const registrarUsuario = async (req, res) => {
     } catch (error) {
         console.error("Error en el controlador de registro:", error);
         return res.status(500).json({ error: "Error interno del servidor al procesar el registro." });
+    }
+};
+
+export const listarUsuariosAdministracion = async (req, res) => {
+    if (req.usuarioLogueado?.tipoUsuario !== 'Administrador') {
+        return res.status(403).json({ error: 'Solo un administrador puede consultar el listado de usuarios.' });
+    }
+
+    try {
+        const usuarios = await modelListarUsuariosAdministracion();
+        return res.status(200).json(usuarios);
+    } catch (error) {
+        console.error('Error al listar usuarios para administración:', error);
+        return res.status(500).json({ error: 'No se pudo obtener el listado de usuarios.' });
     }
 };
 

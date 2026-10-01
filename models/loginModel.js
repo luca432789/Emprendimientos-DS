@@ -10,7 +10,8 @@ export const modelObtenerUsuarioPorCorreo = async (correo) => {
 
 // 🔍 MODELO: Verificar si existe la persona física en Empleado o Emprendedor
 export const modelVerificarPersonaFisica = async (tablaBusqueda, columnaId, correo) => {
-    const sql = `SELECT ${columnaId} FROM ${tablaBusqueda} WHERE Correo = ?`;
+    const columnas = tablaBusqueda === 'empleado' ? `${columnaId}, Cargo` : columnaId;
+    const sql = `SELECT ${columnas} FROM ${tablaBusqueda} WHERE Correo = ?`;
     const [personas] = await pool.query(sql, [correo]);
     return personas[0] || null;
 };
@@ -35,6 +36,27 @@ export const modelInsertarUsuarioWeb = async (datos, datosAuditoria) => {
     ]);
     
     return resultado;
+};
+
+export const modelListarUsuariosAdministracion = async () => {
+    const [filas] = await pool.query(`
+        SELECT
+            u.idUsuario,
+            u.Correo,
+            u.TipoUsuario,
+            u.Activa,
+            COALESCE(
+                CONCAT_WS(' ', e.Nombre, e.Apellido),
+                CONCAT_WS(' ', empr.Nombre, empr.Apellido),
+                'Sin vínculo'
+            ) AS Persona
+        FROM Usuario u
+        LEFT JOIN Empleado e ON e.idEmpleado = u.idEmpleado
+        LEFT JOIN Emprendedor empr ON empr.idEmprendedor = u.idEmprendedor
+        ORDER BY u.Correo
+    `);
+
+    return filas;
 };
 
 // 📝 MODELO: Registrar Auditoría del Login (Ya que no se genera por Trigger al no ser un INSERT/UPDATE común de tabla)

@@ -136,6 +136,11 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Registrar Empleado
                 </a>
             </li>
+            <li class="item-simple" id="item-administrar-empleados">
+                <a href="#" onclick="cargarSección('administrar-empleados', 'Administración de Empleados')">
+                    <i class="fa-solid fa-user-gear" style="margin-right: 8px;"></i> Administrar Empleados
+                </a>
+            </li>
             <li class="item-simple" id="item-registrar-usuario">
                 <a href="#" onclick="cargarSección('registrar-usuario', 'Registrar Nuevo Usuario')">
                     <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Registrar Usuario
@@ -227,25 +232,52 @@ function cargarSección(codigoSeccion, tituloSeccion) {
     // CASO 2: ADMINISTRAR USUARIOS
     // ======================================================================
     else if (codigoSeccion === 'administrar-usuarios') {
-        filtrosTabla.style.display = 'flex';
+        filtrosTabla.style.display = 'none';
         
         zonaRender.innerHTML = `
             <table class="tabla-datos">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
+                        <th>ID</th>
                         <th>Email</th>
-                        <th style="text-align:center;">Estado</th>
-                        <th style="text-align:center;">Acción</th>
+                        <th>Persona</th>
+                        <th>Tipo de usuario</th>
+                        <th style="text-align:center;">Estado de cuenta</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo-dinamico">
-                    <tr><td>Juan Carlos</td><td>Gomez</td><td>USUARIO1@gmail.com</td><td style="text-align:center;"><span class="estado-indicador estado-verde"></span></td><td style="text-align:center;"><button class="btn-acciones-tabla"><i class="fa-solid fa-ellipsis-vertical"></i></button></td></tr>
-                    <tr><td>María Elena</td><td>Rodríguez</td><td>Usuario2@gmail.com</td><td style="text-align:center;"><span class="estado-indicador estado-rojo"></span></td><td style="text-align:center;"><button class="btn-acciones-tabla"><i class="fa-solid fa-ellipsis-vertical"></i></button></td></tr>
+                    <tr><td colspan="5" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando usuarios...</td></tr>
                 </tbody>
             </table>
         `;
+        cargarAdministracionUsuarios();
+    }
+    // ======================================================================
+    // CASO 3: ADMINISTRAR EMPLEADOS
+    // ======================================================================
+    else if (codigoSeccion === 'administrar-empleados') {
+        filtrosTabla.style.display = 'none';
+
+        zonaRender.innerHTML = `
+            <table class="tabla-datos">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>DNI</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th>Cargo</th>
+                        <th>Estado laboral</th>
+                        <th>Cuenta web</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo-dinamico">
+                    <tr><td colspan="8" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando empleados...</td></tr>
+                </tbody>
+            </table>
+        `;
+        cargarAdministracionEmpleados();
     }
     // ======================================================================
     // CASO 3: SOLICITUDES SIN EXPEDIENTE (Para empleados de Mesa)
@@ -271,7 +303,61 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         fetchSolicitudesMesaEntrada();
     }
     // ======================================================================
-    // CASO 4: REGISTRAR usuario (FORMULARIO DINÁMICO)
+    // CASO 4: REGISTRAR EMPLEADO
+    // ======================================================================
+    else if (codigoSeccion === 'registrar-empleado') {
+        filtrosTabla.style.display = 'none';
+
+        zonaRender.innerHTML = `
+            <div class="formulario-contenedor-panel" style="max-width: 680px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h3 style="color: #1a3a5f; margin: 0 0 20px; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">
+                    <i class="fa-solid fa-user-plus"></i> Alta de empleado
+                </h3>
+                <form id="formulario-registro-empleado">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                        <label>Nombre
+                            <input type="text" id="empleado-nombre" maxlength="30" autocomplete="given-name" required style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #ccc; border-radius:4px;">
+                        </label>
+                        <label>Apellido
+                            <input type="text" id="empleado-apellido" maxlength="30" autocomplete="family-name" required style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #ccc; border-radius:4px;">
+                        </label>
+                        <label>DNI
+                            <input type="text" id="empleado-dni" maxlength="15" required style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #ccc; border-radius:4px;">
+                        </label>
+                        <label>Teléfono
+                            <input type="tel" id="empleado-telefono" maxlength="25" autocomplete="tel" required style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #ccc; border-radius:4px;">
+                        </label>
+                        <label style="grid-column: 1 / -1;">Domicilio
+                            <input type="text" id="empleado-domicilio" maxlength="512" autocomplete="street-address" required style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #ccc; border-radius:4px;">
+                        </label>
+                        <label>Correo electrónico
+                            <input type="email" id="empleado-correo" maxlength="150" autocomplete="email" required style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #ccc; border-radius:4px;">
+                        </label>
+                        <label>Cargo
+                            <select id="empleado-cargo" required style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #ccc; border-radius:4px; background:#fff;">
+                                <option value="">-- Seleccione un cargo --</option>
+                                <option value="Mesa de Entrada">Mesa de Entrada</option>
+                                <option value="Técnico">Técnico</option>
+                                <option value="Social">Social</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label style="display:flex; align-items:center; gap:8px; margin:18px 0;">
+                        <input type="checkbox" id="empleado-activo" checked>
+                        Empleado activo
+                    </label>
+                    <button type="submit" class="btn-filtro" style="width:100%; padding:12px; background-color:#1a3a5f; color:#fff; border:0; border-radius:4px; font-size:1rem; cursor:pointer;">
+                        <i class="fa-solid fa-floppy-disk"></i> Registrar empleado
+                    </button>
+                </form>
+            </div>
+        `;
+
+        inicializarFormularioRegistroEmpleado();
+    }
+    // ======================================================================
+    // CASO 5: REGISTRAR usuario (FORMULARIO DINÁMICO)
     // ======================================================================
     else if (codigoSeccion === 'registrar-usuario') {
         filtrosTabla.style.display = 'none'; // Ocultamos filtros generales
@@ -313,7 +399,7 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         inicializarEscuchaRegistro();
     }
 // ======================================================================
-    // CASO 5: SOLICITUDES DE INICIO SIN REVISAR (Para Empleados de Área / Admin)
+    // CASO 6: SOLICITUDES DE INICIO SIN REVISAR (Para Empleados de Área / Admin)
     // ======================================================================
     else if (codigoSeccion === 'inicio-sin-revisar') {
         filtrosTabla.style.display = 'flex'; // Muestra la barra con "Ordenar por..."

@@ -12,7 +12,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ========================================================
     // 2. AUTENTICACIÓN (SESSION STORAGE)
     // ========================================================
-    const token = sessionStorage.getItem('token_ministerio');
+    const respuesta = await fetch('/api/me', {
+                method: 'GET',
+                credentials: 'include'
+            });
 
     let esAdmin = false;
 
