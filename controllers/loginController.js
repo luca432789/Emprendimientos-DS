@@ -43,7 +43,7 @@ export const loginUsuario = async (req, res) => {
         };
 
         // Ponemos la caducidad exacta por inactividad/tiempo: 5 minutos
-        const token = jwt.sign(payload, tokenSecret, { expiresIn: '5m' });
+        const token = jwt.sign(payload, tokenSecret, { expiresIn: process.env.JWT_EXPIRES_IN || '5m' });
 
         // Registrar rastro en la tabla auditoría mediante el modelo
         const ipCliente = req.ip || '127.0.0.1';
