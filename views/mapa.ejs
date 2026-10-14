@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubicación de Emprendimientos - El Camino de los Emprendedores</title>
+
+    <!-- Estilos del sitio (mismos que index.html) -->
+    <link rel="stylesheet" href="/CSS/index CSS.css">
+    <link rel="stylesheet" href="/CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="/CSS/mapa.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Barra de navegación con sesión (igual que index.html) -->
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <script src="/js/navbar.js" defer></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="/index.html">Inicio</a></li>
+            <li><a href="#">Publicaciones</a></li>
+            <li><a href="/mapa" class="active">Mapa</a></li>
+            <li><a href="/Camino FORMULARIOS.html">Formularios</a></li>
+            <li><a href="/Camino CONTACTOS.html">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/Camino LOG IN.html">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container" style="max-width: 1200px; margin: 30px auto; padding: 0 20px;">
+
+            <div class="titulo-seccion" style="text-align: center; margin-bottom: 25px;">
+                <h2 style="font-size: 28px; color: #2c3e50; margin-bottom: 5px;">Ubicación de Emprendimientos</h2>
+                <p style="color: #666; font-size: 16px;">Mapeo georeferenciado de proyectos en la provincia</p>
+            </div>
+
+            <!-- PANEL SUPERIOR DE EDICIÓN (lo muestra mapa.js si hay sesión) -->
+            <div id="panel-edicion" style="display: none;">
+                <h3>📍 Ubicar / Editar Emprendimiento</h3>
+                <div class="panel-row">
+                    <div class="panel-group flex-2">
+                        <label for="select-emprendimiento">Seleccionar Emprendimiento:</label>
+                        <select id="select-emprendimiento">
+                            <option value="">-- Seleccionar un emprendimiento --</option>
+                        </select>
+                    </div>
+                    <div class="panel-group">
+                        <label for="input-latitud">Latitud:</label>
+                        <input type="text" id="input-latitud" placeholder="Haz clic en el mapa" readonly>
+                    </div>
+                    <div class="panel-group">
+                        <label for="input-longitud">Longitud:</label>
+                        <input type="text" id="input-longitud" placeholder="Haz clic en el mapa" readonly>
+                    </div>
+                    <button id="btn-guardar-ubicacion" disabled>Guardar Ubicación</button>
+                </div>
+                <div id="info-coordenadas">
+                    💡 <b>Instrucciones:</b> Selecciona un emprendimiento de la lista, haz clic en cualquier lugar del mapa para colocar la marca y presiona "Guardar Ubicación".
+                </div>
+            </div>
+
+            <!-- MAPA Y FILTROS -->
+            <div class="main-grid" style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; background: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+
+                <div id="map"></div>
+
+                <div class="panel-filtro" style="background: #f8fafc; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 15px;">
+                    <h3 style="margin: 0; font-size: 16px; color: #2d3748;">Filtrar Proyectos</h3>
+
+                    <div class="form-group">
+                        <label for="select-rubro" style="display: block; font-size: 13px; font-weight: bold; color: #4a5568; margin-bottom: 5px;">Rubro / Sector:</label>
+                        <select id="select-rubro" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px;">
+                            <option value="">Todos los rubros</option>
+                            <option value="gastronomia">Gastronomía</option>
+                            <option value="artesanias">Artesanías</option>
+                            <option value="textil">Textil</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="select-localidad" style="display: block; font-size: 13px; font-weight: bold; color: #4a5568; margin-bottom: 5px;">Localidad:</label>
+                        <select id="select-localidad" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px;">
+                            <option value="">Todas las localidades</option>
+                            <option value="La Banda">La Banda</option>
+                            <option value="Santiago del Estero">Santiago del Estero</option>
+                        </select>
+                    </div>
+
+                    <button id="btn-aplicar-filtros" style="background-color: #2d3748; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">Aplicar Filtros</button>
+
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0;">
+
+                    <div id="lista-resultados" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                        <p style="font-size: 12px; color: #a0aec0; text-align: center;">Cargando proyectos...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!--FOOTER (igual que index.html)-->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="/Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="/Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aquí]
+        </div>
+    </footer>
+
+    <!-- Leaflet JS: siempre antes de mapa.js y al final del body -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/js/mapa.js"></script>
+
+</body>
+</html>

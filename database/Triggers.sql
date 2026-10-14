@@ -266,12 +266,13 @@ BEGIN
 
     -- 3. Cambio de ubicacion
     IF OLD.Calle <> NEW.Calle OR OLD.NúmeroCalle <> NEW.NúmeroCalle OR OLD.Barrio <> NEW.Barrio OR OLD.Departamento <> NEW.Departamento 
-    OR OLD.Localidad <> NEW.Localidad OR OLD.Latitud <> NEW.Latitud OR OLD.Longitud <> NEW.Longitud THEN
+    -- Latitud/Longitud pueden ser NULL (sin ubicar): se compara con <=> e IFNULL para no perder la auditoría
+    OR OLD.Localidad <> NEW.Localidad OR NOT (OLD.Latitud <=> NEW.Latitud) OR NOT (OLD.Longitud <=> NEW.Longitud) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Emprendimiento', NEW.idEmprendimiento, 
-			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (Latitud: ', OLD.Latitud, '/ Longitud: ', OLD.Longitud, ') -> 
-				Nueva dirección: ', NEW.Calle, ' ', NEW.NúmeroCalle, ' (Latitud: ', NEW.Latitud, '/ Longitud: ', NEW.Longitud, ')'), 
+			@usuario_id, 'UPDATE', 'Emprendimiento', NEW.idEmprendimiento,
+			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (Latitud: ', IFNULL(OLD.Latitud, 'sin ubicar'), '/ Longitud: ', IFNULL(OLD.Longitud, 'sin ubicar'), ') ->
+				Nueva dirección: ', NEW.Calle, ' ', NEW.NúmeroCalle, ' (Latitud: ', IFNULL(NEW.Latitud, 'sin ubicar'), '/ Longitud: ', IFNULL(NEW.Longitud, 'sin ubicar'), ')'),
 			@usuario_ip);
     END IF;
 

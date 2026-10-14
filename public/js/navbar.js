@@ -142,9 +142,29 @@ function inicializarDropdowns() {
             e.preventDefault(); // Evita que la página navegue al "#"
             
             sessionStorage.removeItem('token_ministerio');
-            // 2. Redirigimos a la página de inicio común / refrescamos la actual
-            alert("Sesión cerrada correctamente");
-            window.location.href = "/index.html"; 
+
+            // 2. Se queda en la página actual (ej. el mapa) y la recarga ya sin sesión.
+            //    Las vistas privadas (panel de empleado / vista de emprendedor) no sirven
+            //    sin sesión, así que desde ahí se vuelve al inicio.
+            const ruta = decodeURIComponent(window.location.pathname).toUpperCase();
+            const esVistaPrivada = ruta.startsWith('/VISTA EMPLEADO/') || ruta.startsWith('/VISTA USUARIO/');
+            const redirigir = () => {
+                if (esVistaPrivada) window.location.href = "/index.html";
+                else window.location.reload();
+            };
+
+            // SweetAlert si la página lo tiene cargado (ej. el mapa); si no, alert() de siempre
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sesión cerrada correctamente',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(redirigir);
+            } else {
+                alert("Sesión cerrada correctamente");
+                redirigir();
+            }
         });
     }
 
