@@ -60,7 +60,7 @@ let marcadorNuevo = null;
 // Elementos del DOM
 const selectEmp = document.getElementById('select-emprendimiento');
 const selectRubro = document.getElementById('select-rubro');
-const selectLocalidad = document.getElementById('select-localidad');
+const selectDepartamento = document.getElementById('select-departamento');
 const btnAplicarFiltros = document.getElementById('btn-aplicar-filtros');
 const contenedorLista = document.getElementById('lista-resultados');
 
@@ -77,7 +77,7 @@ function esc(texto) {
   }[c]));
 }
 
-// Minúsculas y sin tildes, para comparar localidades sin errores de escritura
+// Minúsculas y sin tildes, para comparar departamentos sin errores de escritura
 function normalizar(texto) {
   return String(texto ?? '')
     .normalize('NFD')
@@ -155,32 +155,32 @@ function llenarFiltros() {
     llenarSelect(selectRubro, 'Todos los rubros', opciones);
   }
 
-  // Localidades: valores distintos que hay cargados (sin duplicar por tildes/mayúsculas)
-  if (selectLocalidad) {
-    const localidades = new Map();
+  // Departamentos: valores distintos que hay cargados (sin duplicar por tildes/mayúsculas)
+  if (selectDepartamento) {
+    const departamentos = new Map();
     emprendimientosTodos.forEach((e) => {
-      const nombre = String(e.Localidad ?? '').trim();
+      const nombre = String(e.Departamento ?? '').trim();
       if (!nombre) return;
       const clave = normalizar(nombre);
-      if (!localidades.has(clave)) localidades.set(clave, nombre);
+      if (!departamentos.has(clave)) departamentos.set(clave, nombre);
     });
 
-    const opciones = [...localidades.entries()]
+    const opciones = [...departamentos.entries()]
       .sort((a, b) => a[1].localeCompare(b[1], 'es'))
       .map(([valor, texto]) => ({ valor, texto }));
 
-    llenarSelect(selectLocalidad, 'Todas las localidades', opciones);
+    llenarSelect(selectDepartamento, 'Todos los departamentos', opciones);
   }
 }
 
 function aplicarFiltroActual() {
   const rubroSel = selectRubro ? selectRubro.value : '';
-  const localidadSel = selectLocalidad ? selectLocalidad.value : '';
+  const departamentoSel = selectDepartamento ? selectDepartamento.value : '';
 
   const listaFiltrada = emprendimientosTodos.filter((emp) => {
     const coincideRubro = !rubroSel || String(emp.idRubro) === rubroSel;
-    const coincideLocalidad = !localidadSel || normalizar(emp.Localidad) === localidadSel;
-    return coincideRubro && coincideLocalidad;
+    const coincideDepartamento = !departamentoSel || normalizar(emp.Departamento) === departamentoSel;
+    return coincideRubro && coincideDepartamento;
   });
 
   renderizarTodo(listaFiltrada);
@@ -194,7 +194,7 @@ if (btnAplicarFiltros) {
 }
 // También se filtra apenas se cambia una opción
 if (selectRubro) selectRubro.addEventListener('change', aplicarFiltroActual);
-if (selectLocalidad) selectLocalidad.addEventListener('change', aplicarFiltroActual);
+if (selectDepartamento) selectDepartamento.addEventListener('change', aplicarFiltroActual);
 
 // ---------- Direcciones reales (Nominatim) ----------
 
@@ -513,10 +513,55 @@ function actualizarBotonDesplegable() {
   });
 }
 
+// Convierte lo escrito en un número. Acepta coma decimal ("-27,78") además de punto.
+function leerCoordenada(texto) {
+  let t = String(texto ?? '').trim();
+  if (!t) return NaN;
+  if (!t.includes('.') && (t.match(/,/g) || []).length === 1) t = t.replace(',', '.');
+  return /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : NaN;
+}
+
+// Devuelve { lat, lng } si los dos campos tienen coordenadas válidas, o null
+function coordenadasEscritas() {
+  if (!inputLat || !inputLng) return null;
+  const lat = leerCoordenada(inputLat.value);
+  const lng = leerCoordenada(inputLng.value);
+  const latOk = Number.isFinite(lat) && lat >= -90 && lat <= 90;
+  const lngOk = Number.isFinite(lng) && lng >= -180 && lng <= 180;
+  return latOk && lngOk ? { lat, lng } : null;
+}
+
+// Marca en rojo el campo que tiene algo escrito pero no es una coordenada válida
+function marcarCampo(input, minimo, maximo) {
+  const valor = leerCoordenada(input.value);
+  const invalido = input.value.trim() !== '' && !(Number.isFinite(valor) && valor >= minimo && valor <= maximo);
+  input.classList.toggle('coordenada-invalida', invalido);
+  input.title = invalido ? `Ingrese un número entre ${minimo} y ${maximo}` : '';
+}
+
 function validarFormulario() {
   if (selectEmp && btnGuardar && inputLat && inputLng) {
-    btnGuardar.disabled = !(selectEmp.value && inputLat.value && inputLng.value);
+    btnGuardar.disabled = !(selectEmp.value && coordenadasEscritas());
   }
+}
+
+// Coloca (o mueve) el marcador de la nueva ubicación; se puede arrastrar para ajustar
+function colocarMarcadorNuevo(latlng) {
+  if (marcadorNuevo) {
+    marcadorNuevo.setLatLng(latlng);
+    return;
+  }
+  marcadorNuevo = L.marker(latlng, { draggable: true }).addTo(map);
+  marcadorNuevo.on('dragend', (evt) => {
+    const pos = evt.target.getLatLng();
+    if (inputLat && inputLng) {
+      inputLat.value = pos.lat.toFixed(6);
+      inputLng.value = pos.lng.toFixed(6);
+      marcarCampo(inputLat, -90, 90);
+      marcarCampo(inputLng, -180, 180);
+    }
+    validarFormulario();
+  });
 }
 
 if (selectEmp && btnGuardar) {
@@ -529,24 +574,45 @@ if (selectEmp && btnGuardar) {
     if (inputLat && inputLng) {
       inputLat.value = lat.toFixed(6);
       inputLng.value = lng.toFixed(6);
+      marcarCampo(inputLat, -90, 90);
+      marcarCampo(inputLng, -180, 180);
     }
 
-    if (marcadorNuevo) {
-      marcadorNuevo.setLatLng(e.latlng);
-    } else {
-      marcadorNuevo = L.marker(e.latlng, { draggable: true }).addTo(map);
-      marcadorNuevo.on('dragend', (evt) => {
-        const pos = evt.target.getLatLng();
-        if (inputLat && inputLng) {
-          inputLat.value = pos.lat.toFixed(6);
-          inputLng.value = pos.lng.toFixed(6);
-        }
-        validarFormulario();
-      });
-    }
-
+    colocarMarcadorNuevo(e.latlng);
     validarFormulario();
   });
+
+  // Coordenadas escritas a mano: al estar las dos completas y válidas se ubica el marcador
+  if (inputLat && inputLng) {
+    let esperaEscritura = null;
+    const alEscribir = (e) => {
+      // Si pegan "lat, lng" juntos (como lo copia Google Maps), se reparten en los dos campos.
+      // "-64,25" sola es una coma decimal: solo se separa si hay espacio o ";" en el medio,
+      // o si los dos números usan punto decimal ("-27.79,-64.26").
+      const juntas = e.target.value.match(/^\s*(-?\d+(?:\.\d+)?)(\s*[,;]\s*|\s+)(-?\d+(?:\.\d+)?)\s*$/);
+      const sonDos = juntas && (/[;\s]/.test(juntas[2]) || (juntas[1].includes('.') && juntas[3].includes('.')));
+      if (sonDos) {
+        inputLat.value = juntas[1];
+        inputLng.value = juntas[3];
+      }
+      validarFormulario();
+
+      // Se espera a que termine de escribir para no mover el mapa con cada tecla
+      clearTimeout(esperaEscritura);
+      esperaEscritura = setTimeout(() => {
+        marcarCampo(inputLat, -90, 90);
+        marcarCampo(inputLng, -180, 180);
+
+        const coords = coordenadasEscritas();
+        if (coords) {
+          colocarMarcadorNuevo([coords.lat, coords.lng]);
+          map.setView([coords.lat, coords.lng], Math.max(map.getZoom(), 13));
+        }
+      }, 600);
+    };
+    inputLat.addEventListener('input', alEscribir);
+    inputLng.addEventListener('input', alEscribir);
+  }
 
   selectEmp.addEventListener('change', () => {
     validarFormulario();
@@ -572,10 +638,11 @@ if (selectEmp && btnGuardar) {
 
   btnGuardar.addEventListener('click', async () => {
     const id = selectEmp.value;
-    const latitud = inputLat.value;
-    const longitud = inputLng.value;
+    const coords = coordenadasEscritas();
 
-    if (!id || !latitud || !longitud) return;
+    if (!id || !coords) return;
+    const latitud = coords.lat;
+    const longitud = coords.lng;
 
     try {
       const token = sessionStorage.getItem(CLAVE_TOKEN);
@@ -616,8 +683,11 @@ if (selectEmp && btnGuardar) {
           map.removeLayer(marcadorNuevo);
           marcadorNuevo = null;
         }
-        if (inputLat) inputLat.value = '';
-        if (inputLng) inputLng.value = '';
+        [inputLat, inputLng].forEach((input) => {
+          if (!input) return;
+          input.value = '';
+          input.classList.remove('coordenada-invalida');
+        });
         selectEmp.value = '';
         actualizarBotonDesplegable();
 

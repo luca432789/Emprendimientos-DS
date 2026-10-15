@@ -104,6 +104,18 @@ body {
     box-sizing: border-box;
 }
 
+#panel-edicion input:focus {
+    outline: none;
+    border-color: #2f4e78;
+    box-shadow: 0 0 0 2px rgba(47, 78, 120, 0.2);
+}
+
+/* Coordenada escrita a mano que no es un número válido */
+#panel-edicion input.coordenada-invalida {
+    border-color: #e53e3e;
+    background-color: #fff5f5;
+}
+
 #panel-edicion button {
     padding: 10px 18px;
     background-color: #aa5656;
