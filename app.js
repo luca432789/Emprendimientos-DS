@@ -19,6 +19,7 @@ import empleadoRouter from './routes/empleadoRoutes.js';
 import mapaRouter from './routes/mapaRoutes.js';
 import formulariosDigitalesRouter from './routes/formulariosDigitalesRoutes.js';
 import notificacionesRouter from './routes/notificacionesRoutes.js';
+import publicacionesRouter from './routes/publicacionesRoutes.js';
 
 // Inicializamos la app express
 const app = express();
@@ -46,6 +47,7 @@ app.use('/api', empleadoRouter);
 app.use('/api', mapaRouter);       // Todo lo de mapa colgará de /api/emprendimientos mapa
 app.use('/api', formulariosDigitalesRouter); // Generación de PDFs de formularios (/api/formularios-digitales)
 app.use('/api', notificacionesRouter); // Campanita del navbar (/api/notificaciones)
+app.use('/api', publicacionesRouter); // Publicaciones del emprendedor y moderación (/api/publicaciones)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)

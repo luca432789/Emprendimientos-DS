@@ -7,7 +7,8 @@
     <title> Camino de los emprendedores </title>
     <link rel="stylesheet" href="/CSS/index CSS.css">
     <link rel="stylesheet" href="/CSS/CdE Navbar.css">
-     <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/fotos css.css"">
     <script src="/js/script.js" defer></script>
     <script src="/js/registro-usuario.js" defer></script>
     
@@ -86,22 +87,45 @@
         <!-- SUB-NAVEGACIÓN DEL PERFIL -->
         <nav class="perfil-subnav">
             <ul>
-                <li><a href="CdE-Perfil Emprendedor.html" class="active">Acerca de</a></li>
+                <li><a href="CdE-Perfil Emprendedor.html">Acerca de</a></li>
                 <li><a href="Publicaciones.html">Publicaciones</a></li>
                 <li><a href="Productos.html">Productos</a></li>
-                <li><a href="Fotos.html">Fotos</a></li>
+                <li><a href="Fotos.html" class="active">Fotos</a></li>
                 <li><a href="Contacto.html">Contacto</a></li>
             </ul>
         </nav>
     </section>
 
     <main>   
-    <div class="perfil-content">
+        <div class="perfil-content">
+            <!-- GALERÍA DE FOTOS -->
+            <section class="galeria-section">
+                <div class="galeria-header">
+                    <h3>Galería Multimedia</h3>
+                    <label for="subir-galeria-input" class="btn-publicar">
+                        <i class="fa-solid fa-upload"></i> Subir Foto
+                    </label>
+                    <input type="file" id="subir-galeria-input" accept="image/*" multiple hidden>
+                </div>
 
-        <!-- COLUMNA IZQUIERDA: INTRODUCCIÓN Y DESCRIPCIÓN -->
-        
+                <div class="galeria-grid" id="galeria-grid">
+                    <!-- Ejemplos de fotos subidas -->
+                    <div class="galeria-item">
+                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Foto subida">
+                    </div>
+                    <div class="galeria-item">
+                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Foto subida">
+                    </div>
+                    <div class="galeria-item">
+                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Foto subida">
+                    </div>
+                    <div class="galeria-item">
+                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Foto subida">
+                    </div>
+                </div>
+            </section>
+        </div>
 
-    </div>
     </main>
 
 

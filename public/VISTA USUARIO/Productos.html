@@ -7,7 +7,8 @@
     <title> Camino de los emprendedores </title>
     <link rel="stylesheet" href="/CSS/index CSS.css">
     <link rel="stylesheet" href="/CSS/CdE Navbar.css">
-     <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/productos css.css">
     <script src="/js/script.js" defer></script>
     <script src="/js/registro-usuario.js" defer></script>
     
@@ -86,24 +87,74 @@
         <!-- SUB-NAVEGACIÓN DEL PERFIL -->
         <nav class="perfil-subnav">
             <ul>
-                <li><a href="CdE-Perfil Emprendedor.html" class="active">Acerca de</a></li>
+                <li><a href="CdE-Perfil Emprendedor.html">Acerca de</a></li>
                 <li><a href="Publicaciones.html">Publicaciones</a></li>
-                <li><a href="Productos.html">Productos</a></li>
+                <li><a href="Productos.html" class="active">Productos</a></li>
                 <li><a href="Fotos.html">Fotos</a></li>
                 <li><a href="Contacto.html">Contacto</a></li>
             </ul>
         </nav>
     </section>
 
-    <main>   
-    <div class="perfil-content">
+    <main>
+    <!-- FORMULARIO PARA REGISTRAR PRODUCTO -->
+            <section class="crear-producto-card">
+                <h3>Publicar Nuevo Producto</h3>
+                <form id="form-producto">
+                    <div class="form-group">
+                        <input type="text" id="prod-nombre" placeholder="Nombre del producto" required>
+                        <input type="number" id="prod-precio" placeholder="Precio ($)" step="0.01" required>
+                    </div>
+                    <textarea id="prod-descripcion" placeholder="Descripción breve del producto..."></textarea>
+                    <div class="acciones-publicacion">
+                        <label for="prod-imagen" class="btn-adjuntar">
+                            <i class="fa-solid fa-camera"></i> Subir Imagen
+                        </label>
+                        <input type="file" id="prod-imagen" accept="image/*" hidden>
+                        <button type="submit" class="btn-publicar">Publicar</button>
+                    </div>
+                </form>
+            </section>
 
-        <!-- COLUMNA IZQUIERDA: INTRODUCCIÓN Y DESCRIPCIÓN -->
-        
+            <!-- CATÁLOGO DE PRODUCTOS -->
+            <section class="productos-grid" id="productos-grid">
+                <!-- Ejemplos de tarjetas de productos -->
+                <div class="producto-card">
+                    <div class="producto-img-container">
+                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Placeholder producto">
+                    </div>
+                    <div class="producto-info">
+                        <h4 class="producto-titulo">Producto de Ejemplo</h4>
+                        <p class="producto-precio">$1.500</p>
+                        <p class="producto-desc">Descripción corta del producto o servicio ofrecido por el emprendedor.</p>
+                    </div>
+                </div>
 
-    </div>
+                <div class="producto-card">
+                    <div class="producto-img-container">
+                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Placeholder producto">
+                    </div>
+                    <div class="producto-info">
+                        <h4 class="producto-titulo">Producto de Ejemplo</h4>
+                        <p class="producto-precio">$1.500</p>
+                        <p class="producto-desc">Descripción corta del producto o servicio ofrecido por el emprendedor.</p>
+                    </div>
+                </div>
+
+                <div class="producto-card">
+                    <div class="producto-img-container">
+                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Placeholder producto">
+                    </div>
+                    <div class="producto-info">
+                        <h4 class="producto-titulo">Producto de Ejemplo</h4>
+                        <p class="producto-precio">$1.500</p>
+                        <p class="producto-desc">Descripción corta del producto o servicio ofrecido por el emprendedor.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
     </main>
-
 
 
 
