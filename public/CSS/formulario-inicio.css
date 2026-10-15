@@ -1,0 +1,355 @@
+/* Formulario de Inicio con aspecto de nota oficial */
+.formulario-inicio {
+    --tinta: #1f1f1f;
+    --azul: #2f4e78;
+    --linea: #b9b9b9;
+    max-width: 1060px;
+    margin: 0 auto;
+    text-align: left;
+    color: var(--tinta);
+    font-family: Calibri, Carlito, 'Segoe UI', sans-serif;
+}
+
+.formulario-inicio * {
+    font-family: inherit;
+}
+
+.formulario-inicio .hoja {
+    background: white;
+    padding: 70px 60px 45px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Encabezado de la nota */
+.formulario-inicio .fecha-lugar {
+    text-align: right;
+    margin-bottom: 55px;
+    color: #444;
+}
+
+.formulario-inicio .campo-fecha {
+    width: 55px;
+    border: none;
+    border-bottom: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px 4px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    background: transparent;
+}
+
+.formulario-inicio .campo-mes {
+    width: 95px;
+}
+
+.formulario-inicio .destinatario {
+    font-weight: bold;
+    line-height: 1.75;
+    margin-bottom: 40px;
+}
+
+.formulario-inicio .parrafo {
+    text-align: justify;
+    line-height: 1.75;
+    margin: 18px 0 8px;
+}
+
+.formulario-inicio .sangria {
+    text-indent: 140px;
+}
+
+.formulario-inicio .titulo-campos {
+    text-align: center;
+    color: var(--azul);
+    font-size: 23px;
+    margin: 30px 0 20px;
+}
+
+/* Campos como líneas punteadas */
+.formulario-inicio .etiqueta {
+    display: block;
+    font-weight: bold;
+    margin-top: 22px;
+}
+
+.formulario-inicio .linea {
+    width: 100%;
+    border: none;
+    border-bottom: 1px dotted #999;
+    padding: 10px 2px 6px;
+    font-size: 16px;
+    background: transparent;
+    color: var(--tinta);
+}
+
+.formulario-inicio select.linea {
+    cursor: pointer;
+}
+
+.formulario-inicio .linea:focus {
+    outline: none;
+    border-bottom: 2px solid var(--azul);
+    background: #f6f8fb;
+}
+
+.formulario-inicio .fila {
+    display: flex;
+    gap: 28px;
+}
+
+.formulario-inicio .fila > .columna {
+    flex: 1;
+}
+
+.formulario-inicio .fila > .columna.ancha {
+    flex: 2;
+}
+
+.formulario-inicio small {
+    display: block;
+    font-size: 11px;
+    color: #555;
+    margin-top: 6px;
+}
+
+.formulario-inicio .extranjero-control {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 6px;
+    color: #444;
+}
+
+.formulario-inicio .extranjero-control input {
+    width: 17px;
+    height: 17px;
+}
+
+/* SI / NO - Subsidio / Crédito */
+.formulario-inicio .opciones {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 10px;
+    font-size: 17px;
+}
+
+.formulario-inicio .opciones label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.formulario-inicio .opciones input {
+    width: 16px;
+    height: 16px;
+}
+
+.formulario-inicio .aclaracion {
+    font-size: 14px;
+    color: #444;
+}
+
+.formulario-inicio .lista-bienes {
+    padding-left: 30px;
+}
+
+.formulario-inicio .lista-bienes li {
+    padding-left: 6px;
+    color: #444;
+}
+
+.formulario-inicio .lista-bienes .linea {
+    padding-top: 4px;
+}
+
+.formulario-inicio .saludo {
+    text-align: center;
+    margin: 35px 0 20px;
+}
+
+.formulario-inicio .firma {
+    max-width: 380px;
+}
+
+/* Nota legal al pie */
+.formulario-inicio .nota-importante {
+    margin-top: 30px;
+    text-align: justify;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.formulario-inicio .nota-importante p + p {
+    margin-top: 8px;
+    font-size: 10px;
+}
+
+/* Hoja 2: imágenes */
+.formulario-inicio .titulo-imagenes {
+    text-align: center;
+    color: var(--azul);
+    font-weight: normal;
+    font-size: 23px;
+    margin: 55px 0 10px;
+}
+
+.formulario-inicio .zona-archivos {
+    margin-top: 10px;
+    padding: 14px 16px;
+    border: 1px dashed #aaa;
+    border-radius: 6px;
+}
+
+.formulario-inicio .revision {
+    margin-top: 35px;
+}
+
+.formulario-inicio .acciones {
+    margin-top: 25px;
+}
+
+#resultado-formulario {
+    text-align: center;
+    font-weight: 600;
+}
+
+#resultado-formulario .btn {
+    display: inline-block;
+    margin: 10px 0 0 10px;
+}
+
+/* Carátula de Subsidios / Créditos */
+.formulario-inicio .cuadro-expediente {
+    display: flex;
+    border: 1px solid var(--tinta);
+    margin-bottom: 45px;
+}
+
+.formulario-inicio .cuadro-expediente div {
+    flex: 1;
+    min-height: 70px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.formulario-inicio .cuadro-expediente div + div {
+    border-left: 1px solid var(--tinta);
+}
+
+.formulario-inicio .cuadro-expediente span {
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+}
+
+.formulario-inicio .encabezado-oficial {
+    text-align: center;
+    font-family: 'Times New Roman', Times, serif;
+    line-height: 1.3;
+    margin-bottom: 15px;
+}
+
+.formulario-inicio .encabezado-oficial p {
+    font-family: inherit;
+    font-size: 18px;
+}
+
+.formulario-inicio .encabezado-oficial .ministerio {
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 23px;
+    text-decoration: underline;
+    margin: 6px 0 22px;
+}
+
+.formulario-inicio .encabezado-oficial .gobierno {
+    font-size: 28px;
+}
+
+.formulario-inicio .encabezado-oficial .presentacion {
+    font-weight: bold;
+    font-size: 15px;
+    margin-top: 22px;
+}
+
+.formulario-inicio .encabezado-oficial .tipo-formulario {
+    font-weight: bold;
+    font-size: 21px;
+    text-decoration: underline;
+}
+
+.formulario-inicio .etiqueta.subrayada {
+    text-decoration: underline;
+}
+
+/* Textos largos escritos sobre renglones */
+.formulario-inicio textarea.renglones {
+    resize: vertical;
+    line-height: 32px;
+    padding: 0 2px;
+    border-bottom: none;
+    background-image: linear-gradient(to bottom, transparent 31px, #999 31px, #999 32px);
+    background-size: 100% 32px;
+    background-attachment: local;
+}
+
+.formulario-inicio textarea.renglones:focus {
+    border-bottom: none;
+    background-color: #f6f8fb;
+}
+
+.formulario-inicio .monto {
+    max-width: 320px;
+}
+
+.formulario-inicio .pie-declaracion {
+    margin-top: 40px;
+    text-align: center;
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.formulario-inicio .pie-declaracion span {
+    font-weight: normal;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+/* Celulares */
+@media (max-width: 700px) {
+    .formulario-inicio .hoja {
+        padding: 35px 16px 30px;
+    }
+
+    .formulario-inicio .fila {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .formulario-inicio .sangria {
+        text-indent: 40px;
+    }
+
+    .formulario-inicio .fecha-lugar {
+        text-align: left;
+        margin-bottom: 30px;
+    }
+
+    .formulario-inicio .opciones {
+        flex-wrap: wrap;
+    }
+
+    .formulario-inicio .encabezado-oficial .gobierno {
+        font-size: 22px;
+    }
+}

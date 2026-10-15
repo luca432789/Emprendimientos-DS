@@ -170,3 +170,14 @@ footer {
 /* FIN DE FOOTER */
 
 
+
+/* Miniaturas de los formularios oficiales (en lugar del placeholder) */
+.formulario-img img.miniatura-formulario {
+  width: 70px;
+  height: 92px;
+  object-fit: cover;
+  object-position: top;
+  background: white;
+  border: 1px solid #c9c9c9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}

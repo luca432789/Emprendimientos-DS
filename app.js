@@ -17,6 +17,7 @@ import loginRouter from './routes/loginRoutes.js';
 import solicitudesInicioRouter from './routes/solicitudesInicioRoutes.js';
 import empleadoRouter from './routes/empleadoRoutes.js';
 import mapaRouter from './routes/mapaRoutes.js';
+import formulariosDigitalesRouter from './routes/formulariosDigitalesRoutes.js';
 
 // Inicializamos la app express
 const app = express();
@@ -29,7 +30,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Middlewares de control (CORS y procesamiento de JSON)
 app.use(cors()); 
-app.use(express.json());
+app.use(express.json({ limit: '25mb' })); // los formularios digitales envían adjuntos en base64 (hasta 16 MB)
 
 app.use(express.static(path.resolve('./public')));  // Servirá tus HTMLs, CSS e Imágenes automáticos
 
@@ -42,6 +43,7 @@ app.use('/api', loginRouter);      // Todo lo de login colgará de /api/login
 app.use('/api', solicitudesInicioRouter);
 app.use('/api', empleadoRouter);
 app.use('/api', mapaRouter);       // Todo lo de mapa colgará de /api/emprendimientos mapa
+app.use('/api', formulariosDigitalesRouter); // Generación de PDFs de formularios (/api/formularios-digitales)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)
