@@ -27,6 +27,15 @@ function inicializarFormularioRegistroEmpleado() {
             activo: document.getElementById('empleado-activo').checked
         };
 
+        if (!/^\d+$/.test(empleado.telefono)) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Teléfono no válido',
+                text: 'El teléfono solo puede contener números.'
+            });
+            return;
+        }
+
         try {
             const respuesta = await fetch('/api/empleados', {
                 method: 'POST',

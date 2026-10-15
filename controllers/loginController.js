@@ -5,7 +5,9 @@ import {
     modelVerificarPersonaFisica, 
     modelInsertarUsuarioWeb,
     modelRegistrarAuditoriaLogin,
-    modelListarUsuariosAdministracion
+    modelListarUsuariosAdministracion,
+    modelContarUsuariosAdministracion,
+    modelActualizarUsuarioAdministracion
 } from '../models/loginModel.js';
 
 // CONTROLADOR DE LOG IN
@@ -164,12 +166,131 @@ export const listarUsuariosAdministracion = async (req, res) => {
         return res.status(403).json({ error: 'Solo un administrador puede consultar el listado de usuarios.' });
     }
 
+    const paginaSolicitada = Number(req.query.page ?? 1);
+    const tiposPermitidos = ['Empleado de Mesa', 'Empleado de Area', 'Administrador', 'Emprendedor'];
+    const { tipoUsuario, estado, buscar, orden } = req.query;
+    const termino = typeof buscar === 'string' ? buscar.trim() : '';
+
+    if (!Number.isInteger(paginaSolicitada) || paginaSolicitada < 1) {
+        return res.status(400).json({ error: 'El número de página debe ser un entero positivo.' });
+    }
+    if (tipoUsuario && !tiposPermitidos.includes(tipoUsuario)) {
+        return res.status(400).json({ error: 'El tipo de usuario seleccionado no es válido.' });
+    }
+    if (estado !== undefined && !['0', '1'].includes(estado)) {
+        return res.status(400).json({ error: 'El estado de cuenta seleccionado no es válido.' });
+    }
+    if (orden !== undefined && !['asc', 'desc'].includes(orden)) {
+        return res.status(400).json({ error: 'El orden por persona no es válido.' });
+    }
+    if (termino.length > 100) {
+        return res.status(400).json({ error: 'La búsqueda no puede superar los 100 caracteres.' });
+    }
+
+    const filtros = {
+        tipoUsuario: tipoUsuario || null,
+        activa: estado === undefined ? null : Number(estado),
+        buscar: termino || null,
+        orden: orden || 'asc'
+    };
+
     try {
-        const usuarios = await modelListarUsuariosAdministracion();
-        return res.status(200).json(usuarios);
+        const registrosPorPagina = 10;
+        const totalRegistros = await modelContarUsuariosAdministracion(filtros);
+        const totalPaginas = Math.ceil(totalRegistros / registrosPorPagina);
+        const pagina = totalPaginas === 0 ? 1 : Math.min(paginaSolicitada, totalPaginas);
+        const offset = (pagina - 1) * registrosPorPagina;
+        const usuarios = await modelListarUsuariosAdministracion(filtros, registrosPorPagina, offset);
+
+        return res.status(200).json({
+            usuarios,
+            pagina,
+            totalPaginas,
+            totalRegistros,
+            registrosPorPagina,
+            orden: filtros.orden
+        });
     } catch (error) {
         console.error('Error al listar usuarios para administración:', error);
         return res.status(500).json({ error: 'No se pudo obtener el listado de usuarios.' });
+    }
+};
+
+export const actualizarUsuarioAdministracion = async (req, res) => {
+    if (req.usuarioLogueado?.tipoUsuario !== 'Administrador') {
+        return res.status(403).json({ error: 'Solo un administrador puede modificar cuentas de usuario.' });
+    }
+
+    const idUsuario = Number(req.params.id);
+    if (!Number.isInteger(idUsuario) || idUsuario < 1) {
+        return res.status(400).json({ error: 'El identificador del usuario no es válido.' });
+    }
+
+    const camposPermitidos = ['correo', 'tipoUsuario', 'cargo', 'activa'];
+    const camposRecibidos = Object.keys(req.body);
+    if (camposRecibidos.some(campo => !camposPermitidos.includes(campo))) {
+        return res.status(400).json({ error: 'La solicitud contiene campos no permitidos.' });
+    }
+
+    const camposDeAccion = camposRecibidos.filter(campo => campo !== 'cargo');
+    if (camposDeAccion.length !== 1 || (camposRecibidos.includes('cargo') && !camposRecibidos.includes('tipoUsuario'))) {
+        return res.status(400).json({ error: 'Envía una sola acción: correo, tipo de usuario o estado.' });
+    }
+
+    const cambios = {};
+    if (Object.hasOwn(req.body, 'correo')) {
+        const correo = typeof req.body.correo === 'string' ? req.body.correo.trim() : '';
+        if (correo.length > 150 || !/^\S+@\S+\.\S+$/.test(correo)) {
+            return res.status(400).json({ error: 'Ingresa un correo válido de hasta 150 caracteres.' });
+        }
+        cambios.correo = correo;
+    }
+
+    if (Object.hasOwn(req.body, 'tipoUsuario')) {
+        const tipoUsuario = req.body.tipoUsuario;
+        const cargo = req.body.cargo;
+        const cargosPorRol = {
+            'Empleado de Mesa': ['Mesa de Entrada'],
+            'Empleado de Area': ['Técnico', 'Social'],
+            'Administrador': ['Administrador']
+        };
+
+        if (!Object.hasOwn(cargosPorRol, tipoUsuario) || !cargosPorRol[tipoUsuario].includes(cargo)) {
+            return res.status(400).json({ error: 'El rol y el cargo de empleado seleccionados no son compatibles.' });
+        }
+        cambios.tipoUsuario = tipoUsuario;
+        cambios.cargo = cargo;
+    }
+
+    if (Object.hasOwn(req.body, 'activa')) {
+        if (req.body.activa !== 0 && req.body.activa !== 1) {
+            return res.status(400).json({ error: 'El estado debe ser 1 (activa) o 0 (inactiva).' });
+        }
+        cambios.activa = req.body.activa;
+    }
+
+    try {
+        const resultado = await modelActualizarUsuarioAdministracion(idUsuario, cambios, {
+            idUsuario: req.usuarioLogueado.idUsuario,
+            ipCliente: req.ip || req.socket.remoteAddress || '127.0.0.1'
+        });
+
+        return res.status(200).json({
+            mensaje: resultado.cambioRealizado ? 'Los datos del usuario se actualizaron correctamente.' : 'No había cambios para aplicar.'
+        });
+    } catch (error) {
+        if (error.code === 'USER_NOT_FOUND') {
+            return res.status(404).json({ error: error.message });
+        }
+        if (error.code === 'TYPE_CHANGE_REQUIRES_EMPLOYEE_RECORD') {
+            return res.status(409).json({ error: error.message });
+        }
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: 'Ese correo ya está asociado a otro registro.' });
+        }
+
+        console.error('Error al actualizar usuario desde administración:', error);
+        return res.status(500).json({ error: 'No se pudieron actualizar los datos del usuario.' });
     }
 };
 
