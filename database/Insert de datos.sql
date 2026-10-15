@@ -3,8 +3,8 @@
 -- PARA REALIZAR PRUEBA DE AUDITORIA EJECUTAR AMBAS LINEAS DE ABAJO
 SET @usuario_id = 10; -- El ID del empleado que está logueado en ese momento
 SET @usuario_ip = '222.555.33.4';
--- select * from auditoria;
--- select * from empleado;
+
+
  -- -----------------------------------------------------------------------------------------------------------
 -- INSERTANDO DATOS --------------------------------------------------------------------------------
 -- -----------------------------------------------------------------------------------------------------------
@@ -24,11 +24,11 @@ values ('Sebastian', 'Santillan', '20987654', 'Av. Belgrano 550, Edificio A, Pis
 ('Admin2', 'Santillan', '20100001', 'Barrio domicilio admin 1', '3856000001', 'admin2@gmail.com', 'Administrador', true), -- Empleado 2 admin
 -- 
 ('Luca', 'Rios', '12354678', 'Barrio la pampuna entre pellegrini y san martin', '3846892734', 'empleadoriosnum1@gmail.com', 'Técnico', true), -- Empleado 3 tecnico
-('Tecnico2', 'Ibañes2', '20100002', 'Barrio domicilio tecnico 2', '3856000002', 'tecnico2@gmail.com', 'Técnico', False), -- Empleado 4 tecnico
-('Tecnico3', 'Ibañes3', '20100003', 'Barrio domicilio tecnico 3', '3856000003', 'tecnico3@gmail.com', 'Técnico', False), -- Empleado 5 tecnico
-('Tecnico4', 'Ibañes4', '20100004', 'Barrio domicilio tecnico 4', '3856000004', 'tecnico4@gmail.com', 'Técnico', False), -- Empleado 6 tecnico
-('Tecnico5', 'Ibañes5', '20100005', 'Barrio domicilio tecnico 5', '3856000005', 'tecnico5@gmail.com', 'Técnico', False), -- Empleado 7 tecnico
-('Tecnico6', 'Ibañes6', '20100006', 'Barrio domicilio tecnico 6', '3856000006', 'tecnico6@gmail.com', 'Técnico', False), -- Empleado 8 tecnico
+('Tecnico2', 'Ibañes2', '20100002', 'Barrio domicilio tecnico 2', '3856000002', 'tecnico2@gmail.com', 'Técnico', true), -- Empleado 4 tecnico
+('Tecnico3', 'Ibañes3', '20100003', 'Barrio domicilio tecnico 3', '3856000003', 'tecnico3@gmail.com', 'Técnico', true), -- Empleado 5 tecnico
+('Tecnico4', 'Ibañes4', '20100004', 'Barrio domicilio tecnico 4', '3856000004', 'tecnico4@gmail.com', 'Técnico', true), -- Empleado 6 tecnico
+('Tecnico5', 'Ibañes5', '20100005', 'Barrio domicilio tecnico 5', '3856000005', 'tecnico5@gmail.com', 'Técnico', true), -- Empleado 7 tecnico
+('Tecnico6', 'Ibañes6', '20100006', 'Barrio domicilio tecnico 6', '3856000006', 'tecnico6@gmail.com', 'Técnico', true), -- Empleado 8 tecnico
 -- 
 ('Miguel', 'Stefanici', '43567213', 'Barrio Centro', '3856789034', 'stefaniMiguel@gmail.com', 'Social', true), -- Empleado 9 social
 ('Social2', 'Stefanici2', '20100007', 'Barrio domicilio social 2', '3856000007', 'social2@gmail.com', 'Social', true), -- Empleado 10 social

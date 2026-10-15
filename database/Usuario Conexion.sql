@@ -3,7 +3,7 @@ use ProyectoEmprendimientos2026;
 -- DROP USER 'ministerio_api'@'localhost';
 
 -- Crear un usuario exclusivo para el Backend de Node.js
-CREATE USER 'ministerio_api'@'localhost' IDENTIFIED BY 'nodejs123!';
+CREATE USER IF NOT EXISTS 'ministerio_api'@'localhost' IDENTIFIED BY 'nodejs123!';
 
 -- Show grants for ministerio_api@localhost; -- muestra los permisos que posee el usuario
 

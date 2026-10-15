@@ -17,6 +17,7 @@ import loginRouter from './routes/loginRoutes.js';
 import solicitudesInicioRouter from './routes/solicitudesInicioRoutes.js';
 import empleadoRouter from './routes/empleadoRoutes.js';
 import mapaRouter from './routes/mapaRoutes.js';
+import auditoriaRouter from './routes/auditoriaRoutes.js';
 
 // inicializamos la app express
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api', loginRouter);      // Todo lo de login colgará de /api/login
 app.use('/api', solicitudesInicioRouter);
 app.use('/api', empleadoRouter);
 app.use('/api', mapaRouter);       // Todo lo de mapa colgará de /api/emprendimientos mapa
+app.use('/api', auditoriaRouter);
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+	CtrlActualizarEmpleadoAdministracion,
 	CtrlListarEmpleadosAdministracion,
 	CtrlObtenerEmpleadosPorCargo,
 	CtrlRegistrarEmpleado
@@ -12,5 +13,6 @@ const router = Router();
 router.get('/empleados', verificarToken, CtrlObtenerEmpleadosPorCargo);
 router.post('/empleados', verificarToken, CtrlRegistrarEmpleado);
 router.get('/empleados/administracion', verificarToken, CtrlListarEmpleadosAdministracion);
+router.patch('/empleados/administracion/:id', verificarToken, CtrlActualizarEmpleadoAdministracion);
 
 export default router;
