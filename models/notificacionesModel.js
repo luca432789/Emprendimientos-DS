@@ -12,6 +12,43 @@ export const modelSolicitudesPendientesMesa = async () => {
     return filas;
 };
 
+// Publicaciones que esperan revisión del Ministerio (para Empleado de Área / Administrador)
+export const modelPublicacionesEnEspera = async () => {
+    const [filas] = await pool.query(`
+        SELECT idPublicacion, FechaSolicitud, TituloPendiente, DescripcionPendiente
+        FROM Publicacion
+        WHERE EstadoModeracion = 1
+        ORDER BY FechaSolicitud, idPublicacion;
+    `);
+    return filas;
+};
+
+// Cuáles de estas claves ya vio el usuario. Devuelve null si la tabla NotificacionVista no existe
+// todavía (falta ejecutar database/Notificaciones.sql): el navegador se encarga en ese caso.
+export const modelClavesVistas = async (idUsuario, claves) => {
+    if (!claves.length) return new Set();
+    try {
+        const [filas] = await pool.query(
+            'SELECT Clave FROM NotificacionVista WHERE idUsuario = ? AND Clave IN (?);',
+            [idUsuario, claves]
+        );
+        return new Set(filas.map((f) => f.Clave));
+    } catch (error) {
+        if (error?.code === 'ER_NO_SUCH_TABLE') return null;
+        throw error;
+    }
+};
+
+// Marca notificaciones como vistas (INSERT IGNORE: si ya estaba vista no hace nada)
+export const modelMarcarVistas = async (idUsuario, claves) => {
+    if (!claves.length) return 0;
+    const [resultado] = await pool.query(
+        'INSERT IGNORE INTO NotificacionVista (idUsuario, Clave) VALUES ?;',
+        [claves.map((clave) => [idUsuario, clave])]
+    );
+    return resultado.affectedRows;
+};
+
 // Publicaciones del emprendedor logueado que el Ministerio aprobó (0) o rechazó (2)
 // en los últimos 30 días. Si el emprendedor la volvió a editar (estado 1) ya no se notifica.
 export const modelResolucionesDeEmprendedor = async (idUsuario) => {

@@ -130,9 +130,16 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
             }
             if (!respuesta.ok) return;
 
-            const { total, ultimoId, notificaciones } = await respuesta.json();
+            const datos = await respuesta.json();
+            const { total, ultimoId, notificaciones } = datos;
             if (tipoUsuario === 'Emprendedor') {
-                procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+                procesarNotificacionesEmprendedor(notificaciones, idUsuario, datos.vistasEnServidor);
+                return;
+            }
+            if (tipoUsuario === 'Empleado de Area' || tipoUsuario === 'Administrador') {
+                pintarNotificaciones(total, notificaciones);
+                actualizarContadorMenu('publicaciones-espera', total);
+                avisarPublicacionesNuevas(datos.pendientes || []);
                 return;
             }
             pintarNotificaciones(total, notificaciones);
@@ -150,6 +157,7 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
     });
     // Otras partes de la página (ej. al cargar un expediente) pueden pedir que se actualice
     window.actualizarNotificaciones = consultar;
+    window.tokenNotificaciones = token; // para marcar como vistas en el servidor
 }
 
 function escaparNotif(texto) {
@@ -186,14 +194,57 @@ function pintarNotificaciones(total, notificaciones) {
     });
 }
 
+// Secciones del Panel de Control a las que llevan las notificaciones
+const SECCIONES_PANEL = {
+    'solicitudes-sin-expediente': 'Carga de Expedientes GED',
+    'publicaciones-espera': 'Publicaciones en Espera'
+};
+
 // Si ya estamos en el Panel de Control, se abre la sección sin recargar la página;
-// si no, el enlace lleva al panel (Mesa de Entrada arranca en Carga de Expedientes GED).
+// si no, el enlace lleva al panel (Empleado%20view.html#seccion abre esa sección).
 function irASeccionNotificacion(evento, seccion) {
-    if (seccion === 'solicitudes-sin-expediente' && typeof window.cargarSección === 'function') {
+    if (SECCIONES_PANEL[seccion] && typeof window.cargarSección === 'function' &&
+        document.getElementById(`item-${seccion}`)) {
         evento.preventDefault();
         document.querySelectorAll('.dropdown-menu').forEach((m) => m.classList.remove('mostrar'));
-        window.cargarSección('solicitudes-sin-expediente', 'Carga de Expedientes GED');
+        window.cargarSección(seccion, SECCIONES_PANEL[seccion]);
     }
+}
+
+// Contador al lado de la sección en el menú lateral del panel (si se está en el panel)
+function actualizarContadorMenu(seccion, total) {
+    const enlace = document.querySelector(`#item-${seccion} a`);
+    if (!enlace) return;
+    let contador = enlace.querySelector('.contador-menu');
+    if (!contador) {
+        contador = document.createElement('span');
+        contador.className = 'contador-menu';
+        enlace.appendChild(contador);
+    }
+    contador.textContent = total > 99 ? '99+' : String(total);
+    contador.style.display = total > 0 ? '' : 'none';
+}
+
+// Moderadores: aviso cuando llega una publicación nueva (o reenviada) para revisar.
+// La primera consulta de la sesión es el punto de partida (sin aviso), como en Mesa de Entrada.
+const CLAVE_PENDIENTES_VISTAS = 'notif_pendientes_vistas';
+function avisarPublicacionesNuevas(pendientes) {
+    const guardado = sessionStorage.getItem(CLAVE_PENDIENTES_VISTAS);
+    sessionStorage.setItem(CLAVE_PENDIENTES_VISTAS, JSON.stringify([
+        ...new Set([...(guardado ? JSON.parse(guardado) : []), ...pendientes])
+    ].slice(-300)));
+    if (guardado === null) return;
+
+    const conocidas = new Set(JSON.parse(guardado));
+    const nuevas = pendientes.filter((c) => !conocidas.has(c));
+    if (!nuevas.length) return;
+
+    mostrarAvisoNotificacion(
+        nuevas.length === 1 ? 'Llegó una publicación para revisar' : `Llegaron ${nuevas.length} publicaciones para revisar`,
+        'Hacé clic para ir a Publicaciones en Espera',
+        '/VISTA%20EMPLEADO/Empleado%20view.html#publicaciones-espera',
+        'publicaciones-espera'
+    );
 }
 
 // Muestra un aviso cuando llega un formulario nuevo (id mayor al último visto en la sesión)
@@ -265,11 +316,30 @@ function marcarVistas(idUsuario, claves) {
     const vistas = new Set(leerLista(localStorage, claveVistas(idUsuario)));
     claves.forEach((c) => vistas.add(c));
     guardarLista(localStorage, claveVistas(idUsuario), [...vistas]);
+
+    // En la base (tabla NotificacionVista): así no reaparecen al entrar desde otra computadora
+    if (window.tokenNotificaciones && claves.length) {
+        fetch('/api/notificaciones/vistas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.tokenNotificaciones}` },
+            body: JSON.stringify({ claves }),
+            keepalive: true // se envía aunque el clic cambie de página
+        }).catch(() => {});
+    }
 }
 
-function procesarNotificacionesEmprendedor(notificaciones, idUsuario) {
-    const vistas = new Set(leerLista(localStorage, claveVistas(idUsuario)));
+function procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor) {
+    // Vista = la marcó en cualquier computadora (servidor) o en este navegador
+    const locales = new Set(leerLista(localStorage, claveVistas(idUsuario)));
+    notificaciones.forEach((n) => { if (n.vista) locales.add(n.clave); });
+    const vistas = locales;
     const noVistas = notificaciones.filter((n) => !vistas.has(n.clave));
+
+    // Lo visto en este navegador antes de que existiera la tabla se sube al servidor una vez
+    if (vistasEnServidor) {
+        const soloLocales = notificaciones.filter((n) => !n.vista && vistas.has(n.clave)).map((n) => n.clave);
+        if (soloLocales.length) marcarVistas(idUsuario, soloLocales);
+    }
 
     // Número rojo: resoluciones que todavía no vio
     const badge = document.getElementById('badge-notificaciones');
@@ -304,14 +374,14 @@ function procesarNotificacionesEmprendedor(notificaciones, idUsuario) {
                 enlace.addEventListener('click', () => {
                     marcarVistas(idUsuario, [enlace.dataset.clave]);
                     document.querySelectorAll('.dropdown-menu').forEach((m) => m.classList.remove('mostrar'));
-                    procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+                    procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor);
                 });
             });
             lista.querySelector('.notif-marcar-todas')?.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 marcarVistas(idUsuario, notificaciones.map((n) => n.clave));
-                procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+                procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor);
             });
         }
     }
@@ -329,7 +399,7 @@ function procesarNotificacionesEmprendedor(notificaciones, idUsuario) {
     if (paraAvisar.length === 1) {
         mostrarAvisoNotificacion(primera.titulo, primera.detalle, primera.url, null, () => {
             marcarVistas(idUsuario, [primera.clave]);
-            procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+            procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor);
         });
     } else {
         mostrarAvisoNotificacion(`Tenés ${paraAvisar.length} novedades en tus publicaciones`,
@@ -380,6 +450,7 @@ function inicializarDropdowns() {
             sessionStorage.removeItem('token_ministerio');
             sessionStorage.removeItem(CLAVE_ULTIMA_NOTIF);
             sessionStorage.removeItem(CLAVE_AVISADAS);
+            sessionStorage.removeItem(CLAVE_PENDIENTES_VISTAS);
 
             // 2. Se queda en la página actual (ej. el mapa) y la recarga ya sin sesión.
             //    Las vistas privadas (panel de empleado / vista de emprendedor) no sirven

@@ -28,6 +28,7 @@ GRANT INSERT ON ProyectoEmprendimientos2026.DatosSolicitudInicio TO 'ministerio_
 GRANT INSERT ON ProyectoEmprendimientos2026.Auditoria TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Expediente TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Garante TO 'ministerio_api'@'localhost';
+GRANT INSERT ON ProyectoEmprendimientos2026.NotificacionVista TO 'ministerio_api'@'localhost';
 
 -- Añadimos permisos especificos para ciertas tablas
 GRANT INSERT, DELETE ON ProyectoEmprendimientos2026.Publicacion_Etiqueta TO 'ministerio_api'@'localhost';

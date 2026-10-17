@@ -89,6 +89,8 @@ async function enviarModeracion(idPublicacion, cuerpo) {
     });
     const datos = await respuesta.json().catch(() => ({}));
     if (!respuesta.ok) throw new Error(datos.error || 'No se pudo guardar la resolución.');
+    // La campanita y el contador del menú bajan enseguida
+    if (typeof window.actualizarNotificaciones === 'function') window.actualizarNotificaciones();
     return datos;
 }
 

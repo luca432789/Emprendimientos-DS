@@ -160,7 +160,17 @@ function inicializarPanelPorRol(rol) {
     }
 
     contenedorMenu.innerHTML = htmlMenu;
-    
+
+    // Entrada directa desde una notificación (ej: Empleado%20view.html#publicaciones-espera):
+    // si el rol tiene esa sección en su menú, se abre esa en lugar de la de por defecto
+    const seccionesPorEnlace = { 'publicaciones-espera': 'Publicaciones en Espera', 'solicitudes-sin-expediente': 'Carga de Expedientes GED' };
+    const seccionPedida = window.location.hash.slice(1);
+    if (seccionesPorEnlace[seccionPedida] && document.getElementById(`item-${seccionPedida}`)) {
+        cargarSección(seccionPedida, seccionesPorEnlace[seccionPedida]);
+        history.replaceState(null, '', window.location.pathname); // el # no queda pegado en la dirección
+        return;
+    }
+
     // Ejecuta la carga por defecto según el rol evitando el desfasaje visual (Solución al BUG)
     if(seccionInicial === 'sin-revisar') {
         cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio');

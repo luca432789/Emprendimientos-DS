@@ -347,3 +347,13 @@ FechaAlta date not null default (current_date),
 constraint fk_Producto_Emprendimiento
 	foreign key (idEmprendimiento) references Emprendimiento(idEmprendimiento)
 );
+
+-- NotificacionVista (idUsuario (PK, FK), Clave (PK), FechaVista)
+create table if not exists NotificacionVista (
+idUsuario int not null,
+Clave varchar(150) not null,            -- identifica la notificación (ej: pub-2-0-2026-10-17-votn1f)
+FechaVista timestamp not null default current_timestamp,
+primary key (idUsuario, Clave),
+constraint fk_NotificacionVista_Usuario
+	foreign key (idUsuario) references Usuario(idUsuario)
+);
