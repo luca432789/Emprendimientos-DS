@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="/CSS/index CSS.css">
     <link rel="stylesheet" href="/CSS/CdE Navbar.css">
      <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/perfil-funcional.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/js/perfil-emprendedor.js" defer></script>
     <script src="/js/script.js" defer></script>
     <script src="/js/registro-usuario.js" defer></script>
     
@@ -19,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body>
+<body data-pagina="contacto">
 
     <header>
         <h1>El Camino de los Emprendedores</h1>
@@ -28,46 +32,13 @@
 
     <nav>
         <ul>
-            <li><a href="/index.html" class="active">Inicio</a></li>
-            <li><a href="#">Publicaciones</a></li>
+            <li><a href="/index.html">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
             <li><a href="/mapa">Mapa</a></li>
             <li><a href="/formularios">Formularios</a></li>
             <li><a href="/contactos">Contactos</a></li>
             
-            <li class="nav-usuario-container">
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-crear">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-crear">
-                        <ul>
-                            <li><a href="#">• Crear Publicación</a></li>
-                            <li><a href="#">• Nueva opción</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-notificaciones">
-                        <i class="fa-solid fa-bell"></i>
-                        <span class="badge-alerta">1</span>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
-                        <div class="dropdown-header">Notificaciones</div>
-                        <ul>
-                            <li><a href="#">• Solicitud de cambios en publ...</a></li>
-                            <li><a href="#">• Solicitud de Actualización de...</a></li>
-                            <li><a href="#">• Notificación 3</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <a href="CdE-Perfil Emprendedor.html" class="nav-perfil-link">
-                    <div class="avatar-nav">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                </a>
-            </li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
         </ul>
     </nav>
 
@@ -98,7 +69,7 @@
     <main>   
     <div class="perfil-content">
 
-        <!-- Aqui va contacto -->
+        <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p>
         
 
     </div>

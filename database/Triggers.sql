@@ -763,3 +763,41 @@ END;
 //
 DELIMITER ;
 
+-- TRIGGERS DE PRODUCTO - AUDITORIA ----------------------------------------------------------------------------------------
+DROP TRIGGER IF EXISTS tg_auditoria_Producto_insert;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Producto_insert
+AFTER INSERT ON Producto
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'INSERT', 'Producto', NEW.idProducto,
+        CONCAT('Nuevo producto en Emprendimiento ID: ', NEW.idEmprendimiento, '. Producto: "', NEW.Nombre, '"'),
+        @usuario_ip);
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_Producto_update;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Producto_update
+AFTER UPDATE ON Producto
+FOR EACH ROW
+BEGIN
+    IF OLD.Activo <> NEW.Activo THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Producto', NEW.idProducto,
+            CONCAT('Producto "', NEW.Nombre, '" ', CASE WHEN NEW.Activo THEN 'visible nuevamente' ELSE 'ocultado' END),
+            @usuario_ip);
+    ELSE
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Producto', NEW.idProducto,
+            CONCAT('Producto editado: "', NEW.Nombre, '"'),
+            @usuario_ip);
+    END IF;
+END;
+//
+DELIMITER ;

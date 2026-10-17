@@ -1,79 +1,149 @@
 import {
+    MAXIMO_PUBLICACIONES,
     modelEmprendimientoDeUsuario,
     modelEmpleadoDeUsuario,
-    modelGuardarPublicacionPendiente,
-    modelPublicacionDeEmprendimiento,
+    modelCrearPublicacion,
+    modelPublicacionPropia,
+    modelEditarPublicacion,
+    modelTodasLasPublicacionesAprobadas,
     modelPublicacionesAprobadas,
     modelPublicacionesPendientes,
     modelModerarPublicacion
 } from '../models/publicacionesModel.js';
+import { ErrorImagen, validarImagenes, guardarImagenes, listarFotos, borrarSubida } from '../helpers/imagenes.js';
 
 // Roles que pueden aprobar o rechazar publicaciones
 const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
-
+const MAXIMO_FOTOS = 4;
 const TITULO_POR_DEFECTO = 'Novedades del Emprendimiento';
+
 const datosAuditoriaDe = (req) => ({
     idUsuario: req.usuarioLogueado.idUsuario,
     ipCliente: req.ip || '127.0.0.1'
 });
-
 const esModerador = (req) => ROLES_MODERADORES.includes(req.usuarioLogueado?.tipoUsuario);
 
-// POST /api/publicaciones  (Emprendedor logueado)
-// La publicación se guarda en las columnas "Pendiente" hasta que un empleado la apruebe.
+// Cada versión de fotos va a su propia carpeta: lo aprobado no se pisa mientras se revisa lo nuevo
+const carpetaNueva = (idPublicacion) => `/uploads/publicaciones/${idPublicacion}/${Date.now()}`;
+
+// Título y texto validados (mismos límites que las columnas de la tabla)
+const leerContenido = (body) => {
+    const titulo = String(body.titulo ?? '').trim() || TITULO_POR_DEFECTO;
+    const descripcion = String(body.descripcion ?? '').trim();
+    if (!descripcion) return { error: 'Escriba el texto de la publicación.' };
+    if (titulo.length > 150) return { error: 'El título admite hasta 150 caracteres.' };
+    if (descripcion.length > 5000) return { error: 'La publicación admite hasta 5000 caracteres.' };
+    return { titulo, descripcion };
+};
+
+// El emprendedor logueado y su emprendimiento (o responde el error)
+const emprendimientoDelEmprendedor = async (req, res) => {
+    if (req.usuarioLogueado.tipoUsuario !== 'Emprendedor') {
+        res.status(403).json({ error: 'Solo un emprendedor puede publicar.' });
+        return null;
+    }
+    const emprendimiento = await modelEmprendimientoDeUsuario(req.usuarioLogueado.idUsuario);
+    if (!emprendimiento) {
+        res.status(404).json({ error: 'Su usuario no tiene un emprendimiento asociado.' });
+        return null;
+    }
+    return emprendimiento;
+};
+
+// Agrega la lista de fotos (rutas web) a cada publicación
+export const conFotos = (publicaciones) => Promise.all(publicaciones.map(async ({ carpetaFotos, ...pub }) => ({
+    ...pub,
+    fotos: await listarFotos(carpetaFotos)
+})));
+
+// POST /api/publicaciones  (Emprendedor) body: { titulo?, descripcion, fotos?: [dataURL] }
 export const crearPublicacion = async (req, res) => {
+    let carpetaGuardada = null;
     try {
-        if (req.usuarioLogueado.tipoUsuario !== 'Emprendedor') {
-            return res.status(403).json({ error: 'Solo un emprendedor puede publicar.' });
-        }
+        const emprendimiento = await emprendimientoDelEmprendedor(req, res);
+        if (!emprendimiento) return;
 
-        const emprendimiento = await modelEmprendimientoDeUsuario(req.usuarioLogueado.idUsuario);
-        if (!emprendimiento) {
-            return res.status(404).json({ error: 'Su usuario no tiene un emprendimiento asociado.' });
-        }
+        const contenido = leerContenido(req.body);
+        if (contenido.error) return res.status(400).json({ error: contenido.error });
+        const imagenes = validarImagenes(req.body.fotos, MAXIMO_FOTOS);
 
-        const titulo = String(req.body.titulo ?? '').trim() || TITULO_POR_DEFECTO;
-        const descripcion = String(req.body.descripcion ?? '').trim();
-        if (!descripcion) {
-            return res.status(400).json({ error: 'Escriba el texto de la publicación.' });
-        }
-        if (titulo.length > 150) {
-            return res.status(400).json({ error: 'El título admite hasta 150 caracteres.' });
-        }
-        if (descripcion.length > 5000) {
-            return res.status(400).json({ error: 'La publicación admite hasta 5000 caracteres.' });
-        }
-
-        // La subida de fotos todavía no está implementada: no se guarda ninguna ruta de foto
-        const idPublicacion = await modelGuardarPublicacionPendiente(
-            emprendimiento.idEmprendimiento, titulo, descripcion, null, datosAuditoriaDe(req)
+        const idPublicacion = await modelCrearPublicacion(
+            emprendimiento.idEmprendimiento, contenido.titulo, contenido.descripcion,
+            async (id) => {
+                if (!imagenes.length) return null;
+                carpetaGuardada = carpetaNueva(id);
+                await guardarImagenes(carpetaGuardada, imagenes);
+                return carpetaGuardada;
+            },
+            datosAuditoriaDe(req)
         );
 
+        if (!idPublicacion) {
+            return res.status(409).json({
+                error: `Ya tiene ${MAXIMO_PUBLICACIONES} publicaciones. Edite una de ellas para cambiar su contenido.`
+            });
+        }
         res.status(201).json({ mensaje: 'Publicación enviada a revisión correctamente.', idPublicacion });
     } catch (error) {
+        await borrarSubida(carpetaGuardada);
+        if (error instanceof ErrorImagen) return res.status(400).json({ error: error.message });
         console.error('Error al guardar la publicación:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
 
-// GET /api/publicaciones/mias  (Emprendedor logueado)
-// Datos del perfil (nombre y rubro) + publicación aprobada + estado de la que está en revisión
-export const obtenerMisPublicaciones = async (req, res) => {
+// PUT /api/publicaciones/:idPublicacion  (Emprendedor dueño)
+// body: { titulo?, descripcion, fotos?: [dataURL], conservarFotos?: boolean }
+// fotos nuevas reemplazan a las anteriores; sin fotos nuevas: conservarFotos mantiene las que tenía.
+export const editarPublicacion = async (req, res) => {
+    let carpetaGuardada = null;
     try {
-        if (req.usuarioLogueado.tipoUsuario !== 'Emprendedor') {
-            return res.status(403).json({ error: 'Solo disponible para emprendedores.' });
+        const emprendimiento = await emprendimientoDelEmprendedor(req, res);
+        if (!emprendimiento) return;
+
+        const idPublicacion = Number(req.params.idPublicacion);
+        if (!Number.isInteger(idPublicacion) || idPublicacion <= 0) {
+            return res.status(400).json({ error: 'Publicación inválida.' });
+        }
+        const publicacion = await modelPublicacionPropia(idPublicacion, emprendimiento.idEmprendimiento);
+        if (!publicacion) return res.status(404).json({ error: 'La publicación no existe o no le pertenece.' });
+
+        const contenido = leerContenido(req.body);
+        if (contenido.error) return res.status(400).json({ error: contenido.error });
+        const imagenes = validarImagenes(req.body.fotos, MAXIMO_FOTOS);
+
+        let carpetaFotos = null;
+        if (imagenes.length) {
+            carpetaGuardada = carpetaNueva(idPublicacion);
+            await guardarImagenes(carpetaGuardada, imagenes);
+            carpetaFotos = carpetaGuardada;
+        } else if (req.body.conservarFotos === true) {
+            // Las fotos "actuales" son las de la versión en revisión si la hay; si no, las aprobadas
+            carpetaFotos = publicacion.EstadoModeracion === 0
+                ? publicacion.DirectorioFotosActual
+                : publicacion.DirectorioFotosPendiente ?? publicacion.DirectorioFotosActual;
         }
 
-        const emprendimiento = await modelEmprendimientoDeUsuario(req.usuarioLogueado.idUsuario);
-        if (!emprendimiento) {
-            return res.status(404).json({ error: 'Su usuario no tiene un emprendimiento asociado.' });
-        }
-
-        const publicaciones = await modelPublicacionDeEmprendimiento(emprendimiento.idEmprendimiento);
-        res.json({ emprendimiento, publicaciones });
+        await modelEditarPublicacion(
+            idPublicacion, emprendimiento.idEmprendimiento, contenido.titulo, contenido.descripcion,
+            carpetaFotos, datosAuditoriaDe(req)
+        );
+        res.json({ mensaje: 'Cambios enviados a revisión. Lo aprobado sigue visible hasta que el Ministerio revise la nueva versión.' });
     } catch (error) {
-        console.error('Error al obtener las publicaciones del emprendedor:', error);
-        res.status(500).json({ error: 'Error al consultar sus publicaciones.' });
+        await borrarSubida(carpetaGuardada);
+        if (error instanceof ErrorImagen) return res.status(400).json({ error: error.message });
+        console.error('Error al editar la publicación:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+// GET /api/publicaciones  (público): todas las aprobadas, para la página "Publicaciones" del menú
+export const obtenerTodasLasAprobadas = async (req, res) => {
+    try {
+        res.json(await conFotos(await modelTodasLasPublicacionesAprobadas()));
+    } catch (error) {
+        console.error('Error al consultar las publicaciones:', error);
+        res.status(500).json({ error: 'Error al consultar las publicaciones.' });
     }
 };
 
@@ -85,7 +155,7 @@ export const obtenerPublicacionesAprobadas = async (req, res) => {
     }
 
     try {
-        res.json(await modelPublicacionesAprobadas(idEmprendimiento));
+        res.json(await conFotos(await modelPublicacionesAprobadas(idEmprendimiento)));
     } catch (error) {
         console.error('Error al consultar la publicación:', error);
         res.status(500).json({ error: 'Error al consultar la publicación.' });
@@ -99,7 +169,12 @@ export const obtenerPublicacionesPendientes = async (req, res) => {
     }
 
     try {
-        res.json(await modelPublicacionesPendientes());
+        const pendientes = await modelPublicacionesPendientes();
+        res.json(await Promise.all(pendientes.map(async ({ DirectorioFotosPendiente, ...pub }) => ({
+            ...pub,
+            esEdicion: Boolean(pub.esEdicion),
+            fotos: await listarFotos(DirectorioFotosPendiente)
+        }))));
     } catch (error) {
         console.error('Error al obtener pendientes:', error);
         res.status(500).json({ error: 'Error al consultar publicaciones pendientes.' });

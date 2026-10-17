@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 .venv/
 .vscode/
+# Fotos que suben los emprendedores (contenido, no codigo)
+uploads/publicaciones/
+uploads/productos/

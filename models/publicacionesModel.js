@@ -1,8 +1,11 @@
 import { pool } from '../config/db.js';
 
+// Máximo de publicaciones por emprendimiento (regla acordada: 2)
+export const MAXIMO_PUBLICACIONES = 2;
+
 // Ejecuta las consultas en una conexión dedicada con las variables de auditoría cargadas
 // (los triggers de Publicacion escriben en Auditoria, que exige @usuario_ip)
-const ejecutarConAuditoria = async (datosAuditoria, consultas) => {
+export const ejecutarConAuditoria = async (datosAuditoria, consultas) => {
     const conexion = await pool.getConnection();
     try {
         await conexion.beginTransaction();
@@ -20,14 +23,13 @@ const ejecutarConAuditoria = async (datosAuditoria, consultas) => {
     }
 };
 
-// Emprendimiento del usuario emprendedor logueado (con nombre y rubro para el perfil)
+// Emprendimiento del usuario emprendedor logueado
 export const modelEmprendimientoDeUsuario = async (idUsuario) => {
     const [filas] = await pool.query(
-        `SELECT e.idEmprendimiento, e.Nombre, r.Nombre AS Rubro
+        `SELECT e.idEmprendimiento, e.Nombre
          FROM Usuario u
          INNER JOIN Emprendedor em ON em.idEmprendedor = u.idEmprendedor
          INNER JOIN Emprendimiento e ON e.idEmprendimiento = em.idEmprendimiento
-         LEFT JOIN Rubro r ON r.idRubro = e.idRubro
          WHERE u.idUsuario = ? AND u.TipoUsuario = 'Emprendedor' AND u.Activa = 1;`,
         [idUsuario]
     );
@@ -40,41 +42,70 @@ export const modelEmpleadoDeUsuario = async (idUsuario) => {
     return filas[0]?.idEmpleado ?? null;
 };
 
-// 1. EMPRENDEDOR: crear o actualizar su publicación -> queda en Revisión Pendiente (1)
-export const modelGuardarPublicacionPendiente = async (idEmprendimiento, titulo, descripcion, fotoUrl, datosAuditoria) => {
+// 1a. EMPRENDEDOR: nueva publicación (queda en Revisión Pendiente = 1).
+// guardarFotos(idPublicacion) guarda los archivos y devuelve la carpeta web (o null).
+// Devuelve null si el emprendimiento ya tiene el máximo de publicaciones.
+export const modelCrearPublicacion = async (idEmprendimiento, titulo, descripcion, guardarFotos, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
-        const [existe] = await conexion.query(
-            'SELECT idPublicacion FROM Publicacion WHERE idEmprendimiento = ?;',
+        // FOR UPDATE bloquea las filas del emprendimiento para que dos envíos a la vez no pasen el límite
+        const [existentes] = await conexion.query(
+            'SELECT idPublicacion FROM Publicacion WHERE idEmprendimiento = ? FOR UPDATE;',
             [idEmprendimiento]
         );
-
-        if (existe.length > 0) {
-            await conexion.query(
-                `UPDATE Publicacion
-                 SET TituloPendiente = ?, DescripcionPendiente = ?, DirectorioFotosPendiente = ?,
-                     EstadoModeracion = 1, FechaSolicitud = CURDATE(), MotivoRechazo = NULL
-                 WHERE idEmprendimiento = ?;`,
-                [titulo, descripcion, fotoUrl, idEmprendimiento]
-            );
-            return existe[0].idPublicacion;
-        }
+        if (existentes.length >= MAXIMO_PUBLICACIONES) return null;
 
         const [resultado] = await conexion.query(
             `INSERT INTO Publicacion
-             (idEmprendimiento, TituloPendiente, DescripcionPendiente, DirectorioFotosPendiente, EstadoModeracion, FechaSolicitud)
-             VALUES (?, ?, ?, ?, 1, CURDATE());`,
-            [idEmprendimiento, titulo, descripcion, fotoUrl]
+             (idEmprendimiento, TituloPendiente, DescripcionPendiente, EstadoModeracion, FechaSolicitud)
+             VALUES (?, ?, ?, 1, CURDATE());`,
+            [idEmprendimiento, titulo, descripcion]
         );
-        return resultado.insertId;
+        const idPublicacion = resultado.insertId;
+
+        const carpetaFotos = await guardarFotos(idPublicacion);
+        if (carpetaFotos) {
+            await conexion.query(
+                'UPDATE Publicacion SET DirectorioFotosPendiente = ? WHERE idPublicacion = ?;',
+                [carpetaFotos, idPublicacion]
+            );
+        }
+        return idPublicacion;
     });
 };
 
-// Publicación del propio emprendedor: lo aprobado + el estado de lo que mandó a revisión
-export const modelPublicacionDeEmprendimiento = async (idEmprendimiento) => {
+// Publicación del emprendimiento (para editar): solo si le pertenece
+export const modelPublicacionPropia = async (idPublicacion, idEmprendimiento) => {
+    const [filas] = await pool.query(
+        `SELECT idPublicacion, EstadoModeracion, DirectorioFotosActual, DirectorioFotosPendiente
+         FROM Publicacion WHERE idPublicacion = ? AND idEmprendimiento = ?;`,
+        [idPublicacion, idEmprendimiento]
+    );
+    return filas[0];
+};
+
+// 1b. EMPRENDEDOR: edita una de sus publicaciones -> vuelve a Revisión Pendiente.
+// Lo aprobado sigue visible hasta que el Ministerio apruebe la nueva versión.
+export const modelEditarPublicacion = async (idPublicacion, idEmprendimiento, titulo, descripcion, carpetaFotos, datosAuditoria) => {
+    return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [resultado] = await conexion.query(
+            `UPDATE Publicacion
+             SET TituloPendiente = ?, DescripcionPendiente = ?, DirectorioFotosPendiente = ?,
+                 EstadoModeracion = 1, FechaSolicitud = CURDATE(), MotivoRechazo = NULL
+             WHERE idPublicacion = ? AND idEmprendimiento = ?;`,
+            [titulo, descripcion, carpetaFotos, idPublicacion, idEmprendimiento]
+        );
+        return resultado.affectedRows;
+    });
+};
+
+// Todas las publicaciones de un emprendimiento (para su dueño: aprobado + pendiente + estado)
+export const modelPublicacionesDeEmprendimiento = async (idEmprendimiento) => {
     const [filas] = await pool.query(
         `SELECT idPublicacion, TituloActual, DescripcionActual, DirectorioFotosActual,
-                TituloPendiente, DescripcionPendiente, EstadoModeracion, FechaSolicitud, MotivoRechazo
-         FROM Publicacion WHERE idEmprendimiento = ?;`,
+                TituloPendiente, DescripcionPendiente, DirectorioFotosPendiente,
+                EstadoModeracion, FechaSolicitud, FechaRevision, MotivoRechazo
+         FROM Publicacion WHERE idEmprendimiento = ?
+         ORDER BY idPublicacion;`,
         [idEmprendimiento]
     );
     return filas;
@@ -84,10 +115,27 @@ export const modelPublicacionDeEmprendimiento = async (idEmprendimiento) => {
 export const modelPublicacionesAprobadas = async (idEmprendimiento) => {
     const [filas] = await pool.query(
         `SELECT idPublicacion, TituloActual AS titulo, DescripcionActual AS descripcion,
-                DirectorioFotosActual AS foto
+                DirectorioFotosActual AS carpetaFotos, FechaRevision AS fecha
          FROM Publicacion
-         WHERE idEmprendimiento = ? AND TituloActual IS NOT NULL;`,
+         WHERE idEmprendimiento = ? AND TituloActual IS NOT NULL
+         ORDER BY FechaRevision DESC, idPublicacion DESC;`,
         [idEmprendimiento]
+    );
+    return filas;
+};
+
+// 2b. WEB PÚBLICA: todas las publicaciones aprobadas (página "Publicaciones" del menú)
+export const modelTodasLasPublicacionesAprobadas = async () => {
+    const [filas] = await pool.query(
+        `SELECT p.idPublicacion, p.TituloActual AS titulo, p.DescripcionActual AS descripcion,
+                p.DirectorioFotosActual AS carpetaFotos, p.FechaRevision AS fecha,
+                e.idEmprendimiento, e.Nombre AS emprendimiento, e.Localidad, e.Departamento,
+                r.idRubro, r.Nombre AS rubro, r.IconoMapa
+         FROM Publicacion p
+         INNER JOIN Emprendimiento e ON e.idEmprendimiento = p.idEmprendimiento
+         LEFT JOIN Rubro r ON r.idRubro = e.idRubro
+         WHERE p.TituloActual IS NOT NULL
+         ORDER BY p.FechaRevision DESC, p.idPublicacion DESC;`
     );
     return filas;
 };
@@ -95,8 +143,9 @@ export const modelPublicacionesAprobadas = async (idEmprendimiento) => {
 // 3. EMPLEADO: publicaciones pendientes de moderación (estado 1)
 export const modelPublicacionesPendientes = async () => {
     const [filas] = await pool.query(
-        `SELECT p.idPublicacion, p.TituloPendiente, p.DescripcionPendiente,
-                p.FechaSolicitud, e.Nombre AS NombreEmprendimiento
+        `SELECT p.idPublicacion, p.TituloPendiente, p.DescripcionPendiente, p.DirectorioFotosPendiente,
+                p.FechaSolicitud, e.idEmprendimiento, e.Nombre AS NombreEmprendimiento,
+                (p.TituloActual IS NOT NULL) AS esEdicion
          FROM Publicacion p
          JOIN Emprendimiento e ON p.idEmprendimiento = e.idEmprendimiento
          WHERE p.EstadoModeracion = 1
@@ -105,7 +154,8 @@ export const modelPublicacionesPendientes = async () => {
     return filas;
 };
 
-// 4. EMPLEADO: aprobar (pendiente -> actual, estado 0) o rechazar (estado 2, con motivo)
+// 4. EMPLEADO: aprobar (pendiente -> actual, estado 0) o rechazar (estado 2, con motivo).
+// Solo afecta publicaciones en revisión: aprobar dos veces no borra el contenido aprobado.
 export const modelModerarPublicacion = async (idPublicacion, aprobar, motivoRechazo, idEmpleadoModerador, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
         const [resultado] = aprobar

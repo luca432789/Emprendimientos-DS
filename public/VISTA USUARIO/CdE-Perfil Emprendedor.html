@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="/CSS/index CSS.css">
     <link rel="stylesheet" href="/CSS/CdE Navbar.css">
      <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/perfil-funcional.css">
+    <script src="/js/perfil-emprendedor.js" defer></script>
+    <script src="/js/publicaciones.js" defer></script>
     <script src="/js/script.js" defer></script>
     <script src="/js/registro-usuario.js" defer></script>
     
@@ -19,7 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body>
+<body data-pagina="acerca">
 
     <header>
         <h1>El Camino de los Emprendedores</h1>
@@ -28,46 +31,13 @@
 
     <nav>
         <ul>
-            <li><a href="/index.html" class="active">Inicio</a></li>
-            <li><a href="#">Publicaciones</a></li>
+            <li><a href="/index.html">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
             <li><a href="/mapa">Mapa</a></li>
             <li><a href="/formularios">Formularios</a></li>
             <li><a href="/contactos">Contactos</a></li>
             
-            <li class="nav-usuario-container">
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-crear">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-crear">
-                        <ul>
-                            <li><a href="#">• Crear Publicación</a></li>
-                            <li><a href="#">• Nueva opción</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-notificaciones">
-                        <i class="fa-solid fa-bell"></i>
-                        <span class="badge-alerta">1</span>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
-                        <div class="dropdown-header">Notificaciones</div>
-                        <ul>
-                            <li><a href="#">• Solicitud de cambios en publ...</a></li>
-                            <li><a href="#">• Solicitud de Actualización de...</a></li>
-                            <li><a href="#">• Notificación 3</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <a href="CdE-Perfil Emprendedor.html" class="nav-perfil-link">
-                    <div class="avatar-nav">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                </a>
-            </li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
         </ul>
     </nav>
 
@@ -115,12 +85,13 @@
         <section class="columna-derecha">
 
             <!-- FORMULARIO DE CREACIÓN (Para que el emprendedor publique) -->
-            <div class="card crear-publicacion-card">
+            <div class="card crear-publicacion-card" style="display:none;">
                 <h3>Crear publicación</h3>
                 <hr>
                 <!-- El backend vincula este formulario con su endpoint/API -->
-                <form id="form-crear-publicacion">
-                    <textarea placeholder="Algo......" rows="3" name="contenido_publicacion" required></textarea>
+                <form id="form-publicacion">
+                    <input type="text" id="publicacion-titulo" maxlength="150" placeholder="Título (opcional)">
+                    <textarea placeholder="¿Qué querés compartir hoy?..." id="publicacion-texto" rows="3" maxlength="5000" required></textarea>
                     
                     <div class="acciones-publicacion">
                         <!-- Botón para adjuntar foto opcional -->
@@ -135,32 +106,7 @@
             </div>
 
             <!-- CONTENEDOR DEL FEED (Donde se renderizan las publicaciones guardadas) -->
-            <div id="feed-publicaciones" class="feed-publicaciones">
-
-                <!-- Ejemplo de Publicación en texto (Maqueta) -->
-                <article class="card publicacion-card">
-                    <div class="publicacion-header">
-                        <h4>Nombre Emprendimiento</h4>
-                    </div>
-                    <div class="publicacion-body">
-                        <p>Una publicación... Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                    </div>
-                </article>
-
-                <!-- Ejemplo de Publicación con Imagen (Maqueta) -->
-                <article class="card publicacion-card">
-                    <div class="publicacion-header">
-                        <h4>Nombre Emprendimiento</h4>
-                    </div>
-                    <div class="publicacion-body">
-                        <p>Contenido explicativo o texto de la publicación acompañada con una imagen del producto/servicio.</p>
-                        <div class="publicacion-imagen">
-                            <img src="/Imagenes/sgo bandera.jpg" alt="Imagen de la publicación">
-                        </div>
-                    </div>
-                </article>
-
-            </div>
+            <div id="feed-publicaciones" class="feed-publicaciones"><p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p></div>
         </section>
 
     </div>

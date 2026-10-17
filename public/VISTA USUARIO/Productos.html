@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="/CSS/index CSS.css">
     <link rel="stylesheet" href="/CSS/CdE Navbar.css">
     <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/perfil-funcional.css">
+    <script src="/js/perfil-emprendedor.js" defer></script>
+    <script src="/js/productos.js" defer></script>
     <link rel="stylesheet" href="CSS/productos css.css">
     <script src="/js/script.js" defer></script>
     <script src="/js/registro-usuario.js" defer></script>
@@ -20,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body>
+<body data-pagina="productos">
 
     <header>
         <h1>El Camino de los Emprendedores</h1>
@@ -29,46 +32,13 @@
 
     <nav>
         <ul>
-            <li><a href="/index.html" class="active">Inicio</a></li>
-            <li><a href="#">Publicaciones</a></li>
+            <li><a href="/index.html">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
             <li><a href="/mapa">Mapa</a></li>
             <li><a href="/formularios">Formularios</a></li>
             <li><a href="/contactos">Contactos</a></li>
             
-            <li class="nav-usuario-container">
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-crear">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-crear">
-                        <ul>
-                            <li><a href="#">• Crear Publicación</a></li>
-                            <li><a href="#">• Nueva opción</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-notificaciones">
-                        <i class="fa-solid fa-bell"></i>
-                        <span class="badge-alerta">1</span>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
-                        <div class="dropdown-header">Notificaciones</div>
-                        <ul>
-                            <li><a href="#">• Solicitud de cambios en publ...</a></li>
-                            <li><a href="#">• Solicitud de Actualización de...</a></li>
-                            <li><a href="#">• Notificación 3</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <a href="CdE-Perfil Emprendedor.html" class="nav-perfil-link">
-                    <div class="avatar-nav">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                </a>
-            </li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
         </ul>
     </nav>
 
@@ -98,14 +68,14 @@
 
     <main>
     <!-- FORMULARIO PARA REGISTRAR PRODUCTO -->
-            <section class="crear-producto-card">
+            <section class="crear-producto-card" style="display:none;">
                 <h3>Publicar Nuevo Producto</h3>
                 <form id="form-producto">
                     <div class="form-group">
-                        <input type="text" id="prod-nombre" placeholder="Nombre del producto" required>
+                        <input type="text" id="prod-nombre" placeholder="Nombre del producto" maxlength="100" required>
                         <input type="number" id="prod-precio" placeholder="Precio ($)" step="0.01" required>
                     </div>
-                    <textarea id="prod-descripcion" placeholder="Descripción breve del producto..."></textarea>
+                    <textarea id="prod-descripcion" placeholder="Descripción breve del producto..." maxlength="500"></textarea>
                     <div class="acciones-publicacion">
                         <label for="prod-imagen" class="btn-adjuntar">
                             <i class="fa-solid fa-camera"></i> Subir Imagen
@@ -117,41 +87,7 @@
             </section>
 
             <!-- CATÁLOGO DE PRODUCTOS -->
-            <section class="productos-grid" id="productos-grid">
-                <!-- Ejemplos de tarjetas de productos -->
-                <div class="producto-card">
-                    <div class="producto-img-container">
-                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Placeholder producto">
-                    </div>
-                    <div class="producto-info">
-                        <h4 class="producto-titulo">Producto de Ejemplo</h4>
-                        <p class="producto-precio">$1.500</p>
-                        <p class="producto-desc">Descripción corta del producto o servicio ofrecido por el emprendedor.</p>
-                    </div>
-                </div>
-
-                <div class="producto-card">
-                    <div class="producto-img-container">
-                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Placeholder producto">
-                    </div>
-                    <div class="producto-info">
-                        <h4 class="producto-titulo">Producto de Ejemplo</h4>
-                        <p class="producto-precio">$1.500</p>
-                        <p class="producto-desc">Descripción corta del producto o servicio ofrecido por el emprendedor.</p>
-                    </div>
-                </div>
-
-                <div class="producto-card">
-                    <div class="producto-img-container">
-                        <img src="/Imagenes/PLACEHOLDER.jpg" alt="Placeholder producto">
-                    </div>
-                    <div class="producto-info">
-                        <h4 class="producto-titulo">Producto de Ejemplo</h4>
-                        <p class="producto-precio">$1.500</p>
-                        <p class="producto-desc">Descripción corta del producto o servicio ofrecido por el emprendedor.</p>
-                    </div>
-                </div>
-            </section>
+            <section class="productos-grid" id="productos-grid"><p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p></section>
         </div>
 
     </main>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Publicaciones - Camino de los emprendedores </title>
+    <link rel="stylesheet" href="/CSS/CdE FORMULARIOS.css">
+    <link rel="stylesheet" href="/CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="/CSS/publicaciones-publicas.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <script src="/js/navbar.js" defer></script>
+    <script src="/js/publicaciones-publicas.js" defer></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="/index.html">Inicio</a></li>
+            <li><a href="/publicaciones" class="active">Publicaciones</a></li>
+            <li><a href="/mapa">Mapa</a></li>
+            <li><a href="/formularios">Formularios</a></li>
+            <li><a href="/contactos">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <main class="publicaciones-publicas">
+        <h2>Publicaciones</h2>
+        <p class="bajada">Novedades de los emprendimientos del Plan Provincial Santiago Productivo, revisadas por el Ministerio.</p>
+
+        <form id="filtros-publicaciones" class="filtros-publicaciones" role="search">
+            <label>
+                <span>Buscar</span>
+                <input type="search" id="buscar-publicacion" placeholder="Emprendimiento, producto, palabra..." maxlength="100">
+            </label>
+            <label>
+                <span>Rubro</span>
+                <select id="filtro-rubro">
+                    <option value="">Todos los rubros</option>
+                </select>
+            </label>
+        </form>
+
+        <p id="contador-publicaciones" class="contador" role="status" aria-live="polite"></p>
+
+        <section id="lista-publicaciones" class="lista-publicaciones">
+            <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando publicaciones...</p>
+        </section>
+    </main>
+
+    <!--FOOTER-->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="/Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="/Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aquí]
+        </div>
+    </footer>
+
+</body>
+</html>

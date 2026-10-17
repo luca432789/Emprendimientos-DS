@@ -8,10 +8,12 @@
     <link rel="stylesheet" href="/CSS/index CSS.css">
     <link rel="stylesheet" href="/CSS/CdE Navbar.css">
     <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="CSS/perfil-funcional.css">
+    <script src="/js/perfil-emprendedor.js" defer></script>
+    <script src="/js/publicaciones.js" defer></script>
     <link rel="stylesheet" href="CSS/publicaciones css.css">
     <script src="/js/script.js" defer></script>
     <script src="/js/registro-usuario.js" defer></script>
-    <script src="/js/publicaciones.js" defer></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
@@ -21,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body>
+<body data-pagina="publicaciones">
 
     <header>
         <h1>El Camino de los Emprendedores</h1>
@@ -30,46 +32,13 @@
 
     <nav>
         <ul>
-            <li><a href="/index.html" class="active">Inicio</a></li>
-            <li><a href="#">Publicaciones</a></li>
+            <li><a href="/index.html">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
             <li><a href="/mapa">Mapa</a></li>
             <li><a href="/formularios">Formularios</a></li>
             <li><a href="/contactos">Contactos</a></li>
             
-            <li class="nav-usuario-container">
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-crear">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-crear">
-                        <ul>
-                            <li><a href="#">• Crear Publicación</a></li>
-                            <li><a href="#">• Nueva opción</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-notificaciones">
-                        <i class="fa-solid fa-bell"></i>
-                        <span class="badge-alerta">1</span>
-                    </button>
-                    <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
-                        <div class="dropdown-header">Notificaciones</div>
-                        <ul>
-                            <li><a href="#">• Solicitud de cambios en publ...</a></li>
-                            <li><a href="#">• Solicitud de Actualización de...</a></li>
-                            <li><a href="#">• Notificación 3</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <a href="CdE-Perfil Emprendedor.html" class="nav-perfil-link">
-                    <div class="avatar-nav">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                </a>
-            </li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
         </ul>
     </nav>
 
@@ -101,10 +70,11 @@
     <main class="perfil-container">
         <div class="perfil-content">
             <!-- SECCIÓN: CREAR Y VER PUBLICACIONES -->
-            <section class="crear-publicacion-card">
+            <section class="crear-publicacion-card" style="display:none;">
                 <h3>Crear publicación</h3>
                 <form id="form-publicacion">
-                    <textarea placeholder="¿Qué quieres compartir hoy?..." id="publicacion-texto" rows="3" required></textarea>
+                    <input type="text" id="publicacion-titulo" maxlength="150" placeholder="Título (opcional)">
+                    <textarea placeholder="¿Qué querés compartir hoy?..." id="publicacion-texto" rows="3" maxlength="5000" required></textarea>
                     <div class="acciones-publicacion">
                         <label for="input-foto" class="btn-adjuntar">
                             <i class="fa-solid fa-image"></i> Agregar Foto
@@ -116,19 +86,7 @@
             </section>
 
             <!-- FEED DE PUBLICACIONES -->
-            <section class="feed-publicaciones" id="feed-publicaciones">
-                <!-- Ejemplo de tarjeta de publicación -->
-                <article class="post-card">
-                    <div class="post-header">
-                        <i class="fa-solid fa-user-circle avatar-post"></i>
-                        <div>
-                            <h4 class="post-autor">Nombre Emprendimiento</h4>
-                            <span class="post-fecha">Hace 2 horas</span>
-                        </div>
-                    </div>
-                    <p class="post-contenido">¡Bienvenidos a nuestro perfil! Estaremos publicando todas las novedades de nuestro emprendimiento por este medio.</p>
-                </article>
-            </section>
+            <section class="feed-publicaciones" id="feed-publicaciones"><p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p></section>
         </div>
 
     </main>

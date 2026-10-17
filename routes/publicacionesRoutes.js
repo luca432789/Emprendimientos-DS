@@ -2,7 +2,8 @@ import express from 'express';
 import { verificarToken } from '../middlewares/loginMiddleware.js';
 import {
     crearPublicacion,
-    obtenerMisPublicaciones,
+    editarPublicacion,
+    obtenerTodasLasAprobadas,
     obtenerPublicacionesAprobadas,
     obtenerPublicacionesPendientes,
     moderarPublicacion
@@ -10,20 +11,22 @@ import {
 
 const router = express.Router();
 
-// 1. EMPRENDEDOR: crear o actualizar su publicación (pasa a Revisión Pendiente = 1)
+// WEB PÚBLICA: todas las publicaciones aprobadas (página "Publicaciones" del menú)
+router.get('/publicaciones', obtenerTodasLasAprobadas);
+
+// EMPRENDEDOR: nueva publicación (máx. 2 por emprendimiento) -> Revisión Pendiente
 router.post('/publicaciones', verificarToken, crearPublicacion);
 
-// Perfil del emprendedor logueado: su publicación aprobada y el estado de la pendiente
-// (va antes de '/publicaciones/:idEmprendimiento' para que "mias" no se tome como un id)
-router.get('/publicaciones/mias', verificarToken, obtenerMisPublicaciones);
-
-// 3. EMPLEADO MODERADOR: pendientes de moderación (estado 1)
+// EMPLEADO MODERADOR: pendientes de moderación (va antes de '/:idEmprendimiento')
 router.get('/publicaciones/pendientes/todas', verificarToken, obtenerPublicacionesPendientes);
 
-// 2. WEB PÚBLICA / PERFIL: contenido APROBADO de un emprendimiento
+// WEB PÚBLICA / PERFIL: contenido APROBADO de un emprendimiento
 router.get('/publicaciones/:idEmprendimiento', obtenerPublicacionesAprobadas);
 
-// 4. EMPLEADO MODERADOR: aprobar o rechazar una publicación
+// EMPLEADO MODERADOR: aprobar o rechazar una publicación
 router.put('/publicaciones/moderacion/:idPublicacion', verificarToken, moderarPublicacion);
+
+// EMPRENDEDOR: editar una de sus publicaciones -> vuelve a Revisión Pendiente
+router.put('/publicaciones/:idPublicacion', verificarToken, editarPublicacion);
 
 export default router;

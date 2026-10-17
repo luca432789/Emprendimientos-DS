@@ -21,6 +21,8 @@ import formulariosDigitalesRouter from './routes/formulariosDigitalesRoutes.js';
 import notificacionesRouter from './routes/notificacionesRoutes.js';
 import publicacionesRouter from './routes/publicacionesRoutes.js';
 import auditoriaRouter from './routes/auditoriaRoutes.js';
+import productosRouter from './routes/productosRoutes.js';
+import perfilRouter from './routes/perfilRoutes.js';
 
 // Inicializamos la app express
 const app = express();
@@ -50,6 +52,8 @@ app.use('/api', formulariosDigitalesRouter); // Generación de PDFs de formulari
 app.use('/api', notificacionesRouter); // Campanita del navbar (/api/notificaciones)
 app.use('/api', publicacionesRouter); // Publicaciones del emprendedor y moderación (/api/publicaciones)
 app.use('/api', auditoriaRouter);
+app.use('/api', productosRouter); // Productos del emprendedor (/api/productos)
+app.use('/api', perfilRouter);    // Perfil del emprendimiento: público y del dueño (/api/perfil)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)
@@ -74,6 +78,11 @@ app.get('/mapa.html', (req, res) => {
 app.get('/formularios', (req, res) => {
     console.log("ENTRÉ A /FORMULARIOS"); // 👈 DEBUG
     res.sendFile(path.join(__dirname, 'public', 'Camino FORMULARIOS.html'));
+});
+
+// 3b. Ruta para Publicaciones (todas las publicaciones aprobadas de los emprendimientos)
+app.get('/publicaciones', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Camino PUBLICACIONES.html'));
 });
 
 // 4. Ruta para Contactos

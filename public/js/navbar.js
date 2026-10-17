@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="nav-btn" id="btn-crear"><i class="fa-solid fa-plus"></i></button>
                     <div class="dropdown-menu menu-derecha" id="menu-crear">
                         <ul>
-                            <li><a href="#">• Crear Publicación</a></li>
+                            <li><a href="/VISTA%20USUARIO/Publicaciones.html">• Crear Publicación</a></li>
                         </ul>
                     </div>
                 </div>

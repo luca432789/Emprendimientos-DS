@@ -37,11 +37,22 @@ async function fetchPublicacionesEnEspera() {
             return `
                 <tr>
                     <td><strong>#${String(pub.idPublicacion).padStart(4, '0')}</strong></td>
-                    <td>${escaparPublicacion(pub.NombreEmprendimiento)}</td>
+                    <td>
+                        <a href="/VISTA%20USUARIO/CdE-Perfil%20Emprendedor.html?id=${encodeURIComponent(pub.idEmprendimiento)}" target="_blank" rel="noopener" title="Ver perfil público">
+                            ${escaparPublicacion(pub.NombreEmprendimiento)}
+                        </a>
+                    </td>
                     <td>${fecha}</td>
                     <td>
+                        <span style="display:inline-block; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:10px; margin-bottom:4px; ${pub.esEdicion ? 'background:#fef3c7; color:#a16207;' : 'background:#e0ecff; color:#2f4e78;'}">
+                            ${pub.esEdicion ? 'Edición de una publicación aprobada' : 'Publicación nueva'}
+                        </span><br>
                         <strong>${escaparPublicacion(pub.TituloPendiente)}</strong>
                         <div style="margin-top:4px; max-height:110px; overflow-y:auto; white-space:pre-wrap; color:#4a5568;">${escaparPublicacion(pub.DescripcionPendiente)}</div>
+                        ${(pub.fotos || []).length ? `
+                            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+                                ${pub.fotos.map((url) => `<a href="${escaparPublicacion(url)}" target="_blank" rel="noopener" title="Ver foto completa"><img src="${escaparPublicacion(url)}" alt="Foto de la publicación" style="width:70px; height:70px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1;"></a>`).join('')}
+                            </div>` : ''}
                     </td>
                     <td style="text-align:center; white-space:nowrap;">
                         <button class="btn-filtro btn-aprobar-publicacion" data-id="${pub.idPublicacion}" style="padding:4px 10px; background-color:#2f855a;">
