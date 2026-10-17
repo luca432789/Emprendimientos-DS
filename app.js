@@ -23,6 +23,7 @@ import publicacionesRouter from './routes/publicacionesRoutes.js';
 import auditoriaRouter from './routes/auditoriaRoutes.js';
 import productosRouter from './routes/productosRoutes.js';
 import perfilRouter from './routes/perfilRoutes.js';
+import ayudasRouter from './routes/ayudasRoutes.js';
 
 // Inicializamos la app express
 const app = express();
@@ -54,6 +55,7 @@ app.use('/api', publicacionesRouter); // Publicaciones del emprendedor y moderac
 app.use('/api', auditoriaRouter);
 app.use('/api', productosRouter); // Productos del emprendedor (/api/productos)
 app.use('/api', perfilRouter);    // Perfil del emprendimiento: público y del dueño (/api/perfil)
+app.use('/api', ayudasRouter);     // Subsidios y créditos sin revisar para el área (/api/ayudas)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)

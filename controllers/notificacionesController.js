@@ -5,6 +5,8 @@ import {
     modelClavesVistas,
     modelMarcarVistas
 } from '../models/notificacionesModel.js';
+import { ModelObtenerSolicitudesParaArea } from '../models/solicitudesInicioModel.js';
+import { modelAyudasSinRevisar } from '../models/ayudasModel.js';
 
 // Roles que moderan publicaciones (mismos que en publicacionesController)
 const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
@@ -39,25 +41,40 @@ const notificacionesMesa = async () => {
     return { total, ultimoId, notificaciones };
 };
 
-// Empleado de Área / Administrador: una notificación con las publicaciones que esperan revisión.
-// "pendientes" trae una clave por publicación (id + contenido) para avisar cuando llega una nueva.
+// Empleado de Área / Administrador: una notificación por cada cosa que espera revisión
+// (solicitudes de inicio, subsidios, créditos y publicaciones), con su contador.
+// "pendientes" trae una clave por elemento para avisar cuando llega uno nuevo.
 const notificacionesModerador = async () => {
-    const enEspera = await modelPublicacionesEnEspera();
-    const total = enEspera.length;
+    const [inicios, subsidios, creditos, publicaciones] = await Promise.all([
+        ModelObtenerSolicitudesParaArea(),
+        modelAyudasSinRevisar('subsidio'),
+        modelAyudasSinRevisar('credito'),
+        modelPublicacionesEnEspera()
+    ]);
 
-    const notificaciones = total === 0 ? [] : [{
-        tipo: 'publicaciones-espera',
-        titulo: total === 1
-            ? 'Hay 1 publicación para revisar'
-            : `Hay ${total} publicaciones para revisar`,
-        detalle: 'Hacé clic para ir a Publicaciones en Espera',
-        seccion: 'publicaciones-espera',
-        url: `${URL_PANEL}#publicaciones-espera`
-    }];
+    const categorias = [
+        { seccion: 'inicio-sin-revisar', nombre: 'Solicitudes de Inicio', singular: 'solicitud de inicio sin revisar', plural: 'solicitudes de inicio sin revisar',
+          claves: inicios.map((s) => `ini-${s.idSolicitudInicio}`) },
+        { seccion: 'subsidio-sin-revisar', nombre: 'Solicitudes de Subsidio', singular: 'solicitud de subsidio sin revisar', plural: 'solicitudes de subsidio sin revisar',
+          claves: subsidios.map((s) => `sub-${s.id}`) },
+        { seccion: 'creditos-sin-revisar', nombre: 'Solicitudes de Créditos', singular: 'solicitud de crédito sin revisar', plural: 'solicitudes de crédito sin revisar',
+          claves: creditos.map((c) => `cre-${c.id}`) },
+        { seccion: 'publicaciones-espera', nombre: 'Publicaciones en Espera', singular: 'publicación para revisar', plural: 'publicaciones para revisar',
+          claves: publicaciones.map((p) => `pend-${p.idPublicacion}-${fechaISO(p.FechaSolicitud)}-${huella(`${p.TituloPendiente}|${p.DescripcionPendiente}`)}`) }
+    ];
+
+    const notificaciones = categorias.filter((c) => c.claves.length).map((c) => ({
+        tipo: c.seccion,
+        titulo: `Hay ${c.claves.length} ${c.claves.length === 1 ? c.singular : c.plural}`,
+        detalle: `Hacé clic para ir a ${c.nombre}`,
+        seccion: c.seccion,
+        url: `${URL_PANEL}#${c.seccion}`
+    }));
 
     return {
-        total,
-        pendientes: enEspera.map((p) => `pend-${p.idPublicacion}-${fechaISO(p.FechaSolicitud)}-${huella(`${p.TituloPendiente}|${p.DescripcionPendiente}`)}`),
+        total: categorias.reduce((suma, c) => suma + c.claves.length, 0),
+        contadores: Object.fromEntries(categorias.map((c) => [c.seccion, c.claves.length])),
+        pendientes: categorias.flatMap((c) => c.claves),
         notificaciones
     };
 };

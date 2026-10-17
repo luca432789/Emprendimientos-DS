@@ -54,13 +54,13 @@ function inicializarPanelPorRol(rol) {
         htmlMenu = `
             <li class="menu-item-contenedor">
                 <div class="menu-categoria" onclick="toggleAcordeon(this)">
-                    <span><i class="fa-solid fa-list-check" style="margin-right: 8px;"></i> Sin revisar</span>
+                    <span id="categoria-sin-revisar"><i class="fa-solid fa-list-check" style="margin-right: 8px;"></i> Sin revisar</span>
                     <i class="fa-solid fa-chevron-down flecha"></i>
                 </div>
                 <ul class="menu-subitems">
-                    <li><a href="#" onclick="cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio')">• Solicitudes de Inicio</a></li>
-                    <li><a href="#" onclick="cargarSección('subsidio-sin-revisar', 'Solicitudes de Subsidio')">• Solicitudes de Subsidio</a></li>
-                    <li><a href="#" onclick="cargarSección('creditos-sin-revisar', 'Solicitudes de Créditos')">• Solicitudes de Créditos</a></li>
+                    <li id="item-inicio-sin-revisar"><a href="#" onclick="cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio')">• Solicitudes de Inicio</a></li>
+                    <li id="item-subsidio-sin-revisar"><a href="#" onclick="cargarSección('subsidio-sin-revisar', 'Solicitudes de Subsidio')">• Solicitudes de Subsidio</a></li>
+                    <li id="item-creditos-sin-revisar"><a href="#" onclick="cargarSección('creditos-sin-revisar', 'Solicitudes de Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
             </li>
             <li class="menu-item-contenedor">
@@ -96,13 +96,13 @@ function inicializarPanelPorRol(rol) {
         htmlMenu = `
             <li class="menu-item-contenedor">
                 <div class="menu-categoria" onclick="toggleAcordeon(this)">
-                    <span><i class="fa-solid fa-list-check" style="margin-right: 8px;"></i> Sin revisar</span>
+                    <span id="categoria-sin-revisar"><i class="fa-solid fa-list-check" style="margin-right: 8px;"></i> Sin revisar</span>
                     <i class="fa-solid fa-chevron-down flecha"></i>
                 </div>
                 <ul class="menu-subitems">
-                    <li><a href="#" onclick="cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio')">• Solicitudes de Inicio</a></li>
-                    <li><a href="#" onclick="cargarSección('subsidio-sin-revisar', 'Solicitudes de Subsidio')">• Solicitudes de Subsidio</a></li>
-                    <li><a href="#" onclick="cargarSección('creditos-sin-revisar', 'Solicitudes de Créditos')">• Solicitudes de Créditos</a></li>
+                    <li id="item-inicio-sin-revisar"><a href="#" onclick="cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio')">• Solicitudes de Inicio</a></li>
+                    <li id="item-subsidio-sin-revisar"><a href="#" onclick="cargarSección('subsidio-sin-revisar', 'Solicitudes de Subsidio')">• Solicitudes de Subsidio</a></li>
+                    <li id="item-creditos-sin-revisar"><a href="#" onclick="cargarSección('creditos-sin-revisar', 'Solicitudes de Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
             </li>
             <li class="menu-item-contenedor">
@@ -163,7 +163,13 @@ function inicializarPanelPorRol(rol) {
 
     // Entrada directa desde una notificación (ej: Empleado%20view.html#publicaciones-espera):
     // si el rol tiene esa sección en su menú, se abre esa en lugar de la de por defecto
-    const seccionesPorEnlace = { 'publicaciones-espera': 'Publicaciones en Espera', 'solicitudes-sin-expediente': 'Carga de Expedientes GED' };
+    const seccionesPorEnlace = {
+        'publicaciones-espera': 'Publicaciones en Espera',
+        'solicitudes-sin-expediente': 'Carga de Expedientes GED',
+        'inicio-sin-revisar': 'Solicitudes de Inicio',
+        'subsidio-sin-revisar': 'Solicitudes de Subsidio',
+        'creditos-sin-revisar': 'Solicitudes de Créditos'
+    };
     const seccionPedida = window.location.hash.slice(1);
     if (seccionesPorEnlace[seccionPedida] && document.getElementById(`item-${seccionPedida}`)) {
         cargarSección(seccionPedida, seccionesPorEnlace[seccionPedida]);
@@ -562,6 +568,30 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         `;
         // 🚀 LLAMADA A LA NUEVA FUNCIÓN DEL SATÉLITE:
         fetchSolicitudesAreaSinRevisar();
+    }
+    // ======================================================================
+    // SUBSIDIOS Y CRÉDITOS SIN REVISAR (lista + ver el formulario PDF)
+    // ======================================================================
+    else if (codigoSeccion === 'subsidio-sin-revisar' || codigoSeccion === 'creditos-sin-revisar') {
+        filtrosTabla.style.display = 'none';
+
+        zonaRender.innerHTML = `
+            <table class="tabla-datos">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Emprendimiento / Solicitante</th>
+                        <th>Monto</th>
+                        <th>Recibido</th>
+                        <th style="text-align:center;">Formulario</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo-ayudas">
+                    <tr><td colspan="5" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando solicitudes...</td></tr>
+                </tbody>
+            </table>
+        `;
+        fetchAyudasSinRevisar(codigoSeccion === 'subsidio-sin-revisar' ? 'subsidio' : 'credito');
     }
     // ======================================================================
     // CASO 7: HISTORIAL DE AUDITORÍA (SOLO ADMINISTRADORES)

@@ -138,7 +138,12 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
             }
             if (tipoUsuario === 'Empleado de Area' || tipoUsuario === 'Administrador') {
                 pintarNotificaciones(total, notificaciones);
-                actualizarContadorMenu('publicaciones-espera', total);
+                const contadores = datos.contadores || {};
+                Object.entries(contadores).forEach(([seccion, cantidad]) => actualizarContadorMenu(seccion, cantidad));
+                // El grupo "Sin revisar" muestra la suma, así se ve aunque esté cerrado
+                const sinRevisar = ['inicio-sin-revisar', 'subsidio-sin-revisar', 'creditos-sin-revisar']
+                    .reduce((suma, seccion) => suma + (contadores[seccion] || 0), 0);
+                ponerContador(document.getElementById('categoria-sin-revisar'), sinRevisar);
                 avisarPublicacionesNuevas(datos.pendientes || []);
                 return;
             }
@@ -197,7 +202,10 @@ function pintarNotificaciones(total, notificaciones) {
 // Secciones del Panel de Control a las que llevan las notificaciones
 const SECCIONES_PANEL = {
     'solicitudes-sin-expediente': 'Carga de Expedientes GED',
-    'publicaciones-espera': 'Publicaciones en Espera'
+    'publicaciones-espera': 'Publicaciones en Espera',
+    'inicio-sin-revisar': 'Solicitudes de Inicio',
+    'subsidio-sin-revisar': 'Solicitudes de Subsidio',
+    'creditos-sin-revisar': 'Solicitudes de Créditos'
 };
 
 // Si ya estamos en el Panel de Control, se abre la sección sin recargar la página;
@@ -211,18 +219,22 @@ function irASeccionNotificacion(evento, seccion) {
     }
 }
 
-// Contador al lado de la sección en el menú lateral del panel (si se está en el panel)
-function actualizarContadorMenu(seccion, total) {
-    const enlace = document.querySelector(`#item-${seccion} a`);
-    if (!enlace) return;
-    let contador = enlace.querySelector('.contador-menu');
+// Contador en rojo dentro de un elemento del menú lateral del panel
+function ponerContador(elemento, total) {
+    if (!elemento) return;
+    let contador = elemento.querySelector('.contador-menu');
     if (!contador) {
         contador = document.createElement('span');
         contador.className = 'contador-menu';
-        enlace.appendChild(contador);
+        elemento.appendChild(contador);
     }
     contador.textContent = total > 99 ? '99+' : String(total);
     contador.style.display = total > 0 ? '' : 'none';
+}
+
+// Contador al lado de la sección en el menú lateral del panel (si se está en el panel)
+function actualizarContadorMenu(seccion, total) {
+    ponerContador(document.querySelector(`#item-${seccion} a`), total);
 }
 
 // Moderadores: aviso cuando llega una publicación nueva (o reenviada) para revisar.
@@ -239,12 +251,32 @@ function avisarPublicacionesNuevas(pendientes) {
     const nuevas = pendientes.filter((c) => !conocidas.has(c));
     if (!nuevas.length) return;
 
-    mostrarAvisoNotificacion(
-        nuevas.length === 1 ? 'Llegó una publicación para revisar' : `Llegaron ${nuevas.length} publicaciones para revisar`,
-        'Hacé clic para ir a Publicaciones en Espera',
-        '/VISTA%20EMPLEADO/Empleado%20view.html#publicaciones-espera',
-        'publicaciones-espera'
-    );
+    // Qué llegó, según el prefijo de la clave (ini- / sub- / cre- / pend-)
+    const tipos = {
+        ini: { seccion: 'inicio-sin-revisar', uno: 'una solicitud de inicio', varios: 'solicitudes de inicio' },
+        sub: { seccion: 'subsidio-sin-revisar', uno: 'una solicitud de subsidio', varios: 'solicitudes de subsidio' },
+        cre: { seccion: 'creditos-sin-revisar', uno: 'una solicitud de crédito', varios: 'solicitudes de crédito' },
+        pend: { seccion: 'publicaciones-espera', uno: 'una publicación', varios: 'publicaciones' }
+    };
+    const prefijos = [...new Set(nuevas.map((c) => c.split('-')[0]))].filter((pre) => tipos[pre]);
+    if (!prefijos.length) return;
+
+    if (prefijos.length === 1) {
+        const tipo = tipos[prefijos[0]];
+        mostrarAvisoNotificacion(
+            nuevas.length === 1 ? `Llegó ${tipo.uno} para revisar` : `Llegaron ${nuevas.length} ${tipo.varios} para revisar`,
+            `Hacé clic para ir a ${SECCIONES_PANEL[tipo.seccion]}`,
+            `/VISTA%20EMPLEADO/Empleado%20view.html#${tipo.seccion}`,
+            tipo.seccion
+        );
+    } else {
+        mostrarAvisoNotificacion(
+            `Llegaron ${nuevas.length} novedades para revisar`,
+            'Revisalas en la campanita de notificaciones.',
+            '/VISTA%20EMPLEADO/Empleado%20view.html',
+            null
+        );
+    }
 }
 
 // Muestra un aviso cuando llega un formulario nuevo (id mayor al último visto en la sesión)
