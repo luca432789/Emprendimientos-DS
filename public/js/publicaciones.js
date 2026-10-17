@@ -104,6 +104,7 @@ function pintarPestanaPublicaciones(Perfil) {
 
     if (!Perfil.esDueno) {
         feed.innerHTML = Perfil.htmlPublicacionesAprobadas(Perfil.datos.publicaciones, Perfil.datos.emprendimiento.nombre);
+        resaltarPublicacionDelEnlace();
         return;
     }
 
@@ -125,7 +126,7 @@ function pintarPestanaPublicaciones(Perfil) {
             // Se muestra la versión que el emprendedor está trabajando (pendiente/rechazada) o la aprobada
             const version = p.estado !== 0 && p.pendiente ? p.pendiente : p.aprobada;
             return `
-                <article class="card publicacion-card post-card">
+                <article class="card publicacion-card post-card" id="publicacion-${p.idPublicacion}">
                     <div class="publicacion-header">
                         <h4>${esc(version?.titulo)}</h4>
                         ${estados[p.estado] || ''}
@@ -148,7 +149,27 @@ function pintarPestanaPublicaciones(Perfil) {
     feed.querySelectorAll('.btn-editar-publicacion').forEach((boton) => {
         boton.addEventListener('click', () => editarPublicacion(Perfil, misPublicaciones[Number(boton.dataset.indice)]));
     });
+    resaltarPublicacionDelEnlace();
 }
+
+// Si se llegó desde una notificación (#publicacion-N), baja hasta esa publicación y la resalta
+function resaltarPublicacionDelEnlace() {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!/^publicacion-\d+$/.test(id)) return;
+    const tarjeta = document.getElementById(id);
+    if (!tarjeta) return;
+    tarjeta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    tarjeta.classList.remove('publicacion-resaltada');
+    void tarjeta.offsetWidth; // reinicia la animación si ya estaba resaltada
+    tarjeta.classList.add('publicacion-resaltada');
+}
+
+// Clic en una notificación estando ya en esta pestaña: solo cambia el #.
+// Se recargan los datos (puede haber una resolución nueva) y al redibujar se resalta.
+window.addEventListener('hashchange', () => {
+    if (window.Perfil?.datos) window.Perfil.recargar();
+    else resaltarPublicacionDelEnlace();
+});
 
 async function editarPublicacion(Perfil, publicacion) {
     const version = publicacion.estado !== 0 && publicacion.pendiente ? publicacion.pendiente : publicacion.aprobada;

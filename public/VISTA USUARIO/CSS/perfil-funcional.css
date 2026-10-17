@@ -261,3 +261,13 @@
 .perfil-publico .solo-dueno {
   display: none !important;
 }
+
+/* Publicación a la que se llegó desde una notificación */
+.publicacion-resaltada {
+  animation: resaltar-publicacion 2.5s ease-out;
+}
+
+@keyframes resaltar-publicacion {
+  0%, 40% { box-shadow: 0 0 0 4px #f6ad55; }
+  100% { box-shadow: 0 0 0 0 rgba(246, 173, 85, 0); }
+}

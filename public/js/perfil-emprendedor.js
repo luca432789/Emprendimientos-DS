@@ -188,7 +188,7 @@ function htmlPublicacionesAprobadas(publicaciones, nombre) {
         return '<article class="card publicacion-card"><p class="sin-datos">Todavía no hay publicaciones aprobadas.</p></article>';
     }
     return publicaciones.map((p) => `
-        <article class="card publicacion-card">
+        <article class="card publicacion-card" id="publicacion-${p.idPublicacion}">
             <div class="publicacion-header">
                 <h4>${Perfil.escapar(p.titulo)}</h4>
                 <span class="post-fecha">${Perfil.escapar(nombre)} · ${Perfil.fecha(p.fecha)}</span>
@@ -264,3 +264,8 @@ function pintarContacto() {
 }
 
 document.addEventListener('DOMContentLoaded', cargarPerfil);
+
+// La campanita avisa que el Ministerio aprobó o rechazó algo: si es su perfil, se actualiza
+document.addEventListener('notificaciones-nuevas', () => {
+    if (Perfil.esDueno) Perfil.recargar();
+});

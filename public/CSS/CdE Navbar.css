@@ -272,3 +272,9 @@ nav ul li a.active {
   margin-top: 2px;
   color: #ffd166;
 }
+
+/* Notificación que el usuario todavía no vio */
+.dropdown-menu ul li a.notif-no-leida {
+  background-color: #1f2a37;
+  border-left: 3px solid #f6ad55;
+}

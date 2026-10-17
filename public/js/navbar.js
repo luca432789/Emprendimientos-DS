@@ -4,12 +4,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const contenedorLogin = document.getElementById('contenedor-login-dinamico');
 
     let tipoUsuario = null; // variable para guardar el tipo de usuario
+    let idUsuario = null;   // para recordar qué notificaciones ya vio cada usuario
     // decodificacion de token
     if (token) {
         try {
             // jwtDecode viene de la librería que añadimos por script en el HTML
             const payload = jwtDecode(token);
             tipoUsuario = payload.tipoUsuario; // Extraemos el rol real guardado en el backend
+            idUsuario = payload.idUsuario;
         } catch (error) {
             console.error("Error al decodificar un token alterado:", error);
             sessionStorage.clear();
@@ -43,13 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-notificaciones">
+                    <button class="nav-btn" id="btn-notificaciones" aria-label="Notificaciones">
                         <i class="fa-solid fa-bell"></i>
-                        <span class="badge-alerta">1</span>
+                        <span class="badge-alerta" id="badge-notificaciones" style="display: none;"></span>
                     </button>
                     <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
                         <div class="dropdown-header">Notificaciones</div>
-                        <ul><li><a href="#">• Nueva solicitud</a></li></ul>
+                        <ul id="lista-notificaciones"><li class="notif-vacia">Cargando...</li></ul>
                     </div>
                 </div>
                 <div class="dropdown-container">
@@ -100,9 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Volvemos a activar los clicks de los botones que se hayan dibujado
     inicializarDropdowns();
 
-    // Campanita con datos reales para los empleados
-    if (rolesEmpleados.includes(tipoUsuario)) {
-        iniciarNotificaciones(token);
+    // Campanita con datos reales para empleados y emprendedores
+    if (rolesEmpleados.includes(tipoUsuario) || tipoUsuario === 'Emprendedor') {
+        iniciarNotificaciones(token, tipoUsuario, idUsuario);
     }
 });
 
@@ -113,7 +115,7 @@ const INTERVALO_NOTIFICACIONES = 30000; // cada 30 segundos
 // Último id ya visto en esta sesión: evita repetir el aviso al cambiar de página
 const CLAVE_ULTIMA_NOTIF = 'notif_ultimo_id';
 
-function iniciarNotificaciones(token) {
+function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
     let temporizador = null;
 
     const consultar = async () => {
@@ -129,6 +131,10 @@ function iniciarNotificaciones(token) {
             if (!respuesta.ok) return;
 
             const { total, ultimoId, notificaciones } = await respuesta.json();
+            if (tipoUsuario === 'Emprendedor') {
+                procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+                return;
+            }
             pintarNotificaciones(total, notificaciones);
             avisarSiHayNuevas(total, ultimoId, notificaciones);
         } catch (error) {
@@ -209,14 +215,17 @@ function avisarSiHayNuevas(total, ultimoId, notificaciones) {
     mostrarAvisoNotificacion('Llegó un formulario de inicio nuevo', `${notif.titulo}. ${notif.detalle}`, notif.url, notif.seccion);
 }
 
-function mostrarAvisoNotificacion(titulo, detalle, url, seccion) {
+function mostrarAvisoNotificacion(titulo, detalle, url, seccion, alHacerClic) {
     const aviso = document.createElement('a');
     aviso.className = 'toast-notificacion';
     aviso.href = url || '#';
     aviso.innerHTML = `
         <i class="fa-solid fa-bell"></i>
         <span><strong>${escaparNotif(titulo)}</strong><br>${escaparNotif(detalle)}</span>`;
-    aviso.addEventListener('click', (e) => irASeccionNotificacion(e, seccion));
+    aviso.addEventListener('click', (e) => {
+        if (alHacerClic) alHacerClic();
+        irASeccionNotificacion(e, seccion);
+    });
     document.body.appendChild(aviso);
 
     requestAnimationFrame(() => aviso.classList.add('visible'));
@@ -224,6 +233,108 @@ function mostrarAvisoNotificacion(titulo, detalle, url, seccion) {
         aviso.classList.remove('visible');
         setTimeout(() => aviso.remove(), 400);
     }, 7000);
+}
+
+// ==========================================
+// NOTIFICACIONES DEL EMPRENDEDOR (publicaciones aprobadas o rechazadas)
+// Cuáles ya vio se guarda en el navegador por usuario (localStorage), así se
+// recuerda aunque cierre sesión. Cada notificación trae una "clave" única.
+// ==========================================
+const CLAVE_AVISADAS = 'notif_avisadas'; // avisos emergentes ya mostrados en esta sesión
+
+function leerLista(almacen, clave) {
+    try {
+        const valor = JSON.parse(almacen.getItem(clave) || '[]');
+        return Array.isArray(valor) ? valor : [];
+    } catch {
+        return [];
+    }
+}
+
+function guardarLista(almacen, clave, lista) {
+    try {
+        almacen.setItem(clave, JSON.stringify(lista.slice(-200)));
+    } catch {
+        // Sin almacenamiento disponible (modo privado): funciona igual, sin recordar las vistas
+    }
+}
+
+const claveVistas = (idUsuario) => `notif_vistas_${idUsuario}`;
+
+function marcarVistas(idUsuario, claves) {
+    const vistas = new Set(leerLista(localStorage, claveVistas(idUsuario)));
+    claves.forEach((c) => vistas.add(c));
+    guardarLista(localStorage, claveVistas(idUsuario), [...vistas]);
+}
+
+function procesarNotificacionesEmprendedor(notificaciones, idUsuario) {
+    const vistas = new Set(leerLista(localStorage, claveVistas(idUsuario)));
+    const noVistas = notificaciones.filter((n) => !vistas.has(n.clave));
+
+    // Número rojo: resoluciones que todavía no vio
+    const badge = document.getElementById('badge-notificaciones');
+    if (badge) {
+        badge.textContent = noVistas.length > 99 ? '99+' : String(noVistas.length);
+        badge.style.display = noVistas.length > 0 ? '' : 'none';
+    }
+
+    const lista = document.getElementById('lista-notificaciones');
+    if (lista) {
+        if (!notificaciones.length) {
+            lista.innerHTML = '<li class="notif-vacia">No tenés notificaciones</li>';
+        } else {
+            lista.innerHTML = notificaciones.map((n) => {
+                const aprobada = n.tipo === 'publicacion-aprobada';
+                const fecha = n.fecha ? new Date(n.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : '';
+                return `
+                    <li>
+                        <a href="${escaparNotif(n.url)}" class="notif-item${vistas.has(n.clave) ? '' : ' notif-no-leida'}" data-clave="${escaparNotif(n.clave)}">
+                            <span class="notif-titulo">
+                                <i class="fa-solid fa-${aprobada ? 'circle-check' : 'circle-xmark'}" style="color: ${aprobada ? '#68d391' : '#fc8181'};"></i>
+                                ${escaparNotif(n.titulo)}
+                            </span>
+                            <span class="notif-detalle">${escaparNotif(n.detalle)}${fecha ? ` · ${fecha}` : ''}</span>
+                        </a>
+                    </li>`;
+            }).join('') + (noVistas.length > 1
+                ? '<li><a href="#" class="notif-item notif-marcar-todas">Marcar todas como vistas</a></li>'
+                : '');
+
+            lista.querySelectorAll('.notif-item[data-clave]').forEach((enlace) => {
+                enlace.addEventListener('click', () => {
+                    marcarVistas(idUsuario, [enlace.dataset.clave]);
+                    document.querySelectorAll('.dropdown-menu').forEach((m) => m.classList.remove('mostrar'));
+                    procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+                });
+            });
+            lista.querySelector('.notif-marcar-todas')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                marcarVistas(idUsuario, notificaciones.map((n) => n.clave));
+                procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+            });
+        }
+    }
+
+    // Aviso emergente para las resoluciones nuevas (una vez por sesión cada una)
+    const avisadas = new Set(leerLista(sessionStorage, CLAVE_AVISADAS));
+    const paraAvisar = noVistas.filter((n) => !avisadas.has(n.clave));
+    if (!paraAvisar.length) return;
+    guardarLista(sessionStorage, CLAVE_AVISADAS, [...avisadas, ...paraAvisar.map((n) => n.clave)]);
+
+    // Si está viendo su perfil, que se actualice con la resolución nueva
+    document.dispatchEvent(new CustomEvent('notificaciones-nuevas'));
+
+    const [primera] = paraAvisar;
+    if (paraAvisar.length === 1) {
+        mostrarAvisoNotificacion(primera.titulo, primera.detalle, primera.url, null, () => {
+            marcarVistas(idUsuario, [primera.clave]);
+            procesarNotificacionesEmprendedor(notificaciones, idUsuario);
+        });
+    } else {
+        mostrarAvisoNotificacion(`Tenés ${paraAvisar.length} novedades en tus publicaciones`,
+            'Revisalas en la campanita de notificaciones.', '/VISTA%20USUARIO/Publicaciones.html', null);
+    }
 }
 
 function inicializarDropdowns() {
@@ -268,6 +379,7 @@ function inicializarDropdowns() {
             
             sessionStorage.removeItem('token_ministerio');
             sessionStorage.removeItem(CLAVE_ULTIMA_NOTIF);
+            sessionStorage.removeItem(CLAVE_AVISADAS);
 
             // 2. Se queda en la página actual (ej. el mapa) y la recarga ya sin sesión.
             //    Las vistas privadas (panel de empleado / vista de emprendedor) no sirven
