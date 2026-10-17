@@ -130,8 +130,7 @@ if (form) {
       const archivoPdf = await respuesta.blob();
       const urlPdf = URL.createObjectURL(archivoPdf);
 
-      const registro = respuesta.headers.get('X-Formulario-Registro');
-      resultado.textContent = `Formulario registrado correctamente (N° ${registro}). PDF descargado. `;
+      resultado.textContent = 'Formulario registrado correctamente. ';
       form.reset();
       completarFecha();
       actualizarFormatoDocumento();
