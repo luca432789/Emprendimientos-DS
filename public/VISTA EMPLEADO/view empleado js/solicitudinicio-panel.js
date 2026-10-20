@@ -251,9 +251,6 @@ function verPdfYRevisionArea(idSolicitud, urlPdf) {
     const zonaRender = document.getElementById('zona-render-contenido');
     document.getElementById('bloque-filtros-tabla').style.display = 'none'; // Ocultamos barra de ordenamiento
 
-    // Obtenemos de forma segura los datos del empleado logueado
-    const cargoEmpleado = sessionStorage.getItem('empleado_cargo'); // "Técnico" o "Social"
-
     zonaRender.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; background: #e8eff7; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #cbd5e1;">
             <div>
@@ -282,119 +279,450 @@ function verPdfYRevisionArea(idSolicitud, urlPdf) {
         cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio');
     });
 
-    // Evento "Comenzar Revisión" con SweetAlert2 consecutiva
-// Evento "Comenzar Revisión" con Desplegable Dinámico
-    document.getElementById('btn-comenzar-revision').addEventListener('click', () => {
-        const cargoEmpleado = sessionStorage.getItem('empleado_cargo'); // "Técnico" o "Social"
-        const contraCargo = cargoEmpleado === 'Técnico' ? 'Social' : 'Técnico';
+    document.getElementById('btn-comenzar-revision').addEventListener('click', async () => {
+        try {
+            const token = sessionStorage.getItem('token_ministerio');
+            if (!token) throw new Error('La sesión venció. Inicia sesión nuevamente.');
 
-        Swal.fire({
-            title: '¿Está seguro? Confirme su acción',
-            text: `Al continuar usted será registrado como el empleado que empezó la revisión del formulario en el rol de Revisor ${cargoEmpleado}.`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#2ecc71',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Comenzar Revisión',
-            cancelButtonText: 'CANCELAR'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                
-                try {
-                    const token = sessionStorage.getItem('token_ministerio');
-
-                    // 1️⃣ Buscamos al compañero del rol opuesto en la API
-                    // Ejemplo: /api/empleados/cargo/Social
-                    /*const respEmpleados = await fetch(`/api/empleados/cargo/${contraCargo}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });*/
-                    /*const cargoEmpleado = sessionStorage.getItem('empleado_cargo'); // "Técnico" o "Social"
-                    const contraCargoLimpio = (cargoEmpleado === 'Técnico' ? 'social' : 'tecnico');
-                    const respEmpleados = await fetch(`/api/empleados/cargo/${contraCargoLimpio}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });*/
-                    //token = sessionStorage.getItem('token_ministerio');
-
-                    const respEmpleados = await fetch('/api/empleados', { 
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio')}`
-                        }
-                    });
-
-                    if (!respEmpleados.ok) throw new Error("No se pudo obtener la lista de compañeros evaluadores.");
-                    const compañeros = await respEmpleados.json();
-
-                    // 2️⃣ Convertimos el array de compañeros en un objeto clave-valor para el select de SweetAlert
-                    // Usamos el idUsuario (o idEmpleado) como clave, y Nombre + Apellido como texto
-                    const opcionesSelect = {};
-                    compañeros.forEach(comp => {
-                        // Usamos comp.idUsuario porque es el que se va a asociar en SolicitudInicio
-                        opcionesSelect[comp.idUsuario] = `${comp.Nombre} ${comp.Apellido}`;
-                    });
-
-                    if (compañeros.length === 0) {
-                        Swal.fire('Atención', `No se encontraron empleados activos con el cargo de Revisor ${contraCargo} en el sistema.`, 'warning');
-                        return;
-                    }
-
-                    // 3️⃣ SEGUNDA PANTALLA: Mostrar el select con los datos reales
-                    Swal.fire({
-                        title: 'Asignación de Pareja Evaluadora',
-                        text: `Usted registrará la revisión del Área para esta solicitud. Seleccione su compañero Revisor ${contraCargo} para conformar el equipo:`,
-                        input: 'select',
-                        inputOptions: opcionesSelect,
-                        inputPlaceholder: `-- Seleccione un Revisor ${contraCargo} --`,
-                        showCancelButton: true,
-                        confirmButtonColor: '#1a3a5f',
-                        cancelButtonColor: '#e74c3c',
-                        confirmButtonText: 'Confirmar y Guardar Asignación',
-                        cancelButtonText: 'Cancelar',
-                        inputValidator: (value) => {
-                            if (!value) {
-                                return '¡Debe seleccionar obligatoriamente un compañero de equipo!';
-                            }
-                        }
-                    }).then(async (partnerResult) => {
-                        if (partnerResult.isConfirmed) {
-                            const idUsuarioCompañero = partnerResult.value; // Este es el idUsuario seleccionado
-                            const idUsuarioActual = sessionStorage.getItem('usuario_id'); // Asegurate de guardarlo en el login
-
-                            // Armamos el body para impactar en tu tabla SolicitudInicio
-                            const bodyAsignacion = {
-                                idUsuarioRevisor1: idUsuarioActual,       // Quien cliquea (Ej: Técnico)
-                                idUsuarioRevisor2: idUsuarioCompañero    // El elegido del select (Ej: Social)
-                            };
-
-                            // Enviamos la asignación al backend
-                            const respuesta = await fetch(`/api/solicitudes/${idSolicitud}/tomar-revision`, {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify(bodyAsignacion)
-                            });
-
-                            if (!respuesta.ok) throw new Error("Error al asentar el inicio de revisión en la base de datos.");
-
-                            Swal.fire({
-                                icon: 'success',
-                                title: '¡Revisión Iniciada!',
-                                text: `Pareja evaluadora asignada correctamente. El expediente pasó a la bandeja "En revisión".`,
-                                confirmButtonColor: '#1a3a5f'
-                            }).then(() => {
-                                // Volvemos a listar la bandeja de entrada actualizando el panel
-                                cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio');
-                            });
-                        }
-                    });
-
-                } catch (error) {
-                    console.error(error);
-                    Swal.fire('Error', 'No se pudo procesar la asignación: ' + error.message, 'error');
-                }
+            const respuestaEmpleados = await fetch('/api/empleados/para-revision', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const datosEquipo = await respuestaEmpleados.json();
+            if (!respuestaEmpleados.ok) {
+                throw new Error(datosEquipo.error || 'No se pudo obtener el equipo revisor.');
             }
-        });
+
+            const { empleadoActual, cargosCandidatos, candidatos } = datosEquipo;
+            if (candidatos.length === 0) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'No hay compañeros disponibles',
+                    text: `No se encontraron empleados activos con cargo ${cargosCandidatos.join(' o ')} y cuenta de usuario activa.`
+                });
+                return;
+            }
+
+            const opcionesSelect = {};
+            candidatos.forEach(compañero => {
+                opcionesSelect[compañero.idEmpleado] = `${compañero.Nombre} ${compañero.Apellido} · ${compañero.Cargo}`;
+            });
+
+            const revisorActual = empleadoActual.cargo === 'Administrador'
+                ? 'Administrador (equipo Técnico)'
+                : empleadoActual.cargo;
+            const cargoCompañero = cargosCandidatos.join(' o ');
+
+            const seleccion = await Swal.fire({
+                title: 'Asignación de pareja evaluadora',
+                text: `Usted iniciará como Revisor ${revisorActual}. Seleccione un compañero con cargo ${cargoCompañero}.`,
+                input: 'select',
+                inputOptions: opcionesSelect,
+                inputPlaceholder: `-- Seleccione ${cargoCompañero} --`,
+                showCancelButton: true,
+                confirmButtonColor: '#1a3a5f',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Continuar',
+                cancelButtonText: 'Cancelar',
+                inputValidator: valor => !valor ? 'Debe seleccionar un compañero de revisión.' : undefined
+            });
+            if (!seleccion.isConfirmed) return;
+
+            const idEmpleadoCompañero = Number(seleccion.value);
+            const compañeroSeleccionado = candidatos.find(compañero => compañero.idEmpleado === idEmpleadoCompañero);
+            const idEmpleadoTecnico = empleadoActual.cargo === 'Social'
+                ? idEmpleadoCompañero
+                : empleadoActual.idEmpleado;
+            const idEmpleadoSocial = empleadoActual.cargo === 'Social'
+                ? empleadoActual.idEmpleado
+                : idEmpleadoCompañero;
+            const nombresRevisores = empleadoActual.cargo === 'Social'
+                ? `Revisor Técnico: ${compañeroSeleccionado.Nombre} ${compañeroSeleccionado.Apellido}. Revisor Social: usted.`
+                : `Revisor Técnico: usted. Revisor Social: ${compañeroSeleccionado.Nombre} ${compañeroSeleccionado.Apellido}.`;
+
+            const confirmacion = await Swal.fire({
+                title: 'Confirmar inicio de revisión',
+                text: `${nombresRevisores} Se guardarán ambos identificadores de Empleado en la solicitud y el expediente pasará a revisión.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#2ecc71',
+                cancelButtonColor: '#e74c3c',
+                confirmButtonText: 'Sí, iniciar revisión',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirmacion.isConfirmed) return;
+
+            const respuesta = await fetch(`/api/solicitudes/${idSolicitud}/iniciar-revision`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ idEmpleadoCompañero })
+            });
+            const resultado = await respuesta.json();
+            if (!respuesta.ok) throw new Error(resultado.error || 'No se pudo iniciar la revisión.');
+
+            await Swal.fire({
+                icon: 'success',
+                title: '¡Revisión iniciada!',
+                text: resultado.mensaje,
+                confirmButtonColor: '#1a3a5f'
+            });
+            cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio');
+        } catch (error) {
+            console.error('Error al iniciar revisión:', error);
+            Swal.fire('Error', `No se pudo procesar la revisión: ${error.message}`, 'error');
+        }
     });
+}
+
+function escaparDatoRevision(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[caracter]);
+}
+
+async function abrirDecisionRevisionArea(solicitud) {
+    const formulario = await Swal.fire({
+        title: `Continuar revisión · Solicitud #${solicitud.id}`,
+        width: '620px',
+        html: `
+            <div style="text-align:left; margin:0 0 12px; padding:12px; background:#f1f5f9; border-radius:4px;">
+                <div><b>Departamento:</b> ${escaparDatoRevision(solicitud.departamento)}</div>
+                <div><b>Ayuda:</b> ${escaparDatoRevision(solicitud.ayuda)}</div>
+                <div><b>Correo emprendedor:</b> ${escaparDatoRevision(solicitud.correo)}</div>
+                ${solicitud.pdf ? `<a href="${escaparDatoRevision(solicitud.pdf)}" target="_blank" rel="noopener noreferrer">Abrir formulario PDF</a>` : ''}
+            </div>
+            <label for="decision-area">Decisión del Área</label>
+            <select id="decision-area" class="swal2-select" style="width:100%; margin:8px 0;">
+                <option value="">-- Seleccione una decisión --</option>
+                <option value="1">Aprobar emprendimiento</option>
+                <option value="0">Rechazar emprendimiento</option>
+            </select>
+            <div id="coordenadas-revision" style="display:none; grid-template-columns:1fr 1fr; gap:10px; text-align:left; margin-top:12px;">
+                <label>Latitud
+                    <input id="revision-latitud" type="number" step="any" min="-90" max="90" class="swal2-input" placeholder="-27.78" style="width:100%; margin:5px 0 0;">
+                </label>
+                <label>Longitud
+                    <input id="revision-longitud" type="number" step="any" min="-180" max="180" class="swal2-input" placeholder="-64.26" style="width:100%; margin:5px 0 0;">
+                </label>
+            </div>
+        `,
+        didOpen: () => {
+            const decision = document.getElementById('decision-area');
+            const coordenadas = document.getElementById('coordenadas-revision');
+            decision.addEventListener('change', () => {
+                coordenadas.style.display = decision.value === '1' ? 'grid' : 'none';
+                if (decision.value !== '1') {
+                    document.getElementById('revision-latitud').value = '';
+                    document.getElementById('revision-longitud').value = '';
+                }
+            });
+        },
+        preConfirm: () => {
+            const decision = document.getElementById('decision-area').value;
+            if (decision !== '0' && decision !== '1') {
+                Swal.showValidationMessage('Selecciona aprobar o rechazar.');
+                return false;
+            }
+
+            if (decision === '0') return { aprobacionArea: 0, latitud: null, longitud: null };
+
+            const latitudTexto = document.getElementById('revision-latitud').value.trim();
+            const longitudTexto = document.getElementById('revision-longitud').value.trim();
+            const latitud = Number(latitudTexto);
+            const longitud = Number(longitudTexto);
+            if (!latitudTexto || !Number.isFinite(latitud) || latitud < -90 || latitud > 90) {
+                Swal.showValidationMessage('Ingresa una latitud entre -90 y 90.');
+                return false;
+            }
+            if (!longitudTexto || !Number.isFinite(longitud) || longitud < -180 || longitud > 180) {
+                Swal.showValidationMessage('Ingresa una longitud entre -180 y 180.');
+                return false;
+            }
+            return { aprobacionArea: 1, latitud, longitud };
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1a3a5f'
+    });
+    if (!formulario.isConfirmed) return;
+
+    const decisionTexto = formulario.value.aprobacionArea === 1
+        ? `aprobar con coordenadas ${formulario.value.latitud}, ${formulario.value.longitud}`
+        : 'rechazar';
+    const confirmacion = await Swal.fire({
+        title: 'Confirmar decisión del Área',
+        text: `Se va a ${decisionTexto} la solicitud #${solicitud.id}. La fecha de finalización se registrará automáticamente.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, registrar decisión',
+        cancelButtonText: 'Volver',
+        confirmButtonColor: formulario.value.aprobacionArea === 1 ? '#2ecc71' : '#c0392b'
+    });
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+        const token = sessionStorage.getItem('token_ministerio');
+        if (!token) throw new Error('La sesión venció. Inicia sesión nuevamente.');
+
+        const respuesta = await fetch(`/api/solicitudes/${encodeURIComponent(solicitud.id)}/resolver-area`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(formulario.value)
+        });
+        const resultado = await respuesta.json();
+        if (!respuesta.ok) throw new Error(resultado.error || 'No se pudo registrar la decisión.');
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Decisión registrada',
+            text: resultado.mensaje,
+            confirmButtonColor: '#1a3a5f'
+        });
+        cargarRevisionesAsignadas();
+    } catch (error) {
+        Swal.fire('Error', `No se pudo guardar la decisión del Área: ${error.message}`, 'error');
+    }
+}
+
+function htmlDatosEtapaMinistro(solicitud) {
+    return `
+        <div style="text-align:left; margin:0 0 12px; padding:12px; background:#f1f5f9; border-radius:4px;">
+            <div><b>N° de expediente:</b> ${escaparDatoRevision(solicitud.expediente || 'Sin expediente')}</div>
+            <div><b>Departamento:</b> ${escaparDatoRevision(solicitud.departamento)}</div>
+            <div><b>Ayuda:</b> ${escaparDatoRevision(solicitud.ayuda)}</div>
+        </div>
+        ${solicitud.pdf ? `<a href="${escaparDatoRevision(solicitud.pdf)}" target="_blank" rel="noopener noreferrer"
+            class="btn-filtro" style="display:inline-block; background-color:#2f4e78; color:white; text-decoration:none; font-size:13px;">
+            <i class="fa-solid fa-download"></i> Exportar PDF
+        </a>` : ''}
+    `;
+}
+
+async function enviarEtapaMinistro(idSolicitud, ruta, cuerpo) {
+    const token = sessionStorage.getItem('token_ministerio');
+    if (!token) throw new Error('La sesión venció. Inicia sesión nuevamente.');
+
+    const respuesta = await fetch(`/api/solicitudes/${encodeURIComponent(idSolicitud)}/${ruta}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(cuerpo)
+    });
+    const resultado = await respuesta.json();
+    if (!respuesta.ok) throw new Error(resultado.error || 'No se pudo registrar la operación.');
+    return resultado;
+}
+
+async function abrirEnvioMinistro(solicitud) {
+    const ventana = await Swal.fire({
+        title: `Envío al Ministro · Solicitud #${solicitud.id}`,
+        width: '620px',
+        html: htmlDatosEtapaMinistro(solicitud),
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Confirmar envío al Ministro',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1a3a5f'
+    });
+    if (!ventana.isConfirmed) return;
+
+    const confirmacion = await Swal.fire({
+        title: '¿Confirmar envío al Ministro?',
+        text: `Se registrará que el expediente ${solicitud.expediente || ''} de la solicitud #${solicitud.id} fue enviado al Ministro con la fecha de hoy.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, registrar envío',
+        cancelButtonText: 'Volver',
+        confirmButtonColor: '#2ecc71',
+        cancelButtonColor: '#e74c3c'
+    });
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+        const resultado = await enviarEtapaMinistro(solicitud.id, 'enviar-ministro', {});
+        await Swal.fire({
+            icon: 'success',
+            title: 'Envío registrado',
+            text: resultado.mensaje,
+            confirmButtonColor: '#1a3a5f'
+        });
+        cargarRevisionesAsignadas();
+    } catch (error) {
+        Swal.fire('Error', `No se pudo registrar el envío al Ministro: ${error.message}`, 'error');
+    }
+}
+
+async function abrirResolucionMinistro(solicitud) {
+    const ventana = await Swal.fire({
+        title: `Resolución del Ministro · Solicitud #${solicitud.id}`,
+        width: '620px',
+        html: `${htmlDatosEtapaMinistro(solicitud)}
+            <p style="margin-top:14px;">Registre la decisión final enviada por el Ministro:</p>`,
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-check"></i> Aprobado',
+        denyButtonText: '<i class="fa-solid fa-xmark"></i> Rechazado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#2ecc71',
+        denyButtonColor: '#c0392b'
+    });
+    if (ventana.isDismissed) return;
+
+    const aprobacionMinistro = ventana.isConfirmed ? 1 : 0;
+    const confirmacion = await Swal.fire({
+        title: '¿Confirmar resolución del Ministro?',
+        text: `Se registrará que el Ministro ${aprobacionMinistro === 1 ? 'APROBÓ' : 'RECHAZÓ'} la solicitud #${solicitud.id} (expediente ${solicitud.expediente || ''}). Esta acción no se puede deshacer.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, registrar resolución',
+        cancelButtonText: 'Volver',
+        confirmButtonColor: aprobacionMinistro === 1 ? '#2ecc71' : '#c0392b'
+    });
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+        const resultado = await enviarEtapaMinistro(solicitud.id, 'resolucion-ministro', { aprobacionMinistro });
+        await Swal.fire({
+            icon: 'success',
+            title: 'Resolución registrada',
+            text: resultado.mensaje,
+            confirmButtonColor: '#1a3a5f'
+        });
+        cargarRevisionesAsignadas();
+    } catch (error) {
+        Swal.fire('Error', `No se pudo registrar la resolución del Ministro: ${error.message}`, 'error');
+    }
+}
+
+function inicializarBandejaRevisionesAsignadas() {
+    const filtroDepartamento = document.getElementById('filtro-departamento-revision');
+    filtroDepartamento.addEventListener('change', cargarRevisionesAsignadas);
+    document.getElementById('limpiar-filtro-departamento-revision').addEventListener('click', () => {
+        filtroDepartamento.value = '';
+        cargarRevisionesAsignadas();
+    });
+    cargarRevisionesAsignadas();
+}
+
+async function cargarRevisionesAsignadas() {
+    const cuerpo = document.getElementById('tabla-revisiones-asignadas');
+    const filtroDepartamento = document.getElementById('filtro-departamento-revision');
+    if (!cuerpo || !filtroDepartamento) return;
+
+    cuerpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando revisiones asignadas...</td></tr>';
+
+    try {
+        const token = sessionStorage.getItem('token_ministerio');
+        if (!token) throw new Error('La sesión venció. Inicia sesión nuevamente.');
+
+        const parametros = new URLSearchParams();
+        if (filtroDepartamento.value) parametros.set('departamento', filtroDepartamento.value);
+        const query = parametros.toString();
+        const respuesta = await fetch(`/api/solicitudes/area/asignadas${query ? `?${query}` : ''}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const resultado = await respuesta.json();
+        if (!respuesta.ok) throw new Error(resultado.error || 'No se pudieron cargar las revisiones.');
+        if (!cuerpo.isConnected) return;
+
+        const departamentoActual = filtroDepartamento.value;
+        filtroDepartamento.replaceChildren(new Option('Todos los departamentos', ''));
+        resultado.departamentos.forEach(departamento => {
+            filtroDepartamento.add(new Option(departamento, departamento));
+        });
+        filtroDepartamento.value = departamentoActual;
+
+        if (resultado.solicitudes.length === 0) {
+            cuerpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No hay solicitudes asignadas pendientes en esta etapa.</td></tr>';
+            return;
+        }
+
+        cuerpo.innerHTML = resultado.solicitudes.map(solicitud => {
+            const fechaValor = solicitud.FechaInicioRev ? String(solicitud.FechaInicioRev) : '';
+            const fechaTexto = /^\d{4}-\d{2}-\d{2}/.test(fechaValor)
+                ? `${fechaValor.slice(8, 10)}/${fechaValor.slice(5, 7)}/${fechaValor.slice(0, 4)}`
+                : 'Sin fecha';
+            const decisionAreaTomada = solicitud.AprobacionArea !== null;
+            const enviadoMinistro = Number(solicitud.EnvioMinistro) === 1;
+            const estadoEtapa = enviadoMinistro
+                ? 'Enviado al Ministro · En espera de resolución'
+                : 'Aprobado por el Área · Pendiente de envío al Ministro';
+            const datosEtapaMinistro = `
+                    data-id="${escaparDatoRevision(solicitud.idSolicitudInicio)}"
+                    data-expediente="${escaparDatoRevision(solicitud.NroExpediente || '')}"
+                    data-departamento="${escaparDatoRevision(solicitud.EmprendimientoDepto)}"
+                    data-ayuda="${escaparDatoRevision(solicitud.EleccionAyuda)}"
+                    data-pdf="${escaparDatoRevision(solicitud.DireccionPDF || '')}"`;
+            const accion = decisionAreaTomada
+                ? `<div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                    <span>${escaparDatoRevision(estadoEtapa)}</span>
+                    ${enviadoMinistro
+                        ? `<button type="button" class="btn-filtro btn-resolucion-ministro" style="background-color:#8e44ad;" ${datosEtapaMinistro}>
+                            <i class="fa-solid fa-gavel"></i> Registrar resolución
+                        </button>`
+                        : `<button type="button" class="btn-filtro btn-envio-ministro" style="background-color:#1a3a5f;" ${datosEtapaMinistro}>
+                            <i class="fa-solid fa-paper-plane"></i> Enviar al Ministro
+                        </button>`}
+                </div>`
+                : `<button type="button" class="btn-filtro btn-continuar-revision"
+                    data-id="${escaparDatoRevision(solicitud.idSolicitudInicio)}"
+                    data-departamento="${escaparDatoRevision(solicitud.EmprendimientoDepto)}"
+                    data-ayuda="${escaparDatoRevision(solicitud.EleccionAyuda)}"
+                    data-correo="${escaparDatoRevision(solicitud.PersonaCorreo)}"
+                    data-pdf="${escaparDatoRevision(solicitud.DireccionPDF || '')}">
+                    <i class="fa-solid fa-file-signature"></i> Continuar revisión
+                </button>`;
+
+            return `
+                <tr>
+                    <td>#${escaparDatoRevision(solicitud.idSolicitudInicio)}</td>
+                    <td>${escaparDatoRevision(solicitud.EmprendimientoDepto)}</td>
+                    <td>${escaparDatoRevision(fechaTexto)}</td>
+                    <td>${escaparDatoRevision(solicitud.EleccionAyuda)}</td>
+                    <td>${escaparDatoRevision(solicitud.PersonaCorreo)}</td>
+                    <td>${accion}</td>
+                </tr>
+            `;
+        }).join('');
+
+        cuerpo.querySelectorAll('.btn-continuar-revision').forEach(boton => {
+            boton.addEventListener('click', () => abrirDecisionRevisionArea({
+                id: boton.dataset.id,
+                departamento: boton.dataset.departamento,
+                ayuda: boton.dataset.ayuda,
+                correo: boton.dataset.correo,
+                pdf: boton.dataset.pdf
+            }));
+        });
+
+        const datosBotonMinistro = boton => ({
+            id: boton.dataset.id,
+            expediente: boton.dataset.expediente,
+            departamento: boton.dataset.departamento,
+            ayuda: boton.dataset.ayuda,
+            pdf: boton.dataset.pdf
+        });
+        cuerpo.querySelectorAll('.btn-envio-ministro').forEach(boton => {
+            boton.addEventListener('click', () => abrirEnvioMinistro(datosBotonMinistro(boton)));
+        });
+        cuerpo.querySelectorAll('.btn-resolucion-ministro').forEach(boton => {
+            boton.addEventListener('click', () => abrirResolucionMinistro(datosBotonMinistro(boton)));
+        });
+    } catch (error) {
+        if (cuerpo.isConnected) {
+            cuerpo.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">${escaparDatoRevision(error.message)}</td></tr>`;
+        }
+        console.error('Error cargando revisiones asignadas:', error);
+    }
 }

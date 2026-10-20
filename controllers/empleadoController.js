@@ -2,6 +2,7 @@ import {
     ModelContarEmpleadosAdministracion,
     ModelActualizarEmpleadoAdministracion,
     ModelListarEmpleadosAdministracion,
+    ModelObtenerEquipoRevision,
     ModelObtenerEmpleadosPorCargo,
     ModelRegistrarEmpleado
 } from '../models/empleadoModel.js';
@@ -216,19 +217,37 @@ export const CtrlRegistrarEmpleado = async (req, res) => {
 // Cómo quedaría tu controlador definitivo leyendo todo desde el Token:
 export const CtrlObtenerEmpleadosPorCargo = async (req, res) => {
     try {
-        // Leemos de forma segura el ID que nos demostró el console.log
         const idUsuarioLogueado = req.usuarioLogueado?.idUsuario;
 
         if (!idUsuarioLogueado) {
             return res.status(401).json({ error: "No se encontró la identificación del usuario en el token." });
         }
 
-        // Llamamos al modelo pasándole solo el ID
         const empleados = await ModelObtenerEmpleadosPorCargo(idUsuarioLogueado);
-        
         return res.status(200).json(empleados);
     } catch (error) {
+        if (error.code === 'INACTIVE_REVIEWER' || error.code === 'REVIEWER_ROLE_NOT_ALLOWED' || error.code === 'EMPLOYEE_ACCOUNT_REQUIRED') {
+            return res.status(403).json({ error: error.message });
+        }
         console.error("Error crítico en CtrlObtenerEmpleadosPorCargo:", error);
         return res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+export const CtrlObtenerEquipoRevision = async (req, res) => {
+    const idUsuarioLogueado = req.usuarioLogueado?.idUsuario;
+    if (!idUsuarioLogueado) {
+        return res.status(401).json({ error: 'No se encontró el usuario autenticado.' });
+    }
+
+    try {
+        const equipo = await ModelObtenerEquipoRevision(idUsuarioLogueado);
+        return res.status(200).json(equipo);
+    } catch (error) {
+        if (error.code === 'INACTIVE_REVIEWER' || error.code === 'REVIEWER_ROLE_NOT_ALLOWED' || error.code === 'EMPLOYEE_ACCOUNT_REQUIRED') {
+            return res.status(403).json({ error: error.message });
+        }
+        console.error('Error al obtener el equipo de revisión:', error);
+        return res.status(500).json({ error: 'No se pudo obtener el equipo revisor.' });
     }
 };

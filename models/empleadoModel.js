@@ -199,26 +199,177 @@ export const ModelListarEmpleadosAdministracion = async (filtros = {}, limite = 
     return filas;
 };
 
-// Recupera los empleados activos de un cargo específico junto con su idUsuario
+const obtenerEmpleadoVinculadoAUsuario = async (conexion, idUsuario, bloquear = false) => {
+    const [filas] = await conexion.query(
+        `SELECT u.idUsuario, u.TipoUsuario, u.Activa AS UsuarioActivo,
+                e.idEmpleado, e.Cargo, e.Activo AS EmpleadoActivo
+         FROM Usuario u
+         INNER JOIN Empleado e ON e.idEmpleado = u.idEmpleado
+         WHERE u.idUsuario = ?
+         ${bloquear ? 'FOR UPDATE' : ''}`,
+        [idUsuario]
+    );
+
+    return filas[0] || null;
+};
+
+const tipoCuentaCompatibleConCargo = (empleado) => {
+    if (empleado.Cargo === 'Administrador') return empleado.TipoUsuario === 'Administrador';
+    return ['Técnico', 'Social'].includes(empleado.Cargo) && empleado.TipoUsuario === 'Empleado de Area';
+};
+
+const cargosValidosParaPareja = (cargoActual) => {
+    if (cargoActual === 'Social') return ['Técnico', 'Administrador'];
+    if (cargoActual === 'Técnico' || cargoActual === 'Administrador') return ['Social'];
+    return [];
+};
+
+export const ModelObtenerEquipoRevision = async (idUsuarioLogueado) => {
+    const actual = await obtenerEmpleadoVinculadoAUsuario(pool, idUsuarioLogueado);
+    if (!actual) {
+        const error = new Error('La cuenta no está vinculada a una ficha de empleado.');
+        error.code = 'EMPLOYEE_ACCOUNT_REQUIRED';
+        throw error;
+    }
+    if (Number(actual.UsuarioActivo) !== 1 || Number(actual.EmpleadoActivo) !== 1) {
+        const error = new Error('La cuenta y la ficha del empleado deben estar activas para iniciar una revisión.');
+        error.code = 'INACTIVE_REVIEWER';
+        throw error;
+    }
+    if (!['Empleado de Area', 'Administrador'].includes(actual.TipoUsuario) || !tipoCuentaCompatibleConCargo(actual)) {
+        const error = new Error('Solo un empleado del Área o un administrador con cargo compatible puede iniciar una revisión.');
+        error.code = 'REVIEWER_ROLE_NOT_ALLOWED';
+        throw error;
+    }
+
+    const cargosCandidatos = cargosValidosParaPareja(actual.Cargo);
+    const placeholders = cargosCandidatos.map(() => '?').join(', ');
+    const [candidatos] = await pool.query(
+        `SELECT DISTINCT u.idUsuario, e.idEmpleado, e.Nombre, e.Apellido, e.DNI, e.Cargo
+         FROM Empleado e
+         INNER JOIN Usuario u ON u.idEmpleado = e.idEmpleado
+         WHERE e.Activo = 1
+           AND u.Activa = 1
+           AND e.idEmpleado <> ?
+           AND e.Cargo IN (${placeholders})
+           AND (
+                (e.Cargo IN ('Técnico', 'Social') AND u.TipoUsuario = 'Empleado de Area')
+                OR (e.Cargo = 'Administrador' AND u.TipoUsuario = 'Administrador')
+           )
+         ORDER BY e.Apellido, e.Nombre`,
+        [actual.idEmpleado, ...cargosCandidatos]
+    );
+
+    return {
+        empleadoActual: {
+            idEmpleado: actual.idEmpleado,
+            cargo: actual.Cargo,
+            tipoUsuario: actual.TipoUsuario
+        },
+        cargosCandidatos,
+        candidatos
+    };
+};
+
 export const ModelObtenerEmpleadosPorCargo = async (idUsuarioLogueado) => {
-    const querySQL = `
-        SELECT u.idUsuario, e.Nombre, e.Apellido 
-        FROM Empleado e
-        INNER JOIN Usuario u ON e.idEmpleado = u.idEmpleado
-        WHERE e.Activo = 1 
-          AND u.idUsuario != ? -- Excluye al usuario activo
-          AND e.Cargo = (
-              SELECT CASE 
-                  WHEN emp_actual.Cargo = 'Técnico' THEN 'Social'
-                  WHEN emp_actual.Cargo = 'Social' THEN 'Técnico'
-                  ELSE 'Ninguno'
-              END
-              FROM Usuario usr_actual
-              INNER JOIN Empleado emp_actual ON usr_actual.idEmpleado = emp_actual.idEmpleado
-              WHERE usr_actual.idUsuario = ?
-          );
-    `;
-    // Pasamos el idUsuarioLogueado para el filtro y para la subconsulta de cargo
-    const [filas] = await pool.query(querySQL, [idUsuarioLogueado, idUsuarioLogueado]);
-    return filas;
+    const equipo = await ModelObtenerEquipoRevision(idUsuarioLogueado);
+    return equipo.candidatos;
+};
+
+export const ModelIniciarRevisionSolicitud = async (idSolicitud, idUsuarioActual, idEmpleadoCompañero, ipCliente) => {
+    const conexion = await pool.getConnection();
+
+    try {
+        await conexion.beginTransaction();
+        await conexion.query('SET @usuario_id = ?;', [idUsuarioActual]);
+        await conexion.query('SET @usuario_ip = ?;', [ipCliente]);
+
+        const actual = await obtenerEmpleadoVinculadoAUsuario(conexion, idUsuarioActual, true);
+        if (!actual || Number(actual.UsuarioActivo) !== 1 || Number(actual.EmpleadoActivo) !== 1) {
+            const error = new Error('La cuenta y la ficha del empleado deben estar activas para iniciar una revisión.');
+            error.code = 'INACTIVE_REVIEWER';
+            throw error;
+        }
+        if (!['Empleado de Area', 'Administrador'].includes(actual.TipoUsuario) || !tipoCuentaCompatibleConCargo(actual)) {
+            const error = new Error('El usuario no tiene un rol/cargo habilitado para iniciar revisiones.');
+            error.code = 'REVIEWER_ROLE_NOT_ALLOWED';
+            throw error;
+        }
+
+        const cargosCandidatos = cargosValidosParaPareja(actual.Cargo);
+        if (cargosCandidatos.length === 0 || Number(idEmpleadoCompañero) === Number(actual.idEmpleado)) {
+            const error = new Error('El compañero seleccionado no es válido para este cargo.');
+            error.code = 'INVALID_REVIEW_PARTNER';
+            throw error;
+        }
+
+        const [pareja] = await conexion.query(
+            `SELECT e.idEmpleado, e.Cargo, u.TipoUsuario
+             FROM Empleado e
+             INNER JOIN Usuario u ON u.idEmpleado = e.idEmpleado
+             WHERE e.idEmpleado = ?
+               AND e.Activo = 1
+               AND u.Activa = 1
+             FOR UPDATE`,
+            [idEmpleadoCompañero]
+        );
+        const cargoPareja = pareja[0];
+        if (!cargoPareja || !cargosCandidatos.includes(cargoPareja.Cargo) || !tipoCuentaCompatibleConCargo(cargoPareja)) {
+            const error = new Error('El compañero debe tener una ficha y cuenta activas con el cargo complementario correspondiente.');
+            error.code = 'INVALID_REVIEW_PARTNER';
+            throw error;
+        }
+
+        const [solicitudes] = await conexion.query(
+            `SELECT s.idSolicitudInicio, s.EstadoRevisionArea, s.idEmpleadoTecRevisor, s.idEmpleadoSocRevisor
+             FROM SolicitudInicio s
+             WHERE s.idSolicitudInicio = ?
+               AND s.FechaRecibidoArea IS NOT NULL
+             FOR UPDATE`,
+            [idSolicitud]
+        );
+        const solicitud = solicitudes[0];
+        if (!solicitud) {
+            const error = new Error('La solicitud no existe o todavía no está disponible para el Área.');
+            error.code = 'REVIEW_REQUEST_NOT_FOUND';
+            throw error;
+        }
+
+        const [expedientes] = await conexion.query(
+            'SELECT idExpediente FROM Expediente WHERE idSolicitudInicio = ? LIMIT 1',
+            [idSolicitud]
+        );
+        if (expedientes.length === 0) {
+            const error = new Error('La solicitud todavía no tiene un expediente asignado.');
+            error.code = 'REVIEW_REQUEST_NOT_FOUND';
+            throw error;
+        }
+
+        if (Number(solicitud.EstadoRevisionArea) !== 0 || solicitud.idEmpleadoTecRevisor || solicitud.idEmpleadoSocRevisor) {
+            const error = new Error('La solicitud ya fue tomada o ya tiene revisores asignados.');
+            error.code = 'REVIEW_ALREADY_STARTED';
+            throw error;
+        }
+
+        const idEmpleadoTecnico = actual.Cargo === 'Social' ? cargoPareja.idEmpleado : actual.idEmpleado;
+        const idEmpleadoSocial = actual.Cargo === 'Social' ? actual.idEmpleado : cargoPareja.idEmpleado;
+
+        await conexion.query(
+            `UPDATE SolicitudInicio
+             SET idEmpleadoTecRevisor = ?,
+                 idEmpleadoSocRevisor = ?,
+                 EstadoRevisionArea = 1,
+                 FechaInicioRev = CURRENT_DATE
+             WHERE idSolicitudInicio = ?`,
+            [idEmpleadoTecnico, idEmpleadoSocial, idSolicitud]
+        );
+
+        await conexion.commit();
+        return { idEmpleadoTecnico, idEmpleadoSocial };
+    } catch (error) {
+        await conexion.rollback();
+        throw error;
+    } finally {
+        conexion.release();
+    }
 };

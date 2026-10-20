@@ -9,7 +9,7 @@
 /* HEADER */
 header {
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
-              url('../Imagenes/Fondo banner.png');
+              url('../Imagenes/fondo-banner.webp');
   background-size: cover;
   background-position: center;
   text-align: center;
@@ -234,7 +234,7 @@ footer {
   color: white;
 
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
-              url('../Imagenes/Fondo banner.png');
+              url('../Imagenes/fondo-banner.webp');
   background-size: cover;
   background-position: center;
 }

@@ -103,9 +103,13 @@ EmprendimientoDepto varchar (20) not null,
 EmprendimientoMarcha boolean not null default True,
 EmprendimientoRubro varchar(150) not null,
 EleccionAyuda varchar(10) not null, -- Subsidio o Credito
+EmprendimientoLatitud decimal(12, 10) null,
+EmprendimientoLongitud decimal(13, 10) null,
 idSolicitudInicio int not null unique,
 CONSTRAINT fk_DatosSolicitud_SolicitudInicio
-	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio)
+	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio),
+CONSTRAINT chk_EleccionAyuda
+	CHECK (EleccionAyuda IN ('Subsidio', 'Credito')) -- Solo se acepta esa ayuda
 );
 
 -- Rubro (idRubro (PK), Nombre, IconoMapa)

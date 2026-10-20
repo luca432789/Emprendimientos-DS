@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
 	CtrlActualizarEmpleadoAdministracion,
 	CtrlListarEmpleadosAdministracion,
+		 CtrlObtenerEquipoRevision,
 	CtrlObtenerEmpleadosPorCargo,
 	CtrlRegistrarEmpleado
 } from '../controllers/empleadoController.js';
@@ -11,6 +12,7 @@ const router = Router();
 
 // Endpoint que va a consultar el SweetAlert2
 router.get('/empleados', verificarToken, CtrlObtenerEmpleadosPorCargo);
+router.get('/empleados/para-revision', verificarToken, CtrlObtenerEquipoRevision);
 router.post('/empleados', verificarToken, CtrlRegistrarEmpleado);
 router.get('/empleados/administracion', verificarToken, CtrlListarEmpleadosAdministracion);
 router.patch('/empleados/administracion/:id', verificarToken, CtrlActualizarEmpleadoAdministracion);

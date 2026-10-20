@@ -66,6 +66,22 @@ values ('C:\Solicitudes\SolicitudInicial\FormIni06.pdf', 'C:\Fotos\FotosSolicitu
 */
 
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DatosSolicitudInicio -----------------------------------------------------------------------------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
+insert into DatosSolicitudInicio (idDatosSolicitudInicio, PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio)
+values (1, 'Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com',
+'San martin del Prado', '256', 'Los palermos', 'Banda', true, 'Bombos Artesanal', 'Subsidio', 1),
+(2, 'Emprendedor2', 'Luca2', '46000001', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 490', '3856000001', 'Emprendedor2prueba@gmail.com',
+'San claudio', '200', 'Los claudios', 'Choya', true, 'Telares artesanal', 'Subsidio', 2),
+(3, 'Emprendedor3', 'rios3', '46000002', 'Banda', 'Chaupi Pozo', 'Chaupi Pozo, B. los pozo entre pellegrini 100 y san jose', '3856000002', 'Emprendedor3prueba@gmail.com',
+'Carbon del Prado', '256', 'Los carbones', 'Carbon', true, 'Muebles', 'Subsidio', 3),
+(4, 'Alberto', 'Sanchez', '46000003', 'Juan Felipe Ibarra', 'El Colorado', 'El colorado, B. los colorados entre x y x9', '3856000003', 'Emprendedor4prueba@gmail.com',
+'Maderos', '256', 'Los Maderas', 'Corteza', true, 'Carpinteria General', 'Credito', 4),
+(5, 'Alberto', 'Sanchez', '46000004', 'Choya', 'Choya', 'Choya, B. los choya entre y x y', '3856000004', 'Emprendedor5prueba@gmail.com',
+'San bombo', '306', 'Los bombo', 'Bomba', true, 'Bombos Artesanal', 'Subsidio', 5); -- 1
+
+-- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- RUBRO ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Rubro (idRubro (PK), Nombre, IconoMapa)
