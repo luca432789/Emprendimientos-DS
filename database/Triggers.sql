@@ -131,7 +131,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio, 
-			CONCAT('El empleado ', NEW.idEmpleadoTecRevisor ,' envió los documentos al ministro'), 
+			CONCAT('Se enviaron los documentos al ministro'), 
 			@usuario_ip);
     END IF;
 
@@ -163,13 +163,62 @@ END;
 //
 DELIMITER ;
 -- Trigger Update_Auditoria_DatosSolicitudInicio
+DROP TRIGGER IF EXISTS tg_auditoria_DatosSolicitudInicio_update;
 DELIMITER //
 CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_update
 BEFORE UPDATE ON DatosSolicitudInicio
 FOR EACH ROW
 BEGIN
-    SIGNAL SQLSTATE '45000' 
-    SET MESSAGE_TEXT = 'Error de Seguridad: La tabla DatosSolicitudInicio es inmutable y no permite modificaciones.';
+    IF NOT (
+        OLD.PersonaNombre <=> NEW.PersonaNombre AND
+        OLD.PersonaApellido <=> NEW.PersonaApellido AND
+        OLD.PersonaDNI <=> NEW.PersonaDNI AND
+        OLD.PersonaDepartamento <=> NEW.PersonaDepartamento AND
+        OLD.PersonaLocalidad <=> NEW.PersonaLocalidad AND
+        OLD.PersonaDomicilio <=> NEW.PersonaDomicilio AND
+        OLD.PersonaTeléfono <=> NEW.PersonaTeléfono AND
+        OLD.PersonaCorreo <=> NEW.PersonaCorreo AND
+        OLD.EmprendimientoCalle <=> NEW.EmprendimientoCalle AND
+        OLD.EmprendimientoNroCalle <=> NEW.EmprendimientoNroCalle AND
+        OLD.EmprendimientoBarrio <=> NEW.EmprendimientoBarrio AND
+        OLD.EmprendimientoDepto <=> NEW.EmprendimientoDepto AND
+        OLD.EmprendimientoMarcha <=> NEW.EmprendimientoMarcha AND
+        OLD.EmprendimientoRubro <=> NEW.EmprendimientoRubro AND
+        OLD.EleccionAyuda <=> NEW.EleccionAyuda AND
+        OLD.idDatosSolicitudInicio <=> NEW.idDatosSolicitudInicio AND
+        OLD.idSolicitudInicio <=> NEW.idSolicitudInicio
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error de Seguridad: Solo se permite actualizar las coordenadas del emprendimiento.';
+    END IF;
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_DatosSolicitudInicio_coordinates;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_coordinates
+AFTER UPDATE ON DatosSolicitudInicio
+FOR EACH ROW
+BEGIN
+    IF NOT (OLD.EmprendimientoLatitud <=> NEW.EmprendimientoLatitud)
+       OR NOT (OLD.EmprendimientoLongitud <=> NEW.EmprendimientoLongitud) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id,
+            'UPDATE',
+            'DatosSolicitudInicio',
+            NEW.idDatosSolicitudInicio,
+            CONCAT(
+                'Coordenadas del emprendimiento para la solicitud ', NEW.idSolicitudInicio,
+                ' actualizadas. Latitud: ', COALESCE(CAST(OLD.EmprendimientoLatitud AS CHAR), 'sin dato'),
+                ' -> ', COALESCE(CAST(NEW.EmprendimientoLatitud AS CHAR), 'sin dato'),
+                '; longitud: ', COALESCE(CAST(OLD.EmprendimientoLongitud AS CHAR), 'sin dato'),
+                ' -> ', COALESCE(CAST(NEW.EmprendimientoLongitud AS CHAR), 'sin dato')
+            ),
+            @usuario_ip
+        );
+    END IF;
 END;
 //
 DELIMITER ;

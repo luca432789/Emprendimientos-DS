@@ -410,6 +410,44 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         fetchSolicitudesMesaEntrada();
     }
     // ======================================================================
+    // CASO: SOLICITUDES DE INICIO ASIGNADAS AL REVISOR
+    // ======================================================================
+    else if (codigoSeccion === 'inicio-en-revision') {
+        filtrosTabla.style.display = 'none';
+
+        zonaRender.innerHTML = `
+            <div style="display:flex; align-items:end; gap:10px; margin-bottom:14px;">
+                <label>Filtrar por departamento
+                    <select id="filtro-departamento-revision" style="display:block; min-width:220px; margin-top:5px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; background:#fff;">
+                        <option value="">Todos los departamentos</option>
+                    </select>
+                </label>
+                <button type="button" class="btn-filtro" id="limpiar-filtro-departamento-revision" title="Limpiar filtro" aria-label="Limpiar filtro">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="tabla-datos">
+                    <thead>
+                        <tr>
+                            <th>ID Solicitud</th>
+                            <th>Departamento</th>
+                            <th>Fecha de inicio de revisión</th>
+                            <th>Ayuda elegida</th>
+                            <th>Correo del emprendedor</th>
+                            <th>Estado / acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-revisiones-asignadas">
+                        <tr><td colspan="6" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando revisiones asignadas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        inicializarBandejaRevisionesAsignadas();
+    }
+    // ======================================================================
     // CASO 4: REGISTRAR EMPLEADO
     // ======================================================================
     else if (codigoSeccion === 'registrar-empleado') {
