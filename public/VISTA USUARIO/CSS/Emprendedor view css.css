@@ -290,6 +290,208 @@ nav ul > li > a.active {
 
 
 /* ==========================================
+   PERFIL DE EMPRENDIMIENTO (MAIN)
+   ========================================== */
+
+body {
+  background-color: #f4ede2; /* Fondo crema claro como en las maquetas */
+}
+
+.perfil-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+/* PORTADA Y BANNER */
+.portada-section {
+  background-color: #ffffff;
+  border-bottom: 2px solid #ccc;
+}
+
+.portada-banner {
+  height: 250px;
+  background-image: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6)), 
+                    url('/Imagenes/sgo\ bandera.jpg'); /* Puedes cambiarla por la imagen del banner */
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px 40px;
+}
+
+.portada-info h2 {
+  color: #ffffff;
+  font-size: 32px;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+  margin-bottom: 4px;
+}
+
+.rubro-tag {
+  color: #e0e0e0;
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+/* SUB-NAVEGACIÓN DEL PERFIL (Barra Bordó) */
+.perfil-subnav {
+  background-color: #a65454; /* Color bordó de tus imágenes */
+}
+
+.perfil-subnav ul {
+  list-style: none;
+  display: flex;
+  padding-left: 20px;
+}
+
+.perfil-subnav ul li a {
+  display: block;
+  padding: 12px 20px;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+.perfil-subnav ul li a:hover,
+.perfil-subnav ul li a.active {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+/* CONTENEDOR EN DOS COLUMNAS */
+.perfil-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  padding: 25px 20px;
+}
+
+/* TARJETAS GENERALES */
+.card {
+  background-color: #fbf7f0;
+  border: 1px solid #e2d9cc;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+}
+
+.card h3 {
+  color: #666;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.card hr {
+  border: none;
+  border-top: 1px solid #e2d9cc;
+  margin-bottom: 12px;
+}
+
+/* COLUMNA IZQUIERDA: INTRO */
+.info-basica p {
+  color: #444;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* FORMULARIO CREAR PUBLICACIÓN */
+.crear-publicacion-card textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  resize: vertical;
+  font-size: 14px;
+  outline: none;
+}
+
+.crear-publicacion-card textarea:focus {
+  border-color: #2f4e78;
+}
+
+.acciones-publicacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.btn-adjuntar {
+  font-size: 20px;
+  color: #555;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: color 0.2s;
+}
+
+.btn-adjuntar:hover {
+  color: #2f4e78;
+}
+
+.btn-publicar {
+  background-color: #2f4e78; /* Azul corporativo */
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-publicar:hover {
+  background-color: #1f3554;
+}
+
+/* FEED DE PUBLICACIONES */
+.publicacion-card .publicacion-header h4 {
+  color: #222;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.publicacion-body p {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.publicacion-imagen {
+  margin-top: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.publicacion-imagen img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+/* RESPONSIVE PARA PANTALLAS PEQUEÑAS */
+@media (max-width: 768px) {
+  .perfil-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .perfil-subnav ul {
+    flex-wrap: wrap;
+    padding-left: 0;
+  }
+  
+  .perfil-subnav ul li {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
+
+
+/* ==========================================
    INICIO DE FOOTER 
    ========================================== */
 
@@ -357,9 +559,9 @@ footer {
   font-size: 13px;
   color: white;
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
-              url('../Imagenes/fondo-banner.webp');
+              url('/Imagenes/fondo-banner.webp');
   background-size: cover;
   background-position: center;
 }
-
 /* FIN DE FOOTER */
+

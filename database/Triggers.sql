@@ -59,7 +59,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Empleado', NEW.idEmpleado, 
-			CONCAT('Cambio de cargo de: ', OLD.Cargo, ' a ', NEW.Cargo),
+			CONCAT('Cambio de cargo de: ', OLD.Cargo, ' A -> ', NEW.Cargo),
 			@usuario_ip);
     END IF;
 
@@ -68,7 +68,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Empleado', NEW.idEmpleado, 
-			CONCAT('Cambio de Domicilio de: ', OLD.Domicilio, ' a ', NEW.Domicilio),
+			CONCAT('Cambio de Domicilio de: ', OLD.Domicilio, ' A -> ', NEW.Domicilio),
 			@usuario_ip);
     END IF;
 
@@ -315,12 +315,13 @@ BEGIN
 
     -- 3. Cambio de ubicacion
     IF OLD.Calle <> NEW.Calle OR OLD.NúmeroCalle <> NEW.NúmeroCalle OR OLD.Barrio <> NEW.Barrio OR OLD.Departamento <> NEW.Departamento 
-    OR OLD.Localidad <> NEW.Localidad OR OLD.Latitud <> NEW.Latitud OR OLD.Longitud <> NEW.Longitud THEN
+    -- Latitud/Longitud pueden ser NULL (sin ubicar): se compara con <=> e IFNULL para no perder la auditoría
+    OR OLD.Localidad <> NEW.Localidad OR NOT (OLD.Latitud <=> NEW.Latitud) OR NOT (OLD.Longitud <=> NEW.Longitud) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Emprendimiento', NEW.idEmprendimiento, 
-			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (Latitud: ', OLD.Latitud, '/ Longitud: ', OLD.Longitud, ') -> 
-				Nueva dirección: ', NEW.Calle, ' ', NEW.NúmeroCalle, ' (Latitud: ', NEW.Latitud, '/ Longitud: ', NEW.Longitud, ')'), 
+			@usuario_id, 'UPDATE', 'Emprendimiento', NEW.idEmprendimiento,
+			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (Latitud: ', IFNULL(OLD.Latitud, 'sin ubicar'), '/ Longitud: ', IFNULL(OLD.Longitud, 'sin ubicar'), ') ->
+				Nueva dirección: ', NEW.Calle, ' ', NEW.NúmeroCalle, ' (Latitud: ', IFNULL(NEW.Latitud, 'sin ubicar'), '/ Longitud: ', IFNULL(NEW.Longitud, 'sin ubicar'), ')'),
 			@usuario_ip);
     END IF;
 
@@ -811,3 +812,41 @@ END;
 //
 DELIMITER ;
 
+-- TRIGGERS DE PRODUCTO - AUDITORIA ----------------------------------------------------------------------------------------
+DROP TRIGGER IF EXISTS tg_auditoria_Producto_insert;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Producto_insert
+AFTER INSERT ON Producto
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'INSERT', 'Producto', NEW.idProducto,
+        CONCAT('Nuevo producto en Emprendimiento ID: ', NEW.idEmprendimiento, '. Producto: "', NEW.Nombre, '"'),
+        @usuario_ip);
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_Producto_update;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Producto_update
+AFTER UPDATE ON Producto
+FOR EACH ROW
+BEGIN
+    IF OLD.Activo <> NEW.Activo THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Producto', NEW.idProducto,
+            CONCAT('Producto "', NEW.Nombre, '" ', CASE WHEN NEW.Activo THEN 'visible nuevamente' ELSE 'ocultado' END),
+            @usuario_ip);
+    ELSE
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Producto', NEW.idProducto,
+            CONCAT('Producto editado: "', NEW.Nombre, '"'),
+            @usuario_ip);
+    END IF;
+END;
+//
+DELIMITER ;

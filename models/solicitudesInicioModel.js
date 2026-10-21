@@ -3,16 +3,22 @@ import { pool } from '../config/db.js';
 // 1. Buscar las solicitudes iniciales que NO tienen asignado un expediente electrónico todavía
 export const ModelObtenerSinExpediente = async () => {
     // Hacemos un LEFT JOIN con Expediente. Si no existe expediente, las columnas de la tabla Expediente vendrán como NULL.
-    // También seleccionamos CorreoVal (que identifica al Emprendedor) y la FechaRecibidoMesa según tus campos reales.
+    // El nombre del Emprendedor sale de DatosSolicitudInicio (lo que cargó en el Formulario de Inicio);
+    // si la solicitud no tiene datos cargados, se usa CorreoVal como antes.
     const querySQL = `
-        SELECT 
-            s.idSolicitudInicio, 
-            s.CorreoVal AS Emprendedor, 
-            s.FechaRecibidoMesa AS FechaRecibido, 
-            s.DireccionPDF 
+        SELECT
+            s.idSolicitudInicio,
+            COALESCE(
+                NULLIF(TRIM(CONCAT_WS(' ', d.PersonaNombre, d.PersonaApellido)), ''),
+                s.CorreoVal
+            ) AS Emprendedor,
+            s.FechaRecibidoMesa AS FechaRecibido,
+            s.DireccionPDF
         FROM SolicitudInicio s
         LEFT JOIN Expediente e ON s.idSolicitudInicio = e.idSolicitudInicio
-        WHERE e.NroExpediente IS NULL;
+        LEFT JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = s.idSolicitudInicio
+        WHERE e.NroExpediente IS NULL
+        ORDER BY s.idSolicitudInicio;
     `;
     const [filas] = await pool.query(querySQL);
     return filas;

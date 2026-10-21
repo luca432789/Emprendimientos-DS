@@ -33,11 +33,14 @@ async function fetchSolicitudesMesaEntrada() {
                 ? new Date(solicitud.FechaRecibido).toLocaleDateString('es-AR') 
                 : 'Sin fecha';
 
-            // 🚀 MAPEO CORREGIDO: Cambiamos "solicitud.id" por "solicitud.idSolicitudInicio" 
-            // y "solicitud.Emprendedor" sigue igual porque lo renombramos con un ALIAS en el SQL (CorreoVal AS Emprendedor).
+            // 🚀 MAPEO CORREGIDO: Cambiamos "solicitud.id" por "solicitud.idSolicitudInicio"
+            // y "solicitud.Emprendedor" es el nombre y apellido cargado en el Formulario de Inicio (ALIAS en el SQL).
+            // El nombre lo escribe el público: se escapa antes de meterlo en el HTML.
+            const emprendedor = String(solicitud.Emprendedor || 'No especificado')
+                .replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             fila.innerHTML = `
                 <td><strong>#${String(solicitud.idSolicitudInicio).padStart(4, '0')}</strong></td>
-                <td>${solicitud.Emprendedor || 'No especificado'}</td>
+                <td>${emprendedor}</td>
                 <td>${fechaFormateada}</td>
                 <td style="text-align:center;">
                     <button class="btn-filtro btn-cargar-exp" 
@@ -154,6 +157,9 @@ function verPdfYFormulario(idSolicitud, urlPdf) {
                             });
 
                             if (!respuesta.ok) throw new Error("Error en la actualización de la DB.");
+
+                            // La solicitud ya tiene expediente: la campanita del navbar baja en 1
+                            if (typeof window.actualizarNotificaciones === 'function') window.actualizarNotificaciones();
 
                             Swal.fire({
                                 icon: 'success',

@@ -1,20 +1,65 @@
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
+    background-color: #f5ece1 !important;
 }
 
 /* MAPA PRINCIPAL */
 #map {
     width: 100%;
-    height: 550px;
+    height: 520px;
     border-radius: 10px;
+}
+
+/* MARCADORES CON ÍCONO DE RUBRO (L.divIcon de mapa.js) */
+.marcador-rubro {
+    background: transparent;
+    border: none;
+}
+
+.marcador-rubro-circulo {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 2px solid #2b6cb0;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease;
+}
+
+/* Punta que señala la ubicación exacta */
+.marcador-rubro-circulo::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid #2b6cb0;
+}
+
+.marcador-rubro-circulo img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.marcador-rubro:hover .marcador-rubro-circulo {
+    transform: scale(1.12);
+    transform-origin: bottom center;
 }
 
 /* PANEL DE EDICIÓN */
 #panel-edicion {
     background: #ffffff;
-    margin: 15px 20px;
-    padding: 15px;
+    margin: 0 0 20px 0;
+    padding: 15px 20px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
@@ -22,34 +67,211 @@ body {
 #panel-edicion h3 {
     margin-top: 0;
     color: #333;
+    font-size: 18px;
 }
 
-#panel-edicion select {
+.panel-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.panel-group {
+    flex: 1;
+    min-width: 140px;
+}
+
+.panel-group.flex-2 {
+    flex: 2;
+    min-width: 220px;
+}
+
+.panel-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 5px;
+}
+
+#panel-edicion select,
+#panel-edicion input {
     width: 100%;
-    padding: 10px;
-    margin-top: 10px;
+    padding: 9px 10px;
     border-radius: 6px;
     border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+#panel-edicion input:focus {
+    outline: none;
+    border-color: #2f4e78;
+    box-shadow: 0 0 0 2px rgba(47, 78, 120, 0.2);
+}
+
+/* Coordenada escrita a mano que no es un número válido */
+#panel-edicion input.coordenada-invalida {
+    border-color: #e53e3e;
+    background-color: #fff5f5;
 }
 
 #panel-edicion button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
+    padding: 10px 18px;
     background-color: #aa5656;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: bold;
+    height: 38px;
 }
 
 #panel-edicion button:hover {
     background-color: #8e3f3f;
 }
 
+#panel-edicion button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* DESPLEGABLE DE EMPRENDIMIENTOS CON ÍCONOS (lo arma mapa.js sobre #select-emprendimiento) */
+.desplegable-emp {
+    position: relative;
+}
+
+#panel-edicion .desplegable-boton,
+#panel-edicion .desplegable-opcion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: #ffffff;
+    color: #333;
+    font-weight: normal;
+    text-align: left;
+    border-radius: 0;
+}
+
+#panel-edicion .desplegable-boton {
+    height: 38px;
+    padding: 4px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+#panel-edicion .desplegable-boton:hover,
+#panel-edicion .desplegable-boton[aria-expanded="true"] {
+    background: #ffffff;
+    border-color: #2d3748;
+}
+
+.desplegable-lista {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    z-index: 1100; /* por encima de los controles de Leaflet */
+    max-height: 300px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+#panel-edicion .desplegable-opcion {
+    height: auto;
+    padding: 8px 10px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+#panel-edicion .desplegable-opcion:last-child {
+    border-bottom: none;
+}
+
+#panel-edicion .desplegable-opcion:hover,
+#panel-edicion .desplegable-opcion:focus {
+    background: #ebf4ff;
+    outline: none;
+}
+
+#panel-edicion .desplegable-opcion[aria-selected="true"] {
+    background: #dbeafe;
+}
+
+.desplegable-emp img,
+.desplegable-sin-icono {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.desplegable-boton img {
+    width: 26px;
+    height: 26px;
+}
+
+.desplegable-texto {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.2;
+}
+
+.desplegable-nombre {
+    font-size: 14px;
+    color: #2d3748;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.desplegable-rubro {
+    font-size: 11px;
+    font-weight: bold;
+    color: #2b6cb0;
+    text-transform: uppercase;
+}
+
+.desplegable-boton .desplegable-rubro {
+    display: none; /* en el botón cerrado solo va el nombre, para que entre en 38px */
+}
+
+.desplegable-placeholder {
+    font-size: 14px;
+    color: #333;
+}
+
+.desplegable-estado {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.desplegable-estado.con {
+    background: #e6fffa;
+    color: #2f855a;
+}
+
+.desplegable-estado.sin {
+    background: #fff5f5;
+    color: #c53030;
+}
+
+.desplegable-flecha {
+    margin-left: auto;
+    color: #555;
+}
+
 #info-coordenadas {
     margin-top: 10px;
-    font-size: 14px;
-    color: #444;
+    font-size: 13px;
+    color: #666;
 }

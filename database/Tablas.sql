@@ -27,6 +27,8 @@ use ProyectoEmprendimientos2026;
 
 -- Publicacion_Etiqueta (idPublicacion, idEtiqueta (pk-fk))
 
+-- Producto (idProducto (PK), idEmprendimiento (FK), Nombre, Precio, Descripcion, PathFoto, Activo (Si-No), FechaAlta)
+
 -- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
 
 -- Credito (idCredito (PK), PathFormularioCredito, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
@@ -338,3 +340,26 @@ Fecha_Hora timestamp default current_timestamp,
 DireccionIP varchar(50) not null -- Para saber desde qué PC se hizo la acción
 );
 
+-- Producto (idProducto (PK), idEmprendimiento (FK), Nombre, Precio, Descripcion, PathFoto, Activo (Si-No), FechaAlta)
+create table if not exists Producto (
+idProducto int auto_increment primary key,
+idEmprendimiento int not null,
+Nombre varchar(100) not null,
+Precio decimal(12, 2) null,             -- null = "Consultar precio"
+Descripcion varchar(500) null,
+PathFoto varchar(1024) null,            -- ruta web de la foto (ej: /uploads/productos/1/producto-3-xxxx.jpg)
+Activo boolean not null default true,   -- false = oculto en el perfil público (la API no borra registros)
+FechaAlta date not null default (current_date),
+constraint fk_Producto_Emprendimiento
+	foreign key (idEmprendimiento) references Emprendimiento(idEmprendimiento)
+);
+
+-- NotificacionVista (idUsuario (PK, FK), Clave (PK), FechaVista)
+create table if not exists NotificacionVista (
+idUsuario int not null,
+Clave varchar(150) not null,            -- identifica la notificación (ej: pub-2-0-2026-10-17-votn1f)
+FechaVista timestamp not null default current_timestamp,
+primary key (idUsuario, Clave),
+constraint fk_NotificacionVista_Usuario
+	foreign key (idUsuario) references Usuario(idUsuario)
+);

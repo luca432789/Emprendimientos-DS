@@ -21,13 +21,15 @@ GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Publicacion TO 'ministerio_a
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Etiqueta TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Subsidio TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Credito TO 'ministerio_api'@'localhost';
+GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Producto TO 'ministerio_api'@'localhost';
 
--- tablas que cumplen permisos de insert: DatosSolicitudInicio, Auditoria, Expediente, Garante
+-- tablas que cumplen permisos de insert: DatosSolicitudInicio (update coordenadas), Auditoria, Expediente, Garante
 GRANT INSERT ON ProyectoEmprendimientos2026.DatosSolicitudInicio TO 'ministerio_api'@'localhost';
 GRANT UPDATE (EmprendimientoLatitud, EmprendimientoLongitud) ON ProyectoEmprendimientos2026.DatosSolicitudInicio TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Auditoria TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Expediente TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Garante TO 'ministerio_api'@'localhost';
+GRANT INSERT ON ProyectoEmprendimientos2026.NotificacionVista TO 'ministerio_api'@'localhost';
 
 -- Añadimos permisos especificos para ciertas tablas
 GRANT INSERT, DELETE ON ProyectoEmprendimientos2026.Publicacion_Etiqueta TO 'ministerio_api'@'localhost';

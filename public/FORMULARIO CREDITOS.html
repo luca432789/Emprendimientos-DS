@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camino de los emprendedores</title>
+    <link rel="stylesheet" href="CSS/Form. de inicio.css">
+    <link rel="stylesheet" href="CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="CSS/formulario-inicio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <script src="js/navbar.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promocion Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
+            <li><a href="#">Mapa</a></li>
+            <li><a href="Camino FORMULARIOS.html" class="active">Formularios</a></li>
+            <li><a href="Camino CONTACTOS.html">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="Camino LOG IN.html">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <main class="contenedor-formulario">
+        <h2>Formulario de Créditos Reintegrables</h2>
+        <p class="texto">Complete los campos del formulario oficial. Debe haber iniciado sesión como emprendedor: el pedido queda registrado a nombre de su emprendimiento y se descarga el PDF.</p>
+
+        <form id="formulario-digital" class="formulario-inicio">
+            <input type="hidden" name="tipoFormulario" value="Formulario de Creditos Reintegrables">
+
+            <!-- HOJA 1: CARÁTULA -->
+            <section class="hoja">
+                <div class="cuadro-expediente">
+                    <div><strong>EXPEDIENTE Nº</strong><span>Uso interno</span></div>
+                    <div><strong>PROYECTO Nº</strong><span>Uso interno</span></div>
+                </div>
+
+                <div class="encabezado-oficial">
+                    <p>SUBSECRETARIA DE DESARROLLO SOCIAL</p>
+                    <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL</p>
+                    <p class="gobierno">GOBIERNO DE LA PROVINCIA DE<br>SANTIAGO DEL ESTERO</p>
+                    <p>PLAN PROVINCIAL SANTIAGO PRODUCTIVO</p>
+                    <p class="presentacion">FORMULARIO DE PRESENTACIÓN DE PROYECTOS</p>
+                    <p class="tipo-formulario">CREDITOS REINTEGRABLES</p>
+                </div>
+
+                <h3 class="titulo-campos">DATOS DEL PROYECTO</h3>
+
+                <label class="etiqueta subrayada">Nombre del proyecto:</label>
+                <input type="text" name="nombreEmprendimiento" class="linea" maxlength="100" required aria-label="Nombre del proyecto">
+
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Localidad:</label>
+                        <input type="text" name="localidad" class="linea" maxlength="40" aria-label="Localidad">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Ingresos mensuales aproximados ($):</label>
+                        <input type="number" name="ingresosMensuales" class="linea" maxlength="60" aria-label="Ingresos mensuales aproximados ($):">
+                    </div>
+                </div>
+
+                <label class="etiqueta">Actividad principal / Rubro:</label>
+                <input type="text" name="rubro" class="linea" maxlength="150" aria-label="Actividad principal o rubro">
+
+                <h3 class="titulo-campos">DATOS DEL TITULAR</h3>
+
+                <label class="etiqueta">(Nombre y apellido)</label>
+                <input type="text" name="nombreApellido" class="linea" maxlength="80" required aria-label="Nombre y apellido">
+
+                <label class="etiqueta">(DNI / documento)</label>
+                <label class="extranjero-control"><input type="checkbox" name="documentoExtranjero" value="true"><span>Soy extranjero/a (pasaporte o documento del país)</span></label>
+                <input type="text" name="dniCuit" class="linea" required aria-label="DNI o documento extranjero" autocomplete="off">
+                <small>Argentino/a: 7 u 8 números. Extranjero/a: active la opción para ingresar letras.</small>
+
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Celular</label>
+                        <input type="tel" name="telefono" class="linea" aria-label="Celular" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" title="Ingrese 10 números, sin 0 inicial, 15 ni espacios">
+                        <small>10 dígitos, incluyendo característica; sin 0 ni 15.</small>
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Correo electrónico</label>
+                        <input type="email" name="correo" class="linea" maxlength="150" aria-label="Correo electrónico">
+                    </div>
+                </div>
+
+                <label class="etiqueta">Domicilio</label>
+                <input type="text" name="domicilio" class="linea" maxlength="200" aria-label="Domicilio">
+
+                <p class="parrafo">
+                    El que suscribe, en su carácter de titular del proyecto de referencia, afirma que los datos consignados en
+                    este formulario son correctos y completos, y que éste formulario del Plan Provincial Santiago Productivo, se ha
+                    confeccionado sin omitir ni falsear dato alguno que deba contener, siendo fiel expresión de la verdad como asimismo
+                    autentica/s la/s firma/s, comprometiéndose a informar en los plazos que fijan las normas vigentes, cualquier cambio en los mismos.
+                </p>
+
+                <p class="pie-declaracion">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA<br><span>RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</span></p>
+            </section>
+
+            <!-- HOJA 2: SOLICITUD -->
+            <section class="hoja">
+                <h3 class="titulo-campos">SOLICITUD DEL CRÉDITO</h3>
+
+                <label class="etiqueta">Monto solicitado ($)</label>
+                <input type="number" name="montoSolicitado" class="linea monto" min="1" max="9999999999.99" step="0.01" required aria-label="Monto solicitado">
+
+                <label class="etiqueta">Destino del crédito</label>
+                <textarea name="destinoCredito" class="linea renglones" rows="4" aria-label="Destino del crédito"></textarea>
+                <label class="etiqueta">Plan de devolución propuesto</label>
+                <textarea name="planDevolucion" class="linea renglones" rows="4" aria-label="Plan de devolución propuesto"></textarea>
+                <label class="etiqueta">Garantía / respaldo</label>
+                <textarea name="garantia" class="linea renglones" rows="4" aria-label="Garantía / respaldo"></textarea>
+
+                <h3 class="titulo-imagenes">Imágenes del emprendimiento</h3>
+                <p class="parrafo">Adjunte fotografías del emprendimiento y la documentación respaldatoria. Puede seleccionar varios archivos.</p>
+
+                <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar archivos</label>
+                <div class="zona-archivos">
+                    <input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple>
+                </div>
+                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos y 16 MB en total.</small>
+
+                <p class="parrafo revision">Antes de culminar el llenado del presente formulario, revise si todos los campos fueron completados de acuerdo a lo solicitado.</p>
+
+                <div class="acciones">
+                    <button type="submit" class="btn enviar">Enviar solicitud y descargar PDF</button>
+                </div>
+                <div id="resultado-formulario"></div>
+
+                <p class="pie-declaracion">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA<br><span>RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</span></p>
+            </section>
+        </form>
+    </main>
+
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economia</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educacion, Ciencia y Tecnologia</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Publicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Produccion</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aqui]
+        </div>
+    </footer>
+
+    <script src="js/formulario-digital.js"></script>
+</body>
+</html>

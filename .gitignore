@@ -3,3 +3,9 @@ node_modules/
 .DS_Store
 .venv/
 .vscode/
+# Fotos que suben los emprendedores (contenido, no codigo)
+uploads/publicaciones/
+uploads/productos/
+# PDFs de pedidos de subsidio y credito que generan los formularios (contenido, no codigo)
+uploads/subsidios/
+uploads/creditos/
