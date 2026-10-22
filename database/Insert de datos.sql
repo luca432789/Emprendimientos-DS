@@ -1,4 +1,4 @@
--- use ProyectoEmprendimientos2026;
+use ProyectoEmprendimientos2026;
 
 -- PARA REALIZAR PRUEBA DE AUDITORIA EJECUTAR AMBAS LINEAS DE ABAJO
 SET @usuario_id = 10; -- El ID del empleado que está logueado en ese momento
@@ -11,13 +11,6 @@ SET @usuario_ip = '222.555.33.4';
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- EMPLEADO ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-/*insert into Empleado (Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo, Activo)
-values ('Social2', 'Stefanici2', '20100007', 'Barrio domicilio social 2', '3856000007', 'social2@gmail.com', 'Social', true); -- Empleado 10 social
- insert into Empleado (Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo, Activo)
-values ('Admin2', 'Santillan', '20100001', 'Barrio domicilio admin 1', '3856000001', 'admin2@gmail.com', 'Administrador', true), -- ADMIN 2
-('Tecnico2', 'Ibañes2', '20100002', 'Barrio domicilio tecnico 2', '3856000002', 'tecnico2@gmail.com', 'Técnico', False), -- Tecnico
-('Mesa2', 'Vasquez2', '20100011', 'Barrio domicilio Mesa 2', '3856000011', 'Mesa2@gmail.com', 'Mesa de Entrada', true); -- Mesa
-*/
 -- Empleado (idEmpleado (PK), Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo (Mesa de Entrada - Técnico - Social - Administrador), Activo (Si-No))
  insert into Empleado (Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo, Activo)
 values ('Sebastian', 'Santillan', '20987654', 'Av. Belgrano 550, Edificio A, Piso 3', '3855112233', 'empleaSebas.santill@gmail.com', 'Administrador', true), -- Empleado 1 admin
@@ -46,14 +39,14 @@ values ('Sebastian', 'Santillan', '20987654', 'Av. Belgrano 550, Edificio A, Pis
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- SolicitudInicio -----------------------------------------------------------------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
 -- SolicitudInicio (DireccionPDF, FechaRecibidoMesa)
-insert into SolicitudInicio (DireccionPDF, FechaRecibidoMesa)
-values ('/uploads/solicitudesinicio/SolicitudInicialFormIni01.pdf', '2010-01-15'), -- 1
-('/uploads/solicitudesinicio/SolicitudInicialFormIni02.pdf', default), -- 2 
-('/uploads/solicitudesinicio/SolicitudInicialFormIni03.pdf', '2011-01-28'), -- 3 
-('/uploads/solicitudesinicio/SolicitudInicialFormIni04.pdf', '2012-05-18'), -- 4 
-('/uploads/solicitudesinicio/SolicitudInicialFormIni05.pdf', '2015-04-08'); -- 5 
+insert into SolicitudInicio (DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea, FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor, idEmpleadoSocRevisor, AprobacionArea, EnvioMinistro, FechaEnvioMinistro, AprobacionMinistro, FechaResolucionMin)
+values ('/uploads/solicitudesinicio/SolicitudInicialFormIni01.pdf', '2010-01-15', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 1
+('/uploads/solicitudesinicio/SolicitudInicialFormIni02.pdf', '2010-01-15', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 2 
+('/uploads/solicitudesinicio/SolicitudInicialFormIni03.pdf', '2011-01-28', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 3 
+('/uploads/solicitudesinicio/SolicitudInicialFormIni04.pdf', '2012-05-18', '2026-9-01', 2, '2026-9-15', '2026-9-25', 6, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 4 
+('/uploads/solicitudesinicio/SolicitudInicialFormIni05.pdf', '2015-04-08', '2026-9-01', 2, '2026-9-15', '2026-9-25', 6, 11, True, 1, '2026-9-21', True, '2026-10-03'); -- 5 
 /*-- SolicitudInicio (DireccionPDF, FechaRecibido, EstadoRevisionTec, FechaInicioTec, FechaFinTec, idEmpleadoTecRevisor (FK), AprobacionTec)
 insert into SolicitudInicio (DireccionPDF, DirectorioFotos, FechaRecibido, EstadoRevisionTec, FechaInicioTec, FechaFinTec, idEmpleadoTecRevisor, AprobacionTec)
 values ('C:\Solicitudes\SolicitudInicial\FormIni04.pdf', 'C:\Fotos\FotosSolicitudInicial\FormIni04', '2010-01-15', 1, '2010-01-18', default, 1, default), -- 4
@@ -68,18 +61,19 @@ values ('C:\Solicitudes\SolicitudInicial\FormIni06.pdf', 'C:\Fotos\FotosSolicitu
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- DatosSolicitudInicio -----------------------------------------------------------------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
--- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
-insert into DatosSolicitudInicio (idDatosSolicitudInicio, PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio)
-values (1, 'Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com',
-'San martin del Prado', '256', 'Los palermos', 'Banda', true, 'Bombos Artesanal', 'Subsidio', 1),
-(2, 'Emprendedor2', 'Luca2', '46000001', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 490', '3856000001', 'Emprendedor2prueba@gmail.com',
-'San claudio', '200', 'Los claudios', 'Choya', true, 'Telares artesanal', 'Subsidio', 2),
-(3, 'Emprendedor3', 'rios3', '46000002', 'Banda', 'Chaupi Pozo', 'Chaupi Pozo, B. los pozo entre pellegrini 100 y san jose', '3856000002', 'Emprendedor3prueba@gmail.com',
-'Carbon del Prado', '256', 'Los carbones', 'Carbon', true, 'Muebles', 'Subsidio', 3),
-(4, 'Alberto', 'Sanchez', '46000003', 'Juan Felipe Ibarra', 'El Colorado', 'El colorado, B. los colorados entre x y x9', '3856000003', 'Emprendedor4prueba@gmail.com',
-'Maderos', '256', 'Los Maderas', 'Corteza', true, 'Carpinteria General', 'Credito', 4),
-(5, 'Alberto', 'Sanchez', '46000004', 'Choya', 'Choya', 'Choya, B. los choya entre y x y', '3856000004', 'Emprendedor5prueba@gmail.com',
-'San bombo', '306', 'Los bombo', 'Bomba', true, 'Bombos Artesanal', 'Subsidio', 5); -- 1
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoNombre, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad, EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, EmprendimientoLatitud, EmprendimientoLongitud, idSolicitudInicio (fk))
+insert into DatosSolicitudInicio (PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, 
+EmprendimientoNombre, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad, EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, EmprendimientoLatitud, EmprendimientoLongitud, idSolicitudInicio)
+values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 489', '7836231312', 'AlbertoSanche@gmail.com',
+'Los bombitos de Sanchez', 'San martin del Prado', '256', 'Los palermos', 'Banda', 'La Banda', 'Fabricacion de Bombos artesanalmente con cuero de cabra', true, 'Bombos Artesanal', 'Subsidio', '-27.72230287', '-64.22430233', 1),
+('Emprendedor2', 'Luca2', '46000001', 'Banda', 'Ardiles', 'Ardiles, B. los palermos entre San Martin del Prado y pellegrini 490', '3856000001', 'Emprendedor2prueba@gmail.com',
+'Los telares de Virginia', 'San claudio', '200', 'Los claudios', 'Jiménez', 'Los Jimenez', 'Fabricacion de telares de decoracion, ponchos gorros, etc.', true, 'Telares artesanal', 'Subsidio', '-26.841993', '-64.451669', 2),
+('Emprendedor3', 'rios3', '46000002', 'Banda', 'Chaupi Pozo', 'Chaupi Pozo, B. los pozo entre pellegrini 100 y san jose', '3856000002', 'Emprendedor3prueba@gmail.com',
+'Muebles agus', 'Carbon del Prado', '256', 'Los carbones', 'Rivadavia', 'La Rivas', 'Fabricacion de Muebles de roble', true, 'Muebles', 'Subsidio', '-29.67199055', '-62.13476573', 3),
+('Emprendedor4', 'Rio', '46000003', 'Juan Felipe Ibarra', 'El Colorado', 'El colorado, B. los colorados entre x y x9', '3856000003', 'Emprendedor4prueba@gmail.com',
+'Carpinteria los angeles', 'Maderos', '256', 'Los Maderas', 'Ojo de Agua', 'El ojo', 'Fabricacion de decoraciones y más de madera.', true, 'Carpinteria General', 'Credito', '-29.49306422', '-63.69408629', 4),
+('Emprendedor5', 'Tauros', '46000004', 'Choya', 'Choya', 'Choya, B. los choya entre y x y', '3856000004', 'Emprendedor5prueba@gmail.com',
+'Bombos Tauros', 'San bombo', '306', 'Los bombo', 'Choya', 'Los Choyas', 'Fabricacion de Bombos de cuero de vaca', true, 'Bombos Artesanal', 'Subsidio', '-28.49195760', '-64.85416639', 5); -- 1
 
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- RUBRO ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -97,10 +91,10 @@ values ('Bombos artesanal', '/uploads/IconoMapa/Bombo.png'), -- 1
 -- Emprendimiento (idEmprendimiento (PK), Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad, EnMarcha (Si-No), ActividadPrincipal, Latitud, Longitud, idSolicitudInicio (FK), idRubro (fk))
 insert into Emprendimiento (Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad, EnMarcha, ActividadPrincipal, Latitud, Longitud, idSolicitudInicio, idRubro)
 values ('Los bombitos de Sanchez', 'T78-PO-09', 'San martin del Prado', '256', 'Los palermos', 'Banda', 'La Banda', true, 'Fabricacion de Bombos: Fabricar artesanalmente bombos de cuero de cabra', '-27.72230287381239', '-64.22430232619693', 1, 1), -- 1
-('Los telares de Virginia', 'T78-PO-10', 'San claudio', '200', 'Los claudios', 'Choya', 'La choya', true, 'Fabricacion de telares de decoracion, ponchos gorros, etc.', '-27.736658479583824', '-64.23177600714162', 2, 2), -- 2
-('Muebles agus', 'T78-CA-02', 'Carbon del Prado', '256', 'Los carbones', 'Carbon', 'La carbon', true, 'Fabricacion de Muebles de roble', '-29.671990545318828', '-62.13476573494931', 3, 3), -- 3
-('Carpinteria los angeles', 'T78-CE-04', 'Maderos', '256', 'Los Maderas', 'Corteza', 'La raiz', true, 'Fabricacion de decoraciones y más de madera.', '-29.493064224666536', '-63.69408629421396', 4, 4), -- 4
-('Bombos Tauros', 'T78-SI-11', 'San bombo', '306', 'Los bombo', 'Bomba', 'La Bamba', true, 'Fabricacion de Bombos de cuero de vaca', '-28.491957598964333', '-64.85416639030281', 5, 1); -- 5
+('Los telares de Virginia', 'T78-PO-10', 'San claudio', '200', 'Los claudios', 'Jiménez', 'Los Jimenez', true, 'Fabricacion de telares de decoracion, ponchos gorros, etc.', '-26.841993', '-64.451669', 2, 2), -- 2
+('Muebles agus', 'T78-CA-02', 'Carbon del Prado', '256', 'Los carbones', 'Rivadavia', 'La Rivas', true, 'Fabricacion de Muebles de roble', '-29.67199055', '-62.13476573', 3, 3), -- 3	
+('Carpinteria los angeles', 'T78-CE-04', 'Maderos', '256', 'Los Maderas', 'Ojo de Agua', 'El ojo', true, 'Fabricacion de decoraciones y más de madera.', '-29.49306422', '-63.69408629', 4, 4), -- 4
+('Bombos Tauros', 'T78-SI-11', 'San bombo', '306', 'Los bombo', 'Choya', 'Los Choyas', true, 'Fabricacion de Bombos de cuero de vaca', '-28.49195760', '-64.85416639', 5, 1); -- 5
 /*('Los ponchos ponchin', 2, 'Pellegrini', 300, 'Jerarquizado Nacional', 'Jimenez', 'Pozo Hondo', false, 'Fabricacion de ponchos', 'Fabricar artesanalmente ponchos de multiples colores', '574QRGQ2+272', 5), -- 2
 ('Taller El Nogal', 3, 'Ruta 34', 15, 'El Algarrobo', 'Atamisqui', 'Estación Atamisqui', true, 'Carpintería de Arte', 'Elaboración de tallas, marcos y pequeños muebles de madera de algarrobo y nogal', '574R7V4G+X64', 6), -- 3
 ('Tapicería La Esmeralda', 4, 'Calle Maipú', 55, 'Centro Termal', 'Río Hondo', 'Las Termas de Río Hondo', true, 'Servicios de Tapicería', 'Restauración y retapizado de muebles antiguos y tapizado de vehículos', '575R8X4M+C23', 7), -- 4
@@ -128,7 +122,7 @@ values ('Emprendedor2', 'Luca2', '46000001', 'Banda', 'Ardiles', 'Ardiles, B. lo
 -- USUARIO ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Usuario EMPLEADO -----------------------------------------------
-/*insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado) -- contraseña 12 caracteres: 1 ABC, 1 abc, 1 Num, 1 CaracEspecial (ej: @, $, !, %, *, ?, &, -).
+insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado) -- contraseña 12 caracteres: 1 ABC, 1 abc, 1 Num, 1 CaracEspecial (ej: @, $, !, %, *, ?, &, -).
 values ('empleaSebas.santill@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfGfIcnq180L0036NaxCgymhO', 'Administrador', true, null, 1), -- Empleado 1 (admin) contra: 1234sEBASss--
 ('admin2@gmail.com', '$2b$10$erGWSB9zNBKnO26HXEBeM.3NTItonfUKwOO6HZM8KwSotx3PFM.Y2', 'Administrador', true, null, 2), -- Empleado 2 (admin) contra: admiN1234@-2
 --
@@ -150,16 +144,16 @@ values ('empleaSebas.santill@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfG
 ('Mesa3@gmail.com', '$2b$10$YvYeJ/9uw3NycUjSLJb./OS1VD4tyxi/Kg.mo/MNXb/OzWxVR9CkK', 'Empleado de Mesa', true, null, 16), -- Empleado 16 (de Mesa) contra: MesA123!4@-3
 ('Mesa4@gmail.com', '$2b$10$YvYeJ/9uw3NycUjSLJb./OS1VD4tyxi/Kg.mo/MNXb/OzWxVR9CkK', 'Empleado de Mesa', true, null, 17), -- Empleado 17 (de Mesa) contra: MesA123!4@-4
 ('Mesa5@gmail.com', '$2b$10$YvYeJ/9uw3NycUjSLJb./OS1VD4tyxi/Kg.mo/MNXb/OzWxVR9CkK', 'Empleado de Mesa', true, null, 18); -- Empleado 18 (de Mesa) contra: MesA123!4@-5
-*/
+
 
 -- Usuario EMPRENDEDOR --------------------------------------------
 insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
 values ('AlbertoSanche@gmail.com', '$2b$10$dZcQwXODcXg.o0Pz.XdWDuHMthBjFyGMCojygNN/Wf.gYbb.EoJ/i', 'Emprendedor', true, 1, null); -- Emprendedor 1 contra: 1234sANCHE--
-/*insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
-values ('Emprendedor2prueba@gmail.com', 'contraseña', 'Emprendedor', true, 2, null), -- Emprendedor 2 1234Empre--2
-('Emprendedor3prueba@gmail.com', 'contraseña', 'Emprendedor', true, 3, null), -- Emprendedor 3 1234Empre--3
-('Emprendedor4prueba@gmail.com', 'contraseña', 'Emprendedor', true, 4, null), -- Emprendedor 4 1234Empre--4
-('Emprendedor5prueba@gmail.com', 'contraseña', 'Emprendedor', true, 5, null), -- Emprendedor 5 1234Empre--5
+insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
+values ('Emprendedor2prueba@gmail.com', '$2b$10$FWxrKuusrwuIVBWMlKWR0ury8TTFvC1bdnHz5LGaFbKBIgF9MzP7y', 'Emprendedor', true, 2, null), -- Emprendedor 2 1234Emprend--2
+('Emprendedor3prueba@gmail.com', '$2b$10$FWxrKuusrwuIVBWMlKWR0ury8TTFvC1bdnHz5LGaFbKBIgF9MzP7y', 'Emprendedor', true, 3, null), -- Emprendedor 3 1234Emprend--2
+('Emprendedor4prueba@gmail.com', '$2b$10$FWxrKuusrwuIVBWMlKWR0ury8TTFvC1bdnHz5LGaFbKBIgF9MzP7y', 'Emprendedor', true, 4, null), -- Emprendedor 4 1234Emprend--2
+('Emprendedor5prueba@gmail.com', '$2b$10$FWxrKuusrwuIVBWMlKWR0ury8TTFvC1bdnHz5LGaFbKBIgF9MzP7y', 'Emprendedor', true, 5, null); -- Emprendedor 5 1234Emprend--2
 /*('Emprendedor6prueba@gmail.com', 'contraseña', 'Emprendedor', true, 6, null), -- Emprendedor 6 1234Empre--6
 ('Emprendedor7prueba@gmail.com', 'contraseña', 'Emprendedor', false, 7, null), -- Emprendedor 7 1234Empre--7
 ('Emprendedor8prueba@gmail.com', 'contraseña', 'Emprendedor', true, 8, null), -- Emprendedor 8 1234Empre--8
@@ -175,8 +169,7 @@ values ('Madera', true),
 ('Reutilizacion', true);
 
 
-/*
-insert into Subsidio (PathFormularioSub, monto, FechaRecibido, Aprobado, FechaAprobacion, PathDirectorioFacturas, FacturasEntregadas, FechaFacturasValidadas, PuestaMarchaAcreditada, FechaPuestaMarcha, idEmprendimiento, idEmpleadoRevisor)
+/*insert into Subsidio (PathFormularioSub, monto, FechaRecibido, Aprobado, FechaAprobacion, PathDirectorioFacturas, FacturasEntregadas, FechaFacturasValidadas, PuestaMarchaAcreditada, FechaPuestaMarcha, idEmprendimiento, idEmpleadoRevisor)
 values ('C:\Solicitudes\Subsidio\Formularios\FormSub01.pdf', 500000.00, '2010-03-20', true, '2010-04-01', 'C:\Solicitudes\Subsidio\Facturas\Formulario01', true, '2010-04-20', true, '2010-05-01', 1, 1), -- 1. Aprobado (Empr 1 - Empleado 1)
 ('C:\Solicitudes\Subsidio\Formularios\FormSub02.pdf', 9500000.00, '2010-03-21', false, '2010-04-01', null, null, null, null, null, 1, 2), -- 2. Denegado (Empr 1 - Empleado 2)
 ('C:\Solicitudes\Subsidio\Formularios\FormSub03.pdf', 400000.00, '2010-04-21', null, null, null, null, null, null, null, 2, null), -- 3. Sin revisar (Empr 2)
@@ -205,16 +198,12 @@ values ('C:\Solicitudes\Credito\Formularios\FormSub01.pdf', 200000.00, '2010-05-
 ('C:\Solicitudes\Credito\Formularios\FormCredito06.pdf', 800000.00, '2011-04-01', false, '2011-04-15', null, null, null, null, null, 5, 5), -- 6. Denegado (Empr 5 - Empleado 5)
 ('C:\Solicitudes\Credito\Formularios\FormCredito07.pdf', 450000.00, '2011-05-01', null, null, null, null, null, null, null, 6, null), -- 7. Sin Revisar (Empr 6)
 ('C:\Solicitudes\Credito\Formularios\FormCredito08.pdf', 600000.00, '2011-06-01', null, null, null, null, null, null, null, 7, null); -- 8. Sin Revisar (Empr 7)
-
--- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
-insert into Expediente (NroExpediente, idEmprendimiento)
-values (101,1),
-(102,2),
-(103,3),
-(104,4),
-(105,5),
-(106,6),
-(107,7),
-(108,8);
 */
 
+-- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+insert into Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+values ('EX-2026-FORMINICIO-BAND-001', 1, '2026-09-01 02:42:40', 14),
+('EX-2026-FORMINICIO-JIM-002', 2, '2026-09-01 02:42:40', 14),
+('EX-2026-FORMINICIO-RIV-003', 3, '2026-09-01 02:42:40', 15),
+('EX-2026-FORMINICIO-OdA-004', 4, '2026-09-01 02:42:40', 15),
+('EX-2026-FORMINICIO-CHY-005', 5, '2026-09-01 02:42:40', 14);
