@@ -63,16 +63,16 @@
                 <div class="fila">
                     <div class="columna">
                         <label class="etiqueta">Localidad:</label>
-                        <input type="text" name="localidad" class="linea" maxlength="40" aria-label="Localidad">
+                        <input type="text" name="localidad" class="linea" maxlength="40" required aria-label="Localidad">
                     </div>
                     <div class="columna">
-                        <label class="etiqueta">Ingresos mensuales aproximados ($):</label>
-                        <input type="number" name="ingresosMensuales" class="linea" maxlength="60" aria-label="Ingresos mensuales aproximados ($):">
+                        <label class="etiqueta">Departamento:</label>
+                        <input type="text" name="departamento" class="linea" maxlength="40" required aria-label="Departamento">
                     </div>
                 </div>
 
-                <label class="etiqueta">Actividad principal / Rubro:</label>
-                <input type="text" name="rubro" class="linea" maxlength="150" aria-label="Actividad principal o rubro">
+                <label class="etiqueta">Actividad principal:</label>
+                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Actividad principal">
 
                 <h3 class="titulo-campos">DATOS DEL TITULAR</h3>
 
@@ -84,21 +84,6 @@
                 <input type="text" name="dniCuit" class="linea" required aria-label="DNI o documento extranjero" autocomplete="off">
                 <small>Argentino/a: 7 u 8 números. Extranjero/a: active la opción para ingresar letras.</small>
 
-                <div class="fila">
-                    <div class="columna">
-                        <label class="etiqueta">Celular</label>
-                        <input type="tel" name="telefono" class="linea" aria-label="Celular" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" title="Ingrese 10 números, sin 0 inicial, 15 ni espacios">
-                        <small>10 dígitos, incluyendo característica; sin 0 ni 15.</small>
-                    </div>
-                    <div class="columna">
-                        <label class="etiqueta">Correo electrónico</label>
-                        <input type="email" name="correo" class="linea" maxlength="150" aria-label="Correo electrónico">
-                    </div>
-                </div>
-
-                <label class="etiqueta">Domicilio</label>
-                <input type="text" name="domicilio" class="linea" maxlength="200" aria-label="Domicilio">
-
                 <p class="parrafo">
                     El que suscribe, en su carácter de titular del proyecto de referencia, afirma que los datos consignados en
                     este formulario son correctos y completos, y que éste formulario del Plan Provincial Santiago Productivo, se ha
@@ -109,37 +94,98 @@
                 <p class="pie-declaracion">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA<br><span>RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</span></p>
             </section>
 
-            <!-- HOJA 2: SOLICITUD -->
+            <!-- HOJA 2: BIENES PROPIOS Y ACTIVO FIJO -->
             <section class="hoja">
-                <h3 class="titulo-campos">SOLICITUD DEL CRÉDITO</h3>
-
-                <label class="etiqueta">Monto solicitado ($)</label>
-                <input type="number" name="montoSolicitado" class="linea monto" min="1" max="9999999999.99" step="0.01" required aria-label="Monto solicitado">
-
-                <label class="etiqueta">Destino del crédito</label>
-                <textarea name="destinoCredito" class="linea renglones" rows="4" aria-label="Destino del crédito"></textarea>
-                <label class="etiqueta">Plan de devolución propuesto</label>
-                <textarea name="planDevolucion" class="linea renglones" rows="4" aria-label="Plan de devolución propuesto"></textarea>
-                <label class="etiqueta">Garantía / respaldo</label>
-                <textarea name="garantia" class="linea renglones" rows="4" aria-label="Garantía / respaldo"></textarea>
-
-                <h3 class="titulo-imagenes">Imágenes del emprendimiento</h3>
-                <p class="parrafo">Adjunte fotografías del emprendimiento y la documentación respaldatoria. Puede seleccionar varios archivos.</p>
-
-                <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar archivos</label>
-                <div class="zona-archivos">
-                    <input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple>
+                <h3 class="titulo-campos">1. BIENES PROPIOS APORTADOS PARA LA EJECUCIÓN DEL PROYECTO</h3>
+                <p class="parrafo">Mencione las maquinarias, herramientas, inmuebles e insumos y el valor en su estado actual.</p>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial">
+                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Antigüedad</th><th>Monto estimado</th></tr></thead>
+                        <tbody id="tabla-bienes-propios" data-tabla-lineas="bienesPropios" data-cantidad="10" data-columnas="bien,cantidad,antiguedad,montoEstimado"></tbody>
+                    </table>
                 </div>
-                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos y 16 MB en total.</small>
 
-                <p class="parrafo revision">Antes de culminar el llenado del presente formulario, revise si todos los campos fueron completados de acuerdo a lo solicitado.</p>
-
-                <div class="acciones">
-                    <button type="submit" class="btn enviar">Enviar solicitud y descargar PDF</button>
+                <h3 class="titulo-campos">2. DESTINO DEL CRÉDITO</h3>
+                <p class="parrafo">Mencione los bienes solicitados en el proyecto.</p>
+                <h4>a) ACTIVO FIJO (maquinarias y herramientas)</h4>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial">
+                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                        <tbody id="tabla-activo-fijo" data-tabla-lineas="activoFijo" data-cantidad="7" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                    </table>
                 </div>
+            </section>
+
+            <!-- HOJA 3: BIENES DE USO Y COSTO TOTAL -->
+            <section class="hoja">
+                <h4>b) BIENES DE USO (materia prima e insumos)</h4>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial">
+                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                        <tbody id="tabla-bienes-uso" data-tabla-lineas="bienesUso" data-cantidad="9" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                    </table>
+                </div>
+
+                <h4>c) TOTAL SOLICITADO</h4>
+                <p>La suma de los bienes solicitados: <strong id="total-solicitado">$ 0,00</strong></p>
+
+                <h3 class="titulo-campos">COSTO TOTAL DEL PROYECTO</h3>
+                <p class="parrafo">Tenga en cuenta un ciclo de producción completo.</p>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial tabla-costos">
+                        <thead><tr><th></th><th>Aporte propio ($)</th><th>Solicitado ($)</th></tr></thead>
+                        <tbody>
+                            <tr><th>Activo fijo (maquinarias y herramientas)</th><td><input type="number" name="aporteActivoFijo" min="0" step="0.01" aria-label="Aporte propio para activo fijo"></td><td><output id="solicitado-activo-fijo">0,00</output></td></tr>
+                            <tr><th>Bienes de uso (insumo y materia prima)</th><td><input type="number" name="aporteBienesUso" min="0" step="0.01" aria-label="Aporte propio para bienes de uso"></td><td><output id="solicitado-bienes-uso">0,00</output></td></tr>
+                            <tr><th>Mano de obra</th><td><input type="number" name="aporteManoObra" min="0" step="0.01" aria-label="Aporte propio en mano de obra"></td><td class="celda-no-aplica"></td></tr>
+                            <tr><th>COSTO TOTAL DEL PROYECTO</th><td><output id="costo-total-propio">0,00</output></td><td><output id="costo-total-solicitado">0,00</output></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- HOJA 7: DATOS Y DOCUMENTACIÓN DEL GARANTE -->
+            <section class="hoja">
+                <h3 class="titulo-campos">DOCUMENTACIÓN DEL GARANTE</h3>
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Nombre completo</label>
+                        <input type="text" name="nombreGarante" class="linea" maxlength="100" required aria-label="Nombre completo del garante">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">DNI</label>
+                        <input type="text" name="dniGarante" class="linea" inputmode="numeric" maxlength="8" pattern="[0-9]{7,8}" required aria-label="DNI del garante">
+                    </div>
+                </div>
+                <label class="etiqueta">CUIL</label>
+                <input type="text" name="cuilGarante" class="linea" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" required aria-label="CUIL del garante">
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Teléfono</label>
+                        <input type="tel" name="telefonoGarante" class="linea" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required aria-label="Teléfono del garante">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Correo electrónico</label>
+                        <input type="email" name="correoGarante" class="linea" maxlength="150" required aria-label="Correo electrónico del garante">
+                    </div>
+                </div>
+                <label class="etiqueta">Confirmar correo electrónico</label>
+                <input type="email" name="correoGaranteConfirmacion" class="linea" maxlength="150" required aria-label="Confirmación del correo del garante">
+                <small>Los dos correos deben coincidir y el dominio debe recibir correo.</small>
+
+                <h3 class="titulo-imagenes">Documentación respaldatoria del garante</h3>
+                <p class="parrafo">Adjunte una imagen JPG/PNG o un PDF para cada documento solicitado.</p>
+                <div class="documentos-garante">
+                    <label class="etiqueta">Fotocopia de DNI <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="DNI" required></label>
+                    <label class="etiqueta">Constancia de CUIL <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="CUIL" required></label>
+                    <label class="etiqueta">Recibo de sueldo <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Recibo de sueldo" required></label>
+                    <label class="etiqueta">Certificado de residencia <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Certificado de residencia" required></label>
+                    <label class="etiqueta">Boleta de impuesto <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Boleta de impuesto" required></label>
+                </div>
+
+                <p class="parrafo revision">Revise todos los campos y documentos antes de enviar la solicitud.</p>
+                <div class="acciones"><button type="submit" class="btn enviar">Enviar solicitud y descargar PDF</button></div>
                 <div id="resultado-formulario"></div>
-
-                <p class="pie-declaracion">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA<br><span>RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</span></p>
             </section>
         </form>
     </main>

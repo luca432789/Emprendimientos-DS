@@ -9,3 +9,5 @@ uploads/productos/
 # PDFs de pedidos de subsidio y credito que generan los formularios (contenido, no codigo)
 uploads/subsidios/
 uploads/creditos/
+uploads/solicitudesinicio/
+tmp/

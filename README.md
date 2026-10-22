@@ -11,7 +11,12 @@ Para hacer funcionar este proyecto de forma local, seguí estos pasos:
 ```bash
    npm install
 ```
-3. **Configurar el archivo `.env`**:
+3. **Iniciar el servidor desde Visual Studio Code**: Abrí una terminal nueva en la raíz del proyecto y ejecutá:
+```bash
+   npm start
+```
+El servidor quedará disponible en `http://localhost:3000`. Para desarrollo con reinicio automático, ejecutá `npm run dev`. Live Server sirve páginas estáticas, pero no inicia Express ni permite generar los PDF por sí solo.
+4. **Configurar el archivo `.env`**:
    Creá un archivo llamado `.env` en la raíz del proyecto y configurá las variables con tus datos locales. Pedile al equipo las credenciales del entorno de desarrollo. Ejemplo de estructura:
 ```env
    PORT=3000
@@ -21,7 +26,7 @@ Para hacer funcionar este proyecto de forma local, seguí estos pasos:
    DB_NAME=ProyectoEmprendimientos2026
    JWT_SECRET=****
 ```
-4. **Instalar Nodemon (Opcional):**
+5. **Instalar Nodemon (Opcional):**
    Para el reinicio automatico del servidor al cambiar configuraciones de funciones, conexion, etc. instalar nodemon de manera global, ejecutando en la terminal:
 ```bash
    npm install -g nodemon

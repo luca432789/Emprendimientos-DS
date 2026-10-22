@@ -14,6 +14,10 @@
     font-family: inherit;
 }
 
+.formulario-inicio [hidden] {
+    display: none !important;
+}
+
 .formulario-inicio .hoja {
     background: white;
     padding: 70px 60px 45px;
@@ -56,6 +60,46 @@
     text-align: justify;
     line-height: 1.75;
     margin: 18px 0 8px;
+}
+
+.formulario-inicio .texto-oficial {
+    line-height: 1.7;
+    padding-left: 30px;
+}
+
+.formulario-inicio .texto-oficial li {
+    margin: 8px 0;
+}
+
+.formulario-inicio .fecha-automatica {
+    display: inline-block;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.formulario-inicio .campo-firma,
+.formulario-inicio .campo-responsable {
+    display: grid;
+    grid-template-columns: minmax(90px, auto) 1fr;
+    align-items: end;
+    gap: 8px;
+    margin-top: 16px;
+    font-weight: 600;
+}
+
+.formulario-inicio .campo-firma .linea,
+.formulario-inicio .campo-responsable .linea {
+    min-width: 0;
+    margin-top: 0;
+}
+
+.formulario-inicio .firmas-en-linea {
+    align-items: end;
+}
+
+.formulario-inicio .campo-fecha-firma {
+    margin: 16px 0 0;
+    font-size: 12px;
 }
 
 .formulario-inicio .sangria {
@@ -205,6 +249,96 @@
     padding: 14px 16px;
     border: 1px dashed #aaa;
     border-radius: 6px;
+}
+
+.formulario-inicio .tabla-responsive {
+    width: 100%;
+    overflow-x: auto;
+    margin: 12px 0 24px;
+}
+
+.formulario-inicio .tabla-oficial {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-family: 'Times New Roman', serif;
+    font-size: 12px;
+}
+
+.formulario-inicio .tabla-oficial th,
+.formulario-inicio .tabla-oficial td {
+    border: 1px solid #2f4e78;
+    padding: 4px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.formulario-inicio .tabla-oficial thead th {
+    height: 28px;
+    font-weight: normal;
+}
+
+.formulario-inicio .tabla-oficial tbody tr:not(.fila-costo) {
+    height: 38px;
+}
+
+.formulario-inicio .tabla-oficial input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 4px 3px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: center;
+    font-size: 12px;
+}
+
+.formulario-inicio .tabla-oficial input:focus {
+    outline: 1px solid var(--azul);
+    background: #fff;
+}
+
+.formulario-inicio .tabla-costos th:first-child {
+    width: 48%;
+    text-align: left;
+}
+
+.formulario-inicio .tabla-costos td {
+    width: 26%;
+}
+
+.formulario-inicio .tabla-costos tbody th {
+    font-weight: normal;
+}
+
+.formulario-inicio .tabla-costos output {
+    display: block;
+    min-height: 20px;
+    text-align: right;
+    padding: 2px 5px;
+}
+
+.formulario-inicio .tabla-costos .celda-no-aplica {
+    background: #d6d6d6;
+}
+
+.formulario-inicio .documentos-garante {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 20px;
+}
+
+.formulario-inicio .documentos-garante input[type='file'] {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+}
+
+@media (max-width: 650px) {
+    .formulario-inicio .documentos-garante {
+        grid-template-columns: 1fr;
+    }
 }
 
 .formulario-inicio .revision {
