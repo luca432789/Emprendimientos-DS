@@ -96,14 +96,30 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino LOG IN.html'));
 });
 
-// 6. Ruta para Emprendedor
-app.get('/Emprendedor', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'CdE-Perfil Emprendedor.html'));
-});
-
-// 7. Ruta para Empleado
+// 6. Ruta para Empleado
 app.get('/Empleado', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA EMPLEADO', 'Empleado view.html'));
+});
+
+// 7. Ruta para Emprendedor Perfil
+app.get('/Emprendedor-Perfil', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'CdE-Perfil Emprendedor.html'));
+});
+// 8. Ruta para Emprendedor Publicaciones
+app.get('/Emprendedor-Publicaciones', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Publicaciones.html'));
+});
+// 9. Ruta para Emprendedor Productos
+app.get('/Emprendedor-Productos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Productos.html'));
+});
+// 10. Ruta para Emprendedor Contacto
+app.get('/Emprendedor-Contacto', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Contacto.html'));
+});
+// 11. Ruta para Emprendedor Fotos
+app.get('/Emprendedor-Fotos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Fotos.html'));
 });
 
 // ==========================================

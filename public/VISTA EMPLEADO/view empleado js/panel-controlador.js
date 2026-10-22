@@ -488,6 +488,13 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         fetchPublicacionesEnEspera();
     }
     // ======================================================================
+    // REGISTRAR EMPRENDIMIENTO (carga histórica de emprendimientos ya aprobados)
+    // ======================================================================
+    else if (codigoSeccion === 'registrar-emprendimiento') {
+        filtrosTabla.style.display = 'none';
+        renderizarRegistroEmprendimiento(zonaRender);
+    }
+    // ======================================================================
     // CASO 4: REGISTRAR EMPLEADO
     // ======================================================================
     else if (codigoSeccion === 'registrar-empleado') {
@@ -587,25 +594,36 @@ function cargarSección(codigoSeccion, tituloSeccion) {
     // CASO 6: SOLICITUDES DE INICIO SIN REVISAR (Para Empleados de Área / Admin)
     // ======================================================================
     else if (codigoSeccion === 'inicio-sin-revisar') {
-        filtrosTabla.style.display = 'flex'; // Muestra la barra con "Ordenar por..."
-        
+        filtrosTabla.style.display = 'none';
+
         zonaRender.innerHTML = `
+            <div style="display:flex; align-items:end; gap:10px; margin-bottom:14px;">
+                <label>Filtrar por departamento
+                    <select id="filtro-departamento-sin-revisar" style="display:block; min-width:220px; margin-top:5px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; background:#fff;">
+                        <option value="">Todos los departamentos</option>
+                    </select>
+                </label>
+                <button type="button" class="btn-filtro" id="limpiar-filtro-departamento-sin-revisar" title="Limpiar filtro" aria-label="Limpiar filtro">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
             <table class="tabla-datos">
                 <thead>
                     <tr>
                         <th>ID Solicitud</th>
                         <th>Nro Expediente</th>
+                        <th>Departamento</th>
                         <th>Fecha Entrada Área</th>
                         <th style="text-align:center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo-dinamico">
-                    <tr><td colspan="4" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando expedientes en bandeja de entrada...</td></tr>
+                    <tr><td colspan="5" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando expedientes en bandeja de entrada...</td></tr>
                 </tbody>
             </table>
         `;
         // 🚀 LLAMADA A LA NUEVA FUNCIÓN DEL SATÉLITE:
-        fetchSolicitudesAreaSinRevisar();
+        inicializarBandejaSinRevisar();
     }
     // ======================================================================
     // SUBSIDIOS Y CRÉDITOS SIN REVISAR (lista + ver el formulario PDF)

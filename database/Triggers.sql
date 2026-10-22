@@ -178,10 +178,13 @@ BEGIN
         OLD.PersonaDomicilio <=> NEW.PersonaDomicilio AND
         OLD.PersonaTeléfono <=> NEW.PersonaTeléfono AND
         OLD.PersonaCorreo <=> NEW.PersonaCorreo AND
+        OLD.EmprendimientoNombre <=> NEW.EmprendimientoNombre AND
         OLD.EmprendimientoCalle <=> NEW.EmprendimientoCalle AND
         OLD.EmprendimientoNroCalle <=> NEW.EmprendimientoNroCalle AND
         OLD.EmprendimientoBarrio <=> NEW.EmprendimientoBarrio AND
         OLD.EmprendimientoDepto <=> NEW.EmprendimientoDepto AND
+        OLD.EmprendimientoLocalidad <=> NEW.EmprendimientoLocalidad AND
+        OLD.EmprendimientoActPrincipal <=> NEW.EmprendimientoActPrincipal AND
         OLD.EmprendimientoMarcha <=> NEW.EmprendimientoMarcha AND
         OLD.EmprendimientoRubro <=> NEW.EmprendimientoRubro AND
         OLD.EleccionAyuda <=> NEW.EleccionAyuda AND

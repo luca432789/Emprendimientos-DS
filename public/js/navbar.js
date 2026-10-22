@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="nav-btn" id="btn-crear"><i class="fa-solid fa-plus"></i></button>
                     <div class="dropdown-menu menu-derecha" id="menu-crear">
                         <ul>
-                            <li><a href="/VISTA%20USUARIO/Publicaciones.html">• Crear Publicación</a></li>
+                            <li><a href="/Emprendedor-Publicaciones">• Crear Publicación</a></li>
                         </ul>
                     </div>
                 </div>
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="avatar-nav" id="btn-perfil"><i class="fa-solid fa-user"></i></div>
                     <div class="dropdown-menu menu-derecha" id="menu-perfil">
                         <ul>
-                            <li><a href="/VISTA%20USUARIO/CdE-Perfil%20Emprendedor.html">• Mi Perfil</a></li>
+                            <li><a href="/Emprendedor-Perfil">• Mi Perfil</a></li>
                             <li><a href="#" id="enlace-logout" style="color: #ff6b6b !important;">• Cerrar Sesión</a></li>
                         </ul>
                     </div>

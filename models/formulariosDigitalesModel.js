@@ -34,20 +34,27 @@ export const modelRegistrarSolicitudInicio = async (direccionPDF, datos, datosAu
         await conexion.query(
             `INSERT INTO DatosSolicitudInicio
                 (PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad,
-                 PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle,
-                 EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro,
-                 EleccionAyuda, idSolicitudInicio)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+                 PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoNombre, EmprendimientoCalle,
+                 EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad,
+                 EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
             [
                 datos.nombre, datos.apellido, datos.dniCuit, datos.departamentoPersona, datos.localidad,
-                datos.domicilio, datos.telefono, datos.correo, datos.calleEmprendimiento, datos.numeroEmprendimiento,
-                datos.barrio, datos.departamento, datos.enMarcha === 'Sí', datos.rubro,
-                datos.tipoFinanciamiento, solicitud.insertId
+                datos.domicilio, datos.telefono, datos.correo, datos.nombreEmprendimiento, datos.calleEmprendimiento,
+                datos.numeroEmprendimiento, datos.barrio, datos.departamento, datos.localidadEmprendimiento,
+                datos.actividadPrincipal, datos.enMarcha === 'Sí', datos.rubro, datos.tipoFinanciamiento,
+                solicitud.insertId
             ]
         );
 
         return solicitud.insertId;
     });
+};
+
+// Evita que un emprendedor ya registrado vuelva a enviar un Formulario de Inicio con su correo
+export const modelExisteEmprendedorConCorreo = async (correo) => {
+    const [filas] = await pool.query('SELECT 1 FROM Emprendedor WHERE Correo = ? LIMIT 1;', [correo]);
+    return filas.length > 0;
 };
 
 // Busca la solicitud de inicio vinculada al usuario emprendedor logueado

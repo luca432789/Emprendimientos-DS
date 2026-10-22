@@ -9,9 +9,9 @@ use ProyectoEmprendimientos2026;
 /* Tablas modelo relacional
 -- Empleado (idEmpleado (PK), Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo (Mesa de Entrada - Técnico - Social - Administrador), Activo (Si-No))
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica, CorreoVal)
 
--- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoNombre, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad, EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, EmprendimientoLatitud, EmprendimientoLongitud, idSolicitudInicio (fk))
 
 -- Rubro (idRubro (PK), Nombre, IconoMapa)
 
@@ -60,7 +60,7 @@ CONSTRAINT chk_CargoEmpleado
 	CHECK (Cargo IN ('Mesa de Entrada', 'Técnico', 'Social', 'Administrador')) -- Solo habran esos cargos
 );
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica, CorreoVal)
 create table SolicitudInicio (
 idSolicitudInicio int auto_increment primary key,
 DireccionPDF varchar (1024) not null,
@@ -80,6 +80,7 @@ EnvioMinistro tinyint default 0, -- 0: Sin enviar, 1: Enviado a ministro, 2: No 
 FechaEnvioMinistro date null,
 AprobacionMinistro boolean null,  -- La respuesta de aprobacion/rechazo del ministro
 FechaResolucionMin date null,
+CargaHistorica boolean not null default False, -- True: emprendimiento antiguo cargado directo por un empleado (sin DatosSolicitudInicio ni fechas de revisión)
 CorreoVal varchar(512) null,-- comentario del porqué de rechazo || validación con usuario y link de contraseña
 CONSTRAINT fk_Solicitud_EmpleadoTec
 	FOREIGN KEY (idEmpleadoTecRevisor) REFERENCES Empleado(idEmpleado),
@@ -87,7 +88,7 @@ CONSTRAINT fk_Solicitud_EmpleadoSoc
 	FOREIGN KEY (idEmpleadoSocRevisor) REFERENCES Empleado(idEmpleado)
 );
 
--- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoNombre, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad, EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, EmprendimientoLatitud, EmprendimientoLongitud, idSolicitudInicio (fk))
 create table DatosSolicitudInicio (
 idDatosSolicitudInicio int auto_increment primary key,
 PersonaNombre varchar (40) not null, 
@@ -98,10 +99,13 @@ PersonaLocalidad varchar (40) not null,
 PersonaDomicilio varchar(512) not null,
 PersonaTeléfono varchar(25) not null, 
 PersonaCorreo varchar(150) not null,
+EmprendimientoNombre varchar (50) not null,
 EmprendimientoCalle varchar(30) not null,
 EmprendimientoNroCalle varchar(6) not null,
 EmprendimientoBarrio varchar (50) not null,
 EmprendimientoDepto varchar (20) not null,
+EmprendimientoLocalidad varchar (40) not null,
+EmprendimientoActPrincipal varchar (400) not null,
 EmprendimientoMarcha boolean not null default True,
 EmprendimientoRubro varchar(150) not null,
 EleccionAyuda varchar(10) not null, -- Subsidio o Credito
