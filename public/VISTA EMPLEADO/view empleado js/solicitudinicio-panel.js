@@ -183,12 +183,29 @@ function verPdfYFormulario(idSolicitud, urlPdf) {
 // ======================================================================
 // C. FETCH ÁREA: TRAER SOLICITUDES CON EXPEDIENTE SIN REVISOR (NUEVO)
 // ======================================================================
+function inicializarBandejaSinRevisar() {
+    const filtroDepartamento = document.getElementById('filtro-departamento-sin-revisar');
+    filtroDepartamento.addEventListener('change', fetchSolicitudesAreaSinRevisar);
+    document.getElementById('limpiar-filtro-departamento-sin-revisar').addEventListener('click', () => {
+        filtroDepartamento.value = '';
+        fetchSolicitudesAreaSinRevisar();
+    });
+    fetchSolicitudesAreaSinRevisar();
+}
+
 async function fetchSolicitudesAreaSinRevisar() {
     const tablaCuerpo = document.getElementById('tabla-cuerpo-dinamico');
+    const filtroDepartamento = document.getElementById('filtro-departamento-sin-revisar');
     const token = sessionStorage.getItem('token_ministerio');
+    if (!tablaCuerpo || !filtroDepartamento) return;
+
+    tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando expedientes en bandeja de entrada...</td></tr>`;
 
     try {
-        const respuesta = await fetch('/api/solicitudes/area/sin-revisar', {
+        const parametros = new URLSearchParams();
+        if (filtroDepartamento.value) parametros.set('departamento', filtroDepartamento.value);
+        const query = parametros.toString();
+        const respuesta = await fetch(`/api/solicitudes/area/sin-revisar${query ? `?${query}` : ''}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -196,10 +213,20 @@ async function fetchSolicitudesAreaSinRevisar() {
         });
 
         if (!respuesta.ok) throw new Error("Error al obtener datos del Área desde el servidor.");
-        const solicitudes = await respuesta.json();
+        const { solicitudes, departamentos } = await respuesta.json();
+        if (!tablaCuerpo.isConnected) return;
+
+        const departamentoActual = filtroDepartamento.value;
+        filtroDepartamento.replaceChildren(new Option('Todos los departamentos', ''));
+        departamentos.forEach(departamento => {
+            filtroDepartamento.add(new Option(departamento, departamento));
+        });
+        filtroDepartamento.value = departamentoActual;
 
         if (solicitudes.length === 0) {
-            tablaCuerpo.innerHTML = `<tr><td colspan="4" style="text-align:center; color:gray; padding:20px;">🎉 No hay solicitudes pendientes de asignación en el área.</td></tr>`;
+            tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align:center; color:gray; padding:20px;">${departamentoActual
+                ? 'No hay solicitudes pendientes de asignación en este departamento.'
+                : '🎉 No hay solicitudes pendientes de asignación en el área.'}</td></tr>`;
             return;
         }
 
@@ -214,7 +241,8 @@ async function fetchSolicitudesAreaSinRevisar() {
 
             fila.innerHTML = `
                 <td><strong>#${String(solicitud.idSolicitudInicio).padStart(4, '0')}</strong></td>
-                <td><span class="badge-expediente" style="color: #1a3a5f; font-weight: 500;">${solicitud.NroExpediente}</span></td>
+                <td><span class="badge-expediente" style="color: #1a3a5f; font-weight: 500;">${escaparDatoRevision(solicitud.NroExpediente)}</span></td>
+                <td>${escaparDatoRevision(solicitud.EmprendimientoDepto || 'Sin datos')}</td>
                 <td>${fechaFormateada}</td>
                 <td style="text-align:center;">
                     <button class="btn-filtro btn-revisar-sol" 
@@ -241,7 +269,7 @@ async function fetchSolicitudesAreaSinRevisar() {
 
     } catch (error) {
         console.error("Error cargando solicitudes de área:", error);
-        tablaCuerpo.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red; padding:20px;">Error al conectar con el servidor.</td></tr>`;
+        tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red; padding:20px;">Error al conectar con el servidor.</td></tr>`;
     }
 }
 // ======================================================================
@@ -563,6 +591,80 @@ async function abrirEnvioMinistro(solicitud) {
     }
 }
 
+function normalizarTextoRubro(texto) {
+    return String(texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+}
+
+// Pide el Nro de Proyecto y el Rubro (preseleccionado según lo escrito en el formulario de inicio)
+async function pedirDatosProyectoAprobado(solicitud) {
+    let rubros;
+    try {
+        const token = sessionStorage.getItem('token_ministerio');
+        if (!token) throw new Error('La sesión venció. Inicia sesión nuevamente.');
+        const respuesta = await fetch('/api/solicitudes/rubros', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        rubros = await respuesta.json();
+        if (!respuesta.ok) throw new Error(rubros.error || 'No se pudieron cargar los rubros.');
+    } catch (error) {
+        Swal.fire('Error', error.message, 'error');
+        return null;
+    }
+    if (rubros.length === 0) {
+        Swal.fire('Sin rubros', 'No hay rubros cargados. Registre al menos un rubro antes de aprobar.', 'warning');
+        return null;
+    }
+
+    const rubroFormulario = normalizarTextoRubro(solicitud.rubro);
+    const rubroCoincidente = rubros.find(rubro => normalizarTextoRubro(rubro.Nombre) === rubroFormulario);
+    const opcionesRubro = rubros.map(rubro => `
+        <option value="${escaparDatoRevision(rubro.idRubro)}" ${rubroCoincidente?.idRubro === rubro.idRubro ? 'selected' : ''}>
+            ${escaparDatoRevision(rubro.Nombre)}
+        </option>`).join('');
+
+    const formulario = await Swal.fire({
+        title: `Aprobación del Ministro · Solicitud #${solicitud.id}`,
+        width: '620px',
+        html: `
+            <div style="text-align:left; margin:0 0 12px; padding:12px; background:#f1f5f9; border-radius:4px;">
+                <div><b>N° de expediente:</b> ${escaparDatoRevision(solicitud.expediente || 'Sin expediente')}</div>
+                <div><b>Emprendimiento:</b> ${escaparDatoRevision(solicitud.nombreEmprendimiento)}</div>
+                <div><b>Rubro indicado en el formulario:</b> ${escaparDatoRevision(solicitud.rubro)}</div>
+            </div>
+            <label for="aprobacion-nro-proyecto" style="display:block; text-align:left;">Nro de Proyecto</label>
+            <input id="aprobacion-nro-proyecto" class="swal2-input" maxlength="50" placeholder="Ej: T78-PO-09" style="width:100%; margin:6px 0 12px; box-sizing:border-box;">
+            <label for="aprobacion-rubro" style="display:block; text-align:left;">Rubro del emprendimiento</label>
+            <select id="aprobacion-rubro" class="swal2-select" style="width:100%; margin:6px 0 0;">
+                ${rubroCoincidente ? '' : '<option value="">-- Seleccione un rubro --</option>'}
+                ${opcionesRubro}
+            </select>
+        `,
+        focusConfirm: false,
+        preConfirm: () => {
+            const nroProyecto = document.getElementById('aprobacion-nro-proyecto').value.trim();
+            const selectRubro = document.getElementById('aprobacion-rubro');
+            if (!nroProyecto) {
+                Swal.showValidationMessage('Ingresa el Nro de Proyecto.');
+                return false;
+            }
+            if (!selectRubro.value) {
+                Swal.showValidationMessage('Selecciona el rubro del emprendimiento.');
+                return false;
+            }
+            return {
+                nroProyecto,
+                idRubro: Number(selectRubro.value),
+                nombreRubro: selectRubro.options[selectRubro.selectedIndex].text.trim()
+            };
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#2ecc71'
+    });
+    return formulario.isConfirmed ? formulario.value : null;
+}
+
 async function abrirResolucionMinistro(solicitud) {
     const ventana = await Swal.fire({
         title: `Resolución del Ministro · Solicitud #${solicitud.id}`,
@@ -580,9 +682,20 @@ async function abrirResolucionMinistro(solicitud) {
     if (ventana.isDismissed) return;
 
     const aprobacionMinistro = ventana.isConfirmed ? 1 : 0;
+    const cuerpo = { aprobacionMinistro };
+    let detalleAprobacion = '';
+
+    if (aprobacionMinistro === 1) {
+        const datosProyecto = await pedirDatosProyectoAprobado(solicitud);
+        if (!datosProyecto) return;
+        cuerpo.nroProyecto = datosProyecto.nroProyecto;
+        cuerpo.idRubro = datosProyecto.idRubro;
+        detalleAprobacion = ` Se creará el emprendimiento "${solicitud.nombreEmprendimiento || ''}" con Nro de Proyecto ${datosProyecto.nroProyecto} (rubro ${datosProyecto.nombreRubro}) , su emprendedor y su cuenta de usuario, con los datos del formulario de inicio.`;
+    }
+
     const confirmacion = await Swal.fire({
         title: '¿Confirmar resolución del Ministro?',
-        text: `Se registrará que el Ministro ${aprobacionMinistro === 1 ? 'APROBÓ' : 'RECHAZÓ'} la solicitud #${solicitud.id} (expediente ${solicitud.expediente || ''}). Esta acción no se puede deshacer.`,
+        text: `Se registrará que el Ministro ${aprobacionMinistro === 1 ? 'APROBÓ' : 'RECHAZÓ'} la solicitud #${solicitud.id} (expediente ${solicitud.expediente || ''}).${detalleAprobacion} Esta acción no se puede deshacer.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sí, registrar resolución',
@@ -592,7 +705,7 @@ async function abrirResolucionMinistro(solicitud) {
     if (!confirmacion.isConfirmed) return;
 
     try {
-        const resultado = await enviarEtapaMinistro(solicitud.id, 'resolucion-ministro', { aprobacionMinistro });
+        const resultado = await enviarEtapaMinistro(solicitud.id, 'resolucion-ministro', cuerpo);
         await Swal.fire({
             icon: 'success',
             title: 'Resolución registrada',
@@ -663,6 +776,8 @@ async function cargarRevisionesAsignadas() {
                     data-expediente="${escaparDatoRevision(solicitud.NroExpediente || '')}"
                     data-departamento="${escaparDatoRevision(solicitud.EmprendimientoDepto)}"
                     data-ayuda="${escaparDatoRevision(solicitud.EleccionAyuda)}"
+                    data-nombre="${escaparDatoRevision(solicitud.EmprendimientoNombre || '')}"
+                    data-rubro="${escaparDatoRevision(solicitud.EmprendimientoRubro || '')}"
                     data-pdf="${escaparDatoRevision(solicitud.DireccionPDF || '')}"`;
             const accion = decisionAreaTomada
                 ? `<div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
@@ -711,6 +826,8 @@ async function cargarRevisionesAsignadas() {
             expediente: boton.dataset.expediente,
             departamento: boton.dataset.departamento,
             ayuda: boton.dataset.ayuda,
+            nombreEmprendimiento: boton.dataset.nombre,
+            rubro: boton.dataset.rubro,
             pdf: boton.dataset.pdf
         });
         cuerpo.querySelectorAll('.btn-envio-ministro').forEach(boton => {

@@ -173,63 +173,98 @@ if (form) {
   const campoDni = form.querySelector('input[name="dniCuit"]');
   const campoTelefono = form.querySelector('input[name="telefono"]');
   const extranjero = form.querySelector('input[name="documentoExtranjero"]');
-  const departamentoPersona = form.querySelector('select[name="departamentoPersona"], select[name="departamento"]');
-  const localidad = form.querySelector('select[name="localidad"]');
-  const localidadLibre = form.querySelector('input[name="localidadLibre"]');
   const numeroEmprendimiento = form.querySelector('input[name="numeroEmprendimiento"]');
   const calleSinNumero = form.querySelector('input[name="calleSinNumero"]');
   const numeroDomicilio = form.querySelector('input[name="numeroDomicilio"]');
-  let numeroCargaLocalidades = 0;
 
-  const mostrarOtraLocalidad = () => {
-    const usarLibre = localidad?.value === '__otra__';
-    if (localidadLibre) {
-      localidadLibre.hidden = !usarLibre;
-      localidadLibre.required = usarLibre;
-      if (!usarLibre) localidadLibre.value = '';
-    }
+  // Conecta un select de departamento con su select de localidades (georef) y el campo "Otra localidad"
+  const crearSelectorLocalidad = (selectDepartamento, selectLocalidad, inputLibre) => {
+    let numeroCarga = 0;
+
+    const mostrarOtra = () => {
+      const usarLibre = selectLocalidad?.value === '__otra__';
+      if (inputLibre) {
+        inputLibre.hidden = !usarLibre;
+        inputLibre.required = usarLibre;
+        if (!usarLibre) inputLibre.value = '';
+      }
+    };
+
+    const cargar = async () => {
+      if (!selectDepartamento || !selectLocalidad) return;
+      const cargaActual = ++numeroCarga;
+      const departamento = selectDepartamento.value;
+      selectLocalidad.replaceChildren(new Option(departamento ? 'Cargando localidades...' : 'Primero seleccione el departamento', ''));
+      selectLocalidad.disabled = true;
+      mostrarOtra();
+      if (!departamento) return;
+
+      try {
+        const parametros = new URLSearchParams({
+          provincia: 'Santiago del Estero',
+          departamento,
+          max: '5000',
+          campos: 'nombre,departamento'
+        });
+        const respuesta = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?${parametros}`);
+        if (!respuesta.ok) throw new Error('No se pudo consultar el listado de localidades.');
+        const datos = await respuesta.json();
+        if (cargaActual !== numeroCarga) return;
+        const normalizar = (texto) => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        const nombres = [...new Set((datos.localidades || [])
+          .filter((item) => normalizar(item.departamento?.nombre) === normalizar(departamento))
+          .map((item) => item.nombre)
+          .filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+
+        selectLocalidad.replaceChildren(new Option('Seleccione una localidad...', ''));
+        nombres.forEach((nombre) => selectLocalidad.add(new Option(nombre, nombre)));
+        selectLocalidad.add(new Option('Otra localidad (escribir)', '__otra__'));
+        selectLocalidad.disabled = false;
+      } catch {
+        if (cargaActual !== numeroCarga) return;
+        selectLocalidad.replaceChildren(new Option('No se pudo cargar; elija escribirla', ''));
+        selectLocalidad.add(new Option('Otra localidad (escribir)', '__otra__'));
+        selectLocalidad.disabled = false;
+      }
+      mostrarOtra();
+    };
+
+    const reiniciar = () => {
+      if (!selectLocalidad) return;
+      numeroCarga++;
+      selectLocalidad.replaceChildren(new Option('Primero seleccione el departamento', ''));
+      selectLocalidad.disabled = true;
+      mostrarOtra();
+    };
+
+    selectDepartamento?.addEventListener('change', cargar);
+    selectLocalidad?.addEventListener('change', mostrarOtra);
+
+    return {
+      cargando: () => Boolean(selectLocalidad?.disabled),
+      // Devuelve lo elegido en la lista, o lo escrito si eligi\u00f3 "Otra localidad"
+      valor: (valorFormulario) => selectLocalidad?.value === '__otra__' ? (inputLibre?.value.trim() || '') : valorFormulario,
+      mostrarOtra,
+      reiniciar
+    };
   };
 
-  const cargarLocalidades = async () => {
-    if (!departamentoPersona || !localidad) return;
-    const cargaActual = ++numeroCargaLocalidades;
-    const departamento = departamentoPersona.value;
-    localidad.replaceChildren(new Option(departamento ? 'Cargando localidades...' : 'Primero seleccione el departamento', ''));
-    localidad.disabled = true;
-    if (!departamento) return;
-
-    try {
-      const parametros = new URLSearchParams({
-        provincia: 'Santiago del Estero',
-        departamento,
-        max: '5000',
-        campos: 'nombre,departamento'
-      });
-      const respuesta = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?${parametros}`);
-      if (!respuesta.ok) throw new Error('No se pudo consultar el listado de localidades.');
-      const datos = await respuesta.json();
-      if (cargaActual !== numeroCargaLocalidades) return;
-      const normalizar = (texto) => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-      const nombres = [...new Set((datos.localidades || [])
-        .filter((item) => normalizar(item.departamento?.nombre) === normalizar(departamento))
-        .map((item) => item.nombre)
-        .filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
-
-      localidad.replaceChildren(new Option('Seleccione una localidad...', ''));
-      nombres.forEach((nombre) => localidad.add(new Option(nombre, nombre)));
-      localidad.add(new Option('Otra localidad (escribir)', '__otra__'));
-      localidad.disabled = false;
-    } catch {
-      if (cargaActual !== numeroCargaLocalidades) return;
-      localidad.replaceChildren(new Option('No se pudo cargar; elija escribirla', ''));
-      localidad.add(new Option('Otra localidad (escribir)', '__otra__'));
-      localidad.disabled = false;
-    }
-    mostrarOtraLocalidad();
-  };
-
-  departamentoPersona?.addEventListener('change', cargarLocalidades);
-  localidad?.addEventListener('change', mostrarOtraLocalidad);
+  // Localidad de la persona (en Subsidios el \u00fanico departamento se llama "departamento")
+  const localidadPersona = crearSelectorLocalidad(
+    form.querySelector('select[name="departamentoPersona"], select[name="departamento"]'),
+    form.querySelector('select[name="localidad"]'),
+    form.querySelector('input[name="localidadLibre"]')
+  );
+  // Localidad del emprendimiento (solo existe en el Formulario de Inicio)
+  const selectLocalidadEmprendimiento = form.querySelector('select[name="localidadEmprendimiento"]');
+  const localidadEmprendimiento = selectLocalidadEmprendimiento
+    ? crearSelectorLocalidad(
+      form.querySelector('select[name="departamento"]'),
+      selectLocalidadEmprendimiento,
+      form.querySelector('input[name="localidadEmprendimientoLibre"]')
+    )
+    : null;
+  const localidad = form.querySelector('select[name="localidad"]');
 
   const actualizarNumeroCalle = () => {
     if (!numeroEmprendimiento) return;
@@ -293,8 +328,12 @@ if (form) {
       resultado.innerHTML = 'Debe <a href="/login">iniciar sesión</a> como emprendedor para enviar este formulario.';
       return;
     }
-    if ((esInicio || esSubsidio) && localidad?.disabled) {
+    if ((esInicio || esSubsidio) && localidad && localidadPersona.cargando()) {
       resultado.textContent = 'Seleccione el departamento y espere a que se carguen sus localidades.';
+      return;
+    }
+    if (esInicio && localidadEmprendimiento?.cargando()) {
+      resultado.textContent = 'Seleccione el departamento del emprendimiento y espere a que se carguen sus localidades.';
       return;
     }
 
@@ -375,7 +414,7 @@ if (form) {
         }
       }
       if (esSubsidio) {
-        if (localidad?.value === '__otra__') datos.localidad = localidadLibre?.value.trim() || '';
+        datos.localidad = localidadPersona.valor(datos.localidad);
         datos.bienesPropios = filasDeTabla('bienesPropios').filter((fila) => Object.values(fila).some(Boolean));
         datos.recursosNecesarios = filasDeTabla('recursosNecesarios').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
         datos.aporteActivoFijo = form.querySelector('[name="aporteActivoFijo"]')?.value || '';
@@ -391,7 +430,12 @@ if (form) {
         ? `${datos.dia} de ${datos.mes} de ${datos.anio}`
         : `${fechaActual.getDate()} de ${meses[fechaActual.getMonth()]} de ${fechaActual.getFullYear()}`;
       datos.documentoExtranjero = Boolean(extranjero?.checked);
-      if (esInicio && localidad?.value === '__otra__') datos.localidad = localidadLibre?.value.trim() || '';
+      if (esInicio) {
+        datos.localidad = localidadPersona.valor(datos.localidad);
+        if (localidadEmprendimiento) datos.localidadEmprendimiento = localidadEmprendimiento.valor(datos.localidadEmprendimiento);
+        delete datos.localidadLibre;
+        delete datos.localidadEmprendimientoLibre;
+      }
       datos.calleSinNumero = Boolean(calleSinNumero?.checked);
       if (datos.calleSinNumero) datos.numeroEmprendimiento = 'S/N';
       if (esSubsidio) {
@@ -432,12 +476,9 @@ if (form) {
       actualizarFormatoDocumento();
       actualizarNumeroCalle();
       actualizarNumeroDomicilio();
-      mostrarOtraLocalidad();
       actualizarCalculosCredito();
-      if (localidad) {
-        localidad.replaceChildren(new Option('Primero seleccione el departamento', ''));
-        localidad.disabled = true;
-      }
+      if (localidad) localidadPersona.reiniciar();
+      localidadEmprendimiento?.reiniciar();
       const enlace = document.createElement('a');
       enlace.className = 'btn descargar';
       enlace.href = urlPdf;

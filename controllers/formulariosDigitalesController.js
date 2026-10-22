@@ -6,8 +6,11 @@ import {
   modelRegistrarSolicitudInicio,
   modelObtenerSolicitudDeUsuario,
   modelTienePedidoPendiente,
-  modelRegistrarPedidoAyuda
+  modelRegistrarPedidoAyuda,
+  modelExisteEmprendedorConCorreo
 } from '../models/formulariosDigitalesModel.js';
+import { escribirConNumero } from '../helpers/archivosPdf.js';
+import { departamentosSantiago } from '../helpers/departamentos.js';
 
 // Los PDF se guardan junto a los demás documentos subidos (servidos en /uploads)
 // con un nombre base y un número correlativo (ej: SolicitudInicialFormIni12.pdf)
@@ -31,7 +34,7 @@ const coordenadasBase = {
     dniCuit: [72, 551],
     domicilio: [88, 526],
     telefono: [58, 500],
-    correo: [300, 500],
+    // el correo no tiene renglón propio en la plantilla: lo escribe dibujarDatosExtraInicio con su etiqueta
     calleEmprendimiento: [210, 475],
     numeroEmprendimiento: [442, 475],
     barrio: [70, 450],
@@ -421,13 +424,6 @@ const validarDatosSubsidio = (datos, imagenes, documentoExtranjero) => {
 
 class ErrorValidacion extends Error {}
 
-const departamentosSantiago = [
-  'Aguirre', 'Alberdi', 'Atamisqui', 'Avellaneda', 'Banda', 'Belgrano', 'Capital', 'Choya', 'Copo',
-  'Figueroa', 'General Taboada', 'Guasayán', 'Jiménez', 'Juan Felipe Ibarra', 'Loreto', 'Mitre', 'Moreno',
-  'Ojo de Agua', 'Pellegrini', 'Quebrachos', 'Río Hondo', 'Rivadavia', 'Robles', 'Salavina', 'San Martín',
-  'Sarmiento', 'Silípica'
-];
-
 // Campos obligatorios del Formulario de Inicio con el largo máximo de su columna en DatosSolicitudInicio
 const camposInicio = {
   nombre: ['Nombre', 40],
@@ -436,11 +432,14 @@ const camposInicio = {
   localidad: ['Localidad', 40],
   domicilio: ['Domicilio', 512],
   correo: ['Correo electrónico', 150],
+  nombreEmprendimiento: ['Nombre del emprendimiento', 50],
   calleEmprendimiento: ['Calle del emprendimiento', 30],
   numeroEmprendimiento: ['Número de calle del emprendimiento', 6],
   barrio: ['Barrio', 50],
   departamento: ['Departamento del emprendimiento', 20],
-  rubro: ['Rubro', 150]
+  localidadEmprendimiento: ['Localidad del emprendimiento', 40],
+  rubro: ['Rubro', 150],
+  actividadPrincipal: ['Actividad principal', 400]
 };
 
 const validarDocumentoYTelefono = (datos, documentoExtranjero, telefonoObligatorio) => {
@@ -514,6 +513,70 @@ const validarMonto = (valor) => {
   return Math.round(monto * 100) / 100;
 };
 
+// Escribe en la hoja 1 del Formulario de Inicio lo que la plantilla oficial no tiene renglón:
+// el correo (junto al "Tel") y un bloque con nombre, localidad y actividad del emprendimiento sobre la firma.
+const dibujarDatosExtraInicio = async (pdfDoc, pagina, fuente, datos) => {
+  const fuenteEtiqueta = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const fuenteTitulo = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+  const negro = rgb(0, 0, 0);
+
+  // Correo: etiqueta con la tipografía de la plantilla; el texto se achica si no entra hasta el margen
+  const correo = limpiarTexto(datos.correo);
+  if (correo) {
+    const xEtiqueta = 276;
+    pagina.drawText('Correo:', { x: xEtiqueta, y: 500, size: 11, font: fuenteEtiqueta, color: negro });
+    const xCorreo = xEtiqueta + fuenteEtiqueta.widthOfTextAtSize('Correo: ', 11);
+    const anchoDisponible = 572 - xCorreo;
+    let tamanio = 9;
+    while (tamanio > 6 && fuente.widthOfTextAtSize(correo, tamanio) > anchoDisponible) tamanio -= 0.5;
+    pagina.drawText(correo, { x: xCorreo, y: 500, size: tamanio, font: fuente, color: negro, maxWidth: anchoDisponible });
+  }
+
+  // Bloque "Datos del emprendimiento" en el espacio libre entre el saludo y la FIRMA
+  const xEtiquetas = 50;
+  const xValores = 182;
+  const anchoValores = 562 - xValores;
+  let y = 202;
+  pagina.drawText('Datos del emprendimiento', { x: xEtiquetas, y, size: 11, font: fuenteTitulo, color: negro });
+
+  // Corta el texto según el ancho real que ocupa; si no entra en maximoLineas, termina en "..."
+  const lineasPorAncho = (texto, tamanio, maximoLineas) => {
+    const lineas = [];
+    let actual = '';
+    for (const palabra of limpiarTexto(texto).split(' ').filter(Boolean)) {
+      const candidata = actual ? `${actual} ${palabra}` : palabra;
+      if (actual && fuente.widthOfTextAtSize(candidata, tamanio) > anchoValores) {
+        lineas.push(actual);
+        actual = palabra;
+      } else {
+        actual = candidata;
+      }
+    }
+    if (actual) lineas.push(actual);
+    if (lineas.length > maximoLineas) {
+      lineas.length = maximoLineas;
+      let ultima = lineas[maximoLineas - 1];
+      while (ultima && fuente.widthOfTextAtSize(`${ultima}...`, tamanio) > anchoValores) ultima = ultima.slice(0, -1);
+      lineas[maximoLineas - 1] = `${ultima.trimEnd()}...`;
+    }
+    return lineas;
+  };
+
+  const filas = [
+    ['Nombre:', datos.nombreEmprendimiento, 9, 1],
+    ['Localidad:', datos.localidadEmprendimiento, 9, 1],
+    ['Actividad principal:', datos.actividadPrincipal, 8, 3]
+  ];
+  for (const [etiqueta, valor, tamanio, maximoLineas] of filas) {
+    y -= 13;
+    pagina.drawText(etiqueta, { x: xEtiquetas, y, size: 11, font: fuenteEtiqueta, color: negro });
+    lineasPorAncho(valor, tamanio, maximoLineas).forEach((linea, indice) => {
+      if (indice > 0) y -= 10;
+      pagina.drawText(linea, { x: xValores, y, size: tamanio, font: fuente, color: negro });
+    });
+  }
+};
+
 // Arma el PDF a partir de la plantilla, los datos y los adjuntos. Devuelve los bytes finales.
 const generarPdf = async (tipoFormulario, datos, imagenes) => {
   if (tipoFormulario === 'Formulario de Inicio' && (!Array.isArray(imagenes) || imagenes.length === 0)) {
@@ -560,6 +623,10 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
   if (tipoFormulario === 'Formulario de Inicio' && datos.enMarcha) {
     const x = datos.enMarcha === 'Sí' ? 300 : 362;
     pagina.drawText('X', { x, y: 425, size: 10, font: fuente, color: rgb(0, 0, 0) });
+  }
+
+  if (tipoFormulario === 'Formulario de Inicio') {
+    await dibujarDatosExtraInicio(pdfDoc, pagina, fuente, datos);
   }
 
   if (tipoFormulario === 'Formulario de Subsidios no Reintegrables') {
@@ -610,6 +677,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       const paginas = await pdfDoc.embedPages(indices.map((indice) => pdfAdjunto.getPage(indice)));
       adjuntosParaHoja.push(...paginas.map((paginaPdf) => ({
         contenido: paginaPdf,
+        esPaginaPdf: true,
         ancho: paginaPdf.width,
         alto: paginaPdf.height,
         categoria: imagen.categoria || '',
@@ -630,6 +698,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
     }
     adjuntosParaHoja.push({
       contenido: imagenPdf,
+      esPaginaPdf: false,
       ancho: imagenPdf.width,
       alto: imagenPdf.height,
       categoria: imagen.categoria || '',
@@ -650,7 +719,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
     const anchoCelda = (area.width - espacio * (columnas - 1)) / columnas;
     const altoCelda = (area.height - espacio * (filas - 1)) / filas;
 
-    adjuntosParaHoja.forEach(({ contenido, ancho, alto }, indice) => {
+    adjuntosParaHoja.forEach(({ contenido, esPaginaPdf, ancho, alto }, indice) => {
       const columna = indice % columnas;
       const fila = Math.floor(indice / columnas);
       const escala = Math.min(anchoCelda / ancho, altoCelda / alto);
@@ -659,7 +728,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       const x = area.x + columna * (anchoCelda + espacio) + (anchoCelda - anchoFinal) / 2;
       const y = area.y + area.height - (fila + 1) * altoCelda - fila * espacio + (altoCelda - altoFinal) / 2;
 
-      if (typeof contenido.scale === 'function') {
+      if (esPaginaPdf) {
         paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
       } else {
         paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
@@ -676,7 +745,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
     const espacio = 8;
     const anchoCelda = (area.width - espacio * (columnas - 1)) / columnas;
     const altoCelda = (area.height - espacio * (filas - 1)) / filas;
-    adjuntosParaHoja.forEach(({ contenido, ancho, alto }, indice) => {
+    adjuntosParaHoja.forEach(({ contenido, esPaginaPdf, ancho, alto }, indice) => {
       const columna = indice % columnas;
       const fila = Math.floor(indice / columnas);
       const escala = Math.min(anchoCelda / ancho, altoCelda / alto);
@@ -684,7 +753,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       const altoFinal = alto * escala;
       const x = area.x + columna * (anchoCelda + espacio) + (anchoCelda - anchoFinal) / 2;
       const y = area.y + area.height - (fila + 1) * altoCelda - fila * espacio + (altoCelda - altoFinal) / 2;
-      if (typeof contenido.scale === 'function') {
+      if (esPaginaPdf) {
         paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
       } else {
         paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
@@ -692,7 +761,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
     });
   } else if (tipoFormulario !== 'Formulario de Inicio' && adjuntosParaHoja.length) {
     // La documentación del garante se conserva en hojas adicionales del expediente de crédito.
-    adjuntosParaHoja.forEach(({ contenido, ancho, alto, categoria, nombre }) => {
+    adjuntosParaHoja.forEach(({ contenido, esPaginaPdf, ancho, alto, categoria, nombre }) => {
       const paginaAdjuntos = pdfDoc.addPage([595.28, 841.89]);
       const tituloAdjunto = tipoFormulario === 'Formulario de Creditos Reintegrables'
         ? `Documentación del garante${categoria ? ` - ${categoria}` : ''}`
@@ -708,7 +777,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       const altoFinal = alto * escala;
       const x = (595.28 - anchoFinal) / 2;
       const y = 765 - altoFinal;
-      if (typeof contenido.scale === 'function') {
+      if (esPaginaPdf) {
         paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
       } else {
         paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
@@ -717,29 +786,6 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
   }
 
   return pdfDoc.save();
-};
-
-// Escribe el PDF con el siguiente número libre de la carpeta (el mayor existente + 1).
-// La bandera 'wx' nunca pisa un archivo: si dos envíos toman el mismo número, el segundo prueba con el siguiente.
-const escribirConNumero = async (carpetaFisica, nombreBase, bytesPdf) => {
-  const patron = new RegExp(`^${nombreBase}(\\d+)\\.pdf$`, 'i');
-  const existentes = await fs.readdir(carpetaFisica);
-  let numero = existentes.reduce((mayor, archivo) => {
-    const coincidencia = archivo.match(patron);
-    return coincidencia ? Math.max(mayor, Number(coincidencia[1])) : mayor;
-  }, 0);
-
-  for (let intento = 0; intento < 20; intento++) {
-    numero += 1;
-    const nombreArchivo = `${nombreBase}${String(numero).padStart(2, '0')}.pdf`;
-    try {
-      await fs.writeFile(path.join(carpetaFisica, nombreArchivo), bytesPdf, { flag: 'wx' });
-      return nombreArchivo;
-    } catch (error) {
-      if (error.code !== 'EEXIST') throw error;
-    }
-  }
-  throw new Error(`No se encontró un número libre para ${nombreBase}`);
 };
 
 // Guarda el PDF en /uploads, lo registra en MySQL y responde con el archivo.
@@ -785,6 +831,9 @@ export const crearFormularioInicio = async (req, res) => {
 
     validarDocumentoYTelefono(datos, documentoExtranjero, true);
     validarInicio(datos);
+    if (await modelExisteEmprendedorConCorreo(datos.correo)) {
+      throw new ErrorValidacion('Ya existe un emprendedor registrado con este correo electrónico. Si ya tiene un emprendimiento aprobado, inicie sesión con su cuenta.');
+    }
     await validarDominioCorreo(datos.correo);
 
     const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);

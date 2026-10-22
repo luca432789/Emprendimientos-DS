@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import { pool } from '../config/db.js';
 
 // 1. Buscar las solicitudes iniciales que NO tienen asignado un expediente electrónico todavía
@@ -44,18 +45,38 @@ export const ModelAsignarExpediente = async (idSolicitud, nroExpediente, idUsuar
 // MODELO PARA EMPLEADO DE AREA/ADMIN
 ////////////////////////////////////7/////////////////////////////////////////////////////////
 // Recupera solicitudes con expediente que no han finalizado su revisión
-export const ModelObtenerSolicitudesParaArea = async () => {
-    const querySQL = `
-        SELECT s.*, e.NroExpediente, e.FechaCarga
+const sinRevisarAreaSql = `
         FROM SolicitudInicio s
         INNER JOIN Expediente e ON s.idSolicitudInicio = e.idSolicitudInicio
-        WHERE s.FechaRecibidoArea IS NOT NULL 
+        LEFT JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = s.idSolicitudInicio
+        WHERE s.FechaRecibidoArea IS NOT NULL
                     AND s.EstadoRevisionArea = 0
                     AND s.idEmpleadoTecRevisor IS NULL
-                    AND s.idEmpleadoSocRevisor IS NULL
+                    AND s.idEmpleadoSocRevisor IS NULL`;
+
+export const ModelObtenerSolicitudesParaArea = async (departamento = null) => {
+    const querySQL = `
+        SELECT s.*, e.NroExpediente, e.FechaCarga, d.EmprendimientoDepto
+        ${sinRevisarAreaSql}
+        ${departamento ? 'AND d.EmprendimientoDepto = ?' : ''}
         ORDER BY s.FechaRecibidoArea ASC;
     `;
-    const [filas] = await pool.query(querySQL);
+    const [filas] = await pool.query(querySQL, departamento ? [departamento] : []);
+    return filas;
+};
+
+export const ModelObtenerDepartamentosSinRevisar = async () => {
+    const [filas] = await pool.query(
+        `SELECT DISTINCT d.EmprendimientoDepto
+        ${sinRevisarAreaSql}
+                    AND d.EmprendimientoDepto IS NOT NULL
+        ORDER BY d.EmprendimientoDepto;`
+    );
+    return filas.map(fila => fila.EmprendimientoDepto);
+};
+
+export const ModelObtenerRubros = async () => {
+    const [filas] = await pool.query('SELECT idRubro, Nombre FROM Rubro ORDER BY Nombre;');
     return filas;
 };
 
@@ -117,6 +138,8 @@ export const ModelListarRevisionesAsignadas = async (idUsuario, departamento = n
                 s.FechaInicioRev,
                 d.EleccionAyuda,
                 d.PersonaCorreo,
+                d.EmprendimientoNombre,
+                d.EmprendimientoRubro,
                 s.DireccionPDF,
                 s.AprobacionArea,
                 s.EnvioMinistro,
@@ -270,7 +293,114 @@ export const ModelRegistrarEnvioMinistro = async (idSolicitud, idUsuario, ipClie
     }
 };
 
-export const ModelRegistrarResolucionMinistro = async (idSolicitud, idUsuario, aprobacionMinistro, ipCliente) => {
+const errorAprobacion = (mensaje, codigo) => {
+    const error = new Error(mensaje);
+    error.code = codigo;
+    return error;
+};
+
+// TEMPORAL: contraseña genérica de las cuentas de emprendedor creadas al aprobar el Ministro.
+// Reemplazar cuando exista el envío por correo del enlace para que el emprendedor defina la suya.
+const CONTRASEÑA_INICIAL_EMPRENDEDOR = '1234Emprend--2';
+
+// Verifica duplicados e inserta Emprendimiento, Emprendedor y la cuenta de Usuario del emprendedor.
+// Lo usan la aprobación del Ministro y la carga histórica de emprendimientos antiguos.
+const insertarEmprendimientoConEmprendedor = async (conexion, idSolicitud, emprendimiento, emprendedor) => {
+    const [rubros] = await conexion.query('SELECT idRubro FROM Rubro WHERE idRubro = ?', [emprendimiento.idRubro]);
+    if (rubros.length === 0) {
+        throw errorAprobacion('El rubro seleccionado no existe.', 'RUBRO_NOT_FOUND');
+    }
+
+    const [emprendimientoPrevio] = await conexion.query(
+        'SELECT idEmprendimiento FROM Emprendimiento WHERE idSolicitudInicio = ? OR NroProyecto = ? LIMIT 1',
+        [idSolicitud, emprendimiento.nroProyecto]
+    );
+    if (emprendimientoPrevio.length > 0) {
+        throw errorAprobacion('Ya existe un emprendimiento para esta solicitud o con ese Nro de Proyecto.', 'EMPRENDIMIENTO_DUPLICADO');
+    }
+
+    const [emprendedorPrevio] = await conexion.query(
+        'SELECT idEmprendedor FROM Emprendedor WHERE DNI = ? OR Correo = ? LIMIT 1',
+        [emprendedor.dni, emprendedor.correo]
+    );
+    if (emprendedorPrevio.length > 0) {
+        throw errorAprobacion('Ya existe un emprendedor registrado con ese DNI o correo.', 'EMPRENDEDOR_DUPLICADO');
+    }
+
+    const [usuarioPrevio] = await conexion.query('SELECT idUsuario FROM Usuario WHERE Correo = ? LIMIT 1', [emprendedor.correo]);
+    if (usuarioPrevio.length > 0) {
+        throw errorAprobacion('Ya existe una cuenta de usuario con ese correo.', 'EMPRENDEDOR_DUPLICADO');
+    }
+
+    const [filaEmprendimiento] = await conexion.query(
+        `INSERT INTO Emprendimiento (Nombre, NroProyecto, Calle, NúmeroCalle, Barrio, Departamento, Localidad,
+                EnMarcha, ActividadPrincipal, Latitud, Longitud, idSolicitudInicio, idRubro)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            emprendimiento.nombre, emprendimiento.nroProyecto, emprendimiento.calle, emprendimiento.numeroCalle,
+            emprendimiento.barrio, emprendimiento.departamento, emprendimiento.localidad, emprendimiento.enMarcha,
+            emprendimiento.actividadPrincipal, emprendimiento.latitud, emprendimiento.longitud, idSolicitud,
+            emprendimiento.idRubro
+        ]
+    );
+
+    const [filaEmprendedor] = await conexion.query(
+        `INSERT INTO Emprendedor (Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, idEmprendimiento)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            emprendedor.nombre, emprendedor.apellido, emprendedor.dni, emprendedor.departamento,
+            emprendedor.localidad, emprendedor.domicilio, emprendedor.telefono, emprendedor.correo,
+            filaEmprendimiento.insertId
+        ]
+    );
+
+    const contraseñaEncriptada = await bcrypt.hash(CONTRASEÑA_INICIAL_EMPRENDEDOR, 10);
+    await conexion.query(
+        `INSERT INTO Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
+         VALUES (?, ?, 'Emprendedor', TRUE, ?, NULL)`,
+        [emprendedor.correo, contraseñaEncriptada, filaEmprendedor.insertId]
+    );
+
+    return { idEmprendimiento: filaEmprendimiento.insertId, idEmprendedor: filaEmprendedor.insertId };
+};
+
+// Crea el Emprendimiento, su Emprendedor y la cuenta de Usuario a partir de los datos del formulario de inicio
+const crearEmprendimientoAprobado = async (conexion, idSolicitud, nroProyecto, idRubro) => {
+    const [datosFilas] = await conexion.query(
+        'SELECT * FROM DatosSolicitudInicio WHERE idSolicitudInicio = ?',
+        [idSolicitud]
+    );
+    const datos = datosFilas[0];
+    if (!datos) {
+        throw errorAprobacion('No se encontraron los datos del formulario de inicio de la solicitud.', 'REVIEW_DATA_NOT_FOUND');
+    }
+
+    await insertarEmprendimientoConEmprendedor(conexion, idSolicitud, {
+        nombre: datos.EmprendimientoNombre,
+        nroProyecto,
+        calle: datos.EmprendimientoCalle,
+        numeroCalle: datos.EmprendimientoNroCalle,
+        barrio: datos.EmprendimientoBarrio,
+        departamento: datos.EmprendimientoDepto,
+        localidad: datos.EmprendimientoLocalidad,
+        enMarcha: datos.EmprendimientoMarcha,
+        actividadPrincipal: datos.EmprendimientoActPrincipal,
+        latitud: datos.EmprendimientoLatitud,
+        longitud: datos.EmprendimientoLongitud,
+        idRubro
+    }, {
+        nombre: datos.PersonaNombre,
+        apellido: datos.PersonaApellido,
+        dni: datos.PersonaDNI,
+        departamento: datos.PersonaDepartamento,
+        localidad: datos.PersonaLocalidad,
+        domicilio: datos.PersonaDomicilio,
+        telefono: datos.PersonaTeléfono,
+        correo: datos.PersonaCorreo
+    });
+};
+
+export const ModelRegistrarResolucionMinistro = async (idSolicitud, idUsuario, aprobacionMinistro, ipCliente, nroProyecto = null, idRubro = null) => {
     const conexion = await pool.getConnection();
 
     try {
@@ -297,7 +427,75 @@ export const ModelRegistrarResolucionMinistro = async (idSolicitud, idUsuario, a
             [aprobacionMinistro, idSolicitud]
         );
 
+        if (aprobacionMinistro === 1) {
+            await crearEmprendimientoAprobado(conexion, idSolicitud, nroProyecto, idRubro);
+        }
+
         await conexion.commit();
+    } catch (error) {
+        await conexion.rollback();
+        throw error;
+    } finally {
+        conexion.release();
+    }
+};
+
+// Carga histórica: registra de una vez un emprendimiento antiguo ya aprobado por el Ministro.
+// No usa DatosSolicitudInicio; las fechas de revisión y envío quedan NULL porque no se conocen.
+export const ModelRegistrarEmprendimientoHistorico = async (idUsuario, ipCliente, carga) => {
+    const conexion = await pool.getConnection();
+
+    try {
+        await conexion.beginTransaction();
+        await conexion.query('SET @usuario_id = ?;', [idUsuario]);
+        await conexion.query('SET @usuario_ip = ?;', [ipCliente]);
+
+        await obtenerRevisorArea(conexion, idUsuario, true);
+
+        const [expedientePrevio] = await conexion.query(
+            'SELECT idExpediente FROM Expediente WHERE NroExpediente = ? LIMIT 1',
+            [carga.nroExpediente]
+        );
+        if (expedientePrevio.length > 0) {
+            throw errorAprobacion('Ya existe una solicitud registrada con ese número de expediente.', 'EXPEDIENTE_DUPLICADO');
+        }
+
+        const [solicitud] = await conexion.query(
+            `INSERT INTO SolicitudInicio (DireccionPDF, FechaRecibidoMesa, EstadoRevisionArea, AprobacionArea,
+                    EnvioMinistro, AprobacionMinistro, FechaResolucionMin, CargaHistorica)
+             VALUES (?, ?, 2, TRUE, 1, TRUE, ?, TRUE)`,
+            [carga.direccionPdfSolicitud, carga.fechaRecibidoMesa, carga.fechaResolucionMin]
+        );
+        const idSolicitud = solicitud.insertId;
+
+        await conexion.query(
+            'INSERT INTO Expediente (NroExpediente, idSolicitudInicio, idEmpleadoCargo) VALUES (?, ?, ?)',
+            [carga.nroExpediente, idSolicitud, idUsuario]
+        );
+
+        const { idEmprendimiento } = await insertarEmprendimientoConEmprendedor(
+            conexion, idSolicitud, carga.emprendimiento, carga.emprendedor
+        );
+
+        // Facturas y puesta en marcha solo se permiten con la ayuda aprobada (CHECK de la tabla)
+        const { ayuda } = carga;
+        const aprobado = ayuda.estado === 'Aprobado' ? true : ayuda.estado === 'Rechazado' ? false : null;
+        const valorSeguimiento = aprobado === true ? 0 : null;
+        const tablaAyuda = ayuda.tipo === 'Subsidio' ? 'Subsidio' : 'Credito';
+        const columnaPdf = ayuda.tipo === 'Subsidio' ? 'PathFormularioSub' : 'PathFormularioCredito';
+        await conexion.query(
+            `INSERT INTO ${tablaAyuda} (${columnaPdf}, monto, FechaRecibido, Aprobado, FechaResolucion,
+                    MensajeResolucion, FacturasEntregadas, PuestaMarchaAcreditada, idSolicitudInicio)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                ayuda.direccionPdf, ayuda.monto, ayuda.fechaRecibido, aprobado,
+                aprobado === null ? null : ayuda.fechaResolucion, ayuda.mensajeResolucion,
+                valorSeguimiento, valorSeguimiento, idSolicitud
+            ]
+        );
+
+        await conexion.commit();
+        return { idSolicitud, idEmprendimiento };
     } catch (error) {
         await conexion.rollback();
         throw error;

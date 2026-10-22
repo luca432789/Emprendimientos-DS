@@ -160,7 +160,7 @@ values ('Emprendedor2prueba@gmail.com', '$2b$10$FWxrKuusrwuIVBWMlKWR0ury8TTFvC1b
 ('Emprendedor9prueba@gmail.com', 'contraseña', 'Emprendedor', true, 9, null), -- Emprendedor 9 1234Empre--9
 ('Emprendedor10prueba@gmail.com', 'contraseña', 'Emprendedor', true, 10, null); -- Emprendedor 10 1234Empre-10
 */
-select *from empleado;
+
 -- Etiqueta (idEtiqueta, nombre, activa) -----------------------------------------------------------------------------------------------------------------------------------------
 insert into Etiqueta (Nombre, Activa)
 values ('Madera', true),
