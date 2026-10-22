@@ -480,14 +480,29 @@ const validarInicio = (datos) => {
   datos.nombreApellido = `${datos.nombre} ${datos.apellido}`;
 };
 
+const codigosDominioInexistente = ['ENODATA', 'ENOTFOUND', 'ESERVFAIL'];
+
+// Si el servidor DNS que usa Node no responde (ECONNREFUSED, ETIMEOUT...), se consulta con el
+// resolvedor del sistema operativo, que es el mismo que usa el navegador.
+const dominioResuelveEnSistema = async (dominio) => {
+  try {
+    await dns.lookup(dominio);
+    return true;
+  } catch (error) {
+    if (codigosDominioInexistente.includes(error.code)) return false;
+    throw new ErrorValidacion('No se pudo comprobar el dominio del correo. Revise su conexión e inténtelo nuevamente.');
+  }
+};
+
 const validarDominioCorreo = async (correo) => {
   const dominio = correo.split('@')[1];
   try {
     const servidores = await dns.resolveMx(dominio);
     if (servidores.length) return;
   } catch (error) {
-    if (!['ENODATA', 'ENOTFOUND', 'ESERVFAIL'].includes(error.code)) {
-      throw new ErrorValidacion('No se pudo comprobar el dominio del correo. Revise su conexión e inténtelo nuevamente.');
+    if (!codigosDominioInexistente.includes(error.code)) {
+      if (await dominioResuelveEnSistema(dominio)) return;
+      throw new ErrorValidacion('El dominio del correo no existe o no recibe correo. Revise la dirección ingresada.');
     }
   }
 
@@ -497,8 +512,9 @@ const validarDominioCorreo = async (correo) => {
       const direcciones = await consulta(dominio);
       if (direcciones.length) return;
     } catch (error) {
-      if (!['ENODATA', 'ENOTFOUND', 'ESERVFAIL'].includes(error.code)) {
-        throw new ErrorValidacion('No se pudo comprobar el dominio del correo. Revise su conexión e inténtelo nuevamente.');
+      if (!codigosDominioInexistente.includes(error.code)) {
+        if (await dominioResuelveEnSistema(dominio)) return;
+        break;
       }
     }
   }
