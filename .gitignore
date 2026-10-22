@@ -1,3 +1,9 @@
 node_modules/
 .env
+.env.*
+!.env.example
 .DS_Store
+tmp/
+uploads/solicitudesinicio/
+database/Usuario Conexion.sql
+*.log
