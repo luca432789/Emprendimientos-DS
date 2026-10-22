@@ -9,9 +9,6 @@ export const verificarToken = (req, res, next) => {
     // Hacemos un split por espacio y nos quedamos con la segunda parte (el token)
     const token = authHeader && authHeader.split(' ')[1];
 
-    //console.log("✈️ HEADER RECIBIDO:", authHeader);
-    //console.log("🔍 TOKEN RECORTADO:", token);
-    
     // Si el usuario no mandó ningún token, lo rechazamos inmediatamente
     if (!token) {
         return res.status(401).json({ error: "Acceso denegado. No se proporcionó un token de seguridad." });

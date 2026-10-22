@@ -62,7 +62,7 @@ app.use('/api', ayudasRouter);     // Subsidios y créditos sin revisar para el 
 // ==========================================
 
 // 1. Ruta para la página de Inicio (raíz)
-app.get('/', (req, res) => {
+app.get('/index', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -78,7 +78,6 @@ app.get('/mapa.html', (req, res) => {
 
 // 3. Ruta para Formularios
 app.get('/formularios', (req, res) => {
-    console.log("ENTRÉ A /FORMULARIOS"); // 👈 DEBUG
     res.sendFile(path.join(__dirname, 'public', 'Camino FORMULARIOS.html'));
 });
 
@@ -95,6 +94,16 @@ app.get('/contactos', (req, res) => {
 // 5. Ruta para Inicio de sesión
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino LOG IN.html'));
+});
+
+// 6. Ruta para Emprendedor
+app.get('/Emprendedor', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'CdE-Perfil Emprendedor.html'));
+});
+
+// 7. Ruta para Empleado
+app.get('/Empleado', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA EMPLEADO', 'Empleado view.html'));
 });
 
 // ==========================================

@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="fa-solid fa-briefcase"></i> </div>
                     <div class="dropdown-menu menu-derecha" id="menu-perfil">
                         <ul>
-                            <li><a href="/VISTA%20EMPLEADO/Empleado%20view.html">• Panel de Control</a></li>
+                            <li><a href="/Empleado">• Panel de Control</a></li>
                             <li><a href="#" id="enlace-logout" style="color: #ff6b6b !important;">• Cerrar Sesión</a></li>
                         </ul>
                     </div>
@@ -490,7 +490,7 @@ function inicializarDropdowns() {
             const ruta = decodeURIComponent(window.location.pathname).toUpperCase();
             const esVistaPrivada = ruta.startsWith('/VISTA EMPLEADO/') || ruta.startsWith('/VISTA USUARIO/');
             const redirigir = () => {
-                if (esVistaPrivada) window.location.href = "/index.html";
+                if (esVistaPrivada) window.location.href = "/index";
                 else window.location.reload();
             };
 

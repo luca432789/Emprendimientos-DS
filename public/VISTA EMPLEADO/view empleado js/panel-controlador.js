@@ -234,7 +234,7 @@ function cargarSección(codigoSeccion, tituloSeccion) {
                     <tr>
                         <th>ID Etiqueta</th>
                         <th>Nombre de la Etiqueta</th>
-                        <th style="text-align: center;">Estado en DB</th>
+                        <th style="text-align: center;">Estado Visible</th>
                         <th style="text-align: center;">Editar</th>
                     </tr>
                 </thead>
@@ -426,30 +426,6 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         fetchSolicitudesMesaEntrada();
     }
     // ======================================================================
-    // PUBLICACIONES EN ESPERA (aprobar / rechazar lo que mandan los emprendedores)
-    // ======================================================================
-    else if (codigoSeccion === 'publicaciones-espera') {
-        filtrosTabla.style.display = 'none';
-
-        zonaRender.innerHTML = `
-            <table class="tabla-datos">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Emprendimiento</th>
-                        <th>Enviada</th>
-                        <th>Publicación</th>
-                        <th style="text-align:center;">Resolución</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-cuerpo-publicaciones">
-                    <tr><td colspan="5" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando publicaciones en espera...</td></tr>
-                </tbody>
-            </table>
-        `;
-        fetchPublicacionesEnEspera();
-    }
-    // ======================================================================
     // CASO: SOLICITUDES DE INICIO ASIGNADAS AL REVISOR
     // ======================================================================
     else if (codigoSeccion === 'inicio-en-revision') {
@@ -486,6 +462,30 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         `;
 
         inicializarBandejaRevisionesAsignadas();
+    }
+    // ======================================================================
+    // PUBLICACIONES EN ESPERA (aprobar / rechazar lo que mandan los emprendedores)
+    // ======================================================================
+    else if (codigoSeccion === 'publicaciones-espera') {
+        filtrosTabla.style.display = 'none';
+
+        zonaRender.innerHTML = `
+            <table class="tabla-datos">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Emprendimiento</th>
+                        <th>Enviada</th>
+                        <th>Publicación</th>
+                        <th style="text-align:center;">Resolución</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo-publicaciones">
+                    <tr><td colspan="5" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando publicaciones en espera...</td></tr>
+                </tbody>
+            </table>
+        `;
+        fetchPublicacionesEnEspera();
     }
     // ======================================================================
     // CASO 4: REGISTRAR EMPLEADO

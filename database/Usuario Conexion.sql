@@ -23,7 +23,7 @@ GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Subsidio TO 'ministerio_api'
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Credito TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Producto TO 'ministerio_api'@'localhost';
 
--- tablas que cumplen permisos de insert: DatosSolicitudInicio, Auditoria, Expediente, Garante
+-- tablas que cumplen permisos de insert: DatosSolicitudInicio (update coordenadas), Auditoria, Expediente, Garante
 GRANT INSERT ON ProyectoEmprendimientos2026.DatosSolicitudInicio TO 'ministerio_api'@'localhost';
 GRANT UPDATE (EmprendimientoLatitud, EmprendimientoLongitud) ON ProyectoEmprendimientos2026.DatosSolicitudInicio TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Auditoria TO 'ministerio_api'@'localhost';

@@ -59,7 +59,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Empleado', NEW.idEmpleado, 
-			CONCAT('Cambio de cargo de: ', OLD.Cargo, ' a ', NEW.Cargo),
+			CONCAT('Cambio de cargo de: ', OLD.Cargo, ' A -> ', NEW.Cargo),
 			@usuario_ip);
     END IF;
 
@@ -68,7 +68,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Empleado', NEW.idEmpleado, 
-			CONCAT('Cambio de Domicilio de: ', OLD.Domicilio, ' a ', NEW.Domicilio),
+			CONCAT('Cambio de Domicilio de: ', OLD.Domicilio, ' A -> ', NEW.Domicilio),
 			@usuario_ip);
     END IF;
 
