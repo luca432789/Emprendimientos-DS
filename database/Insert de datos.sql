@@ -128,7 +128,7 @@ values ('Emprendedor2', 'Luca2', '46000001', 'Banda', 'Ardiles', 'Ardiles, B. lo
 -- USUARIO ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Usuario EMPLEADO -----------------------------------------------
-/*insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado) -- contraseña 12 caracteres: 1 ABC, 1 abc, 1 Num, 1 CaracEspecial (ej: @, $, !, %, *, ?, &, -).
+insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado) -- contraseña 12 caracteres: 1 ABC, 1 abc, 1 Num, 1 CaracEspecial (ej: @, $, !, %, *, ?, &, -).
 values ('empleaSebas.santill@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfGfIcnq180L0036NaxCgymhO', 'Administrador', true, null, 1), -- Empleado 1 (admin) contra: 1234sEBASss--
 ('admin2@gmail.com', '$2b$10$erGWSB9zNBKnO26HXEBeM.3NTItonfUKwOO6HZM8KwSotx3PFM.Y2', 'Administrador', true, null, 2), -- Empleado 2 (admin) contra: admiN1234@-2
 --
@@ -150,7 +150,7 @@ values ('empleaSebas.santill@gmail.com', '$2b$10$mEIN/RBMUB5G28bVno2gju3y9doFDfG
 ('Mesa3@gmail.com', '$2b$10$YvYeJ/9uw3NycUjSLJb./OS1VD4tyxi/Kg.mo/MNXb/OzWxVR9CkK', 'Empleado de Mesa', true, null, 16), -- Empleado 16 (de Mesa) contra: MesA123!4@-3
 ('Mesa4@gmail.com', '$2b$10$YvYeJ/9uw3NycUjSLJb./OS1VD4tyxi/Kg.mo/MNXb/OzWxVR9CkK', 'Empleado de Mesa', true, null, 17), -- Empleado 17 (de Mesa) contra: MesA123!4@-4
 ('Mesa5@gmail.com', '$2b$10$YvYeJ/9uw3NycUjSLJb./OS1VD4tyxi/Kg.mo/MNXb/OzWxVR9CkK', 'Empleado de Mesa', true, null, 18); -- Empleado 18 (de Mesa) contra: MesA123!4@-5
-*/
+
 
 -- Usuario EMPRENDEDOR --------------------------------------------
 insert into Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
@@ -166,7 +166,6 @@ values ('Emprendedor2prueba@gmail.com', 'contraseña', 'Emprendedor', true, 2, n
 ('Emprendedor9prueba@gmail.com', 'contraseña', 'Emprendedor', true, 9, null), -- Emprendedor 9 1234Empre--9
 ('Emprendedor10prueba@gmail.com', 'contraseña', 'Emprendedor', true, 10, null); -- Emprendedor 10 1234Empre-10
 */
-
 -- Etiqueta (idEtiqueta, nombre, activa) -----------------------------------------------------------------------------------------------------------------------------------------
 insert into Etiqueta (Nombre, Activa)
 values ('Madera', true),

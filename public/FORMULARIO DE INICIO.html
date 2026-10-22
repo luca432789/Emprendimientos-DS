@@ -118,7 +118,10 @@
                     </div>
                     <div class="columna">
                         <label class="etiqueta">Localidad</label>
-                        <input type="text" name="localidad" class="linea" maxlength="40" required aria-label="Localidad">
+                        <select name="localidad" class="linea" required aria-label="Localidad" disabled>
+                            <option value="">Primero seleccione el departamento</option>
+                        </select>
+                        <input type="text" name="localidadLibre" class="linea" maxlength="40" aria-label="Escriba otra localidad" placeholder="Escriba la localidad" hidden>
                     </div>
                 </div>
 
@@ -128,6 +131,7 @@
 
                 <label class="etiqueta">Correo electrónico</label>
                 <input type="email" name="correo" class="linea" maxlength="150" required aria-label="Correo electrónico">
+                <small>El dominio del correo debe tener un servidor de correo activo. El correo también aparecerá en el PDF y en el nombre del archivo.</small>
 
                 <div class="fila">
                     <div class="columna ancha">
@@ -137,6 +141,7 @@
                     <div class="columna">
                         <label class="etiqueta">Nº</label>
                         <input type="text" name="numeroEmprendimiento" class="linea" maxlength="6" required aria-label="Número de calle del emprendimiento">
+                        <label class="extranjero-control"><input type="checkbox" name="calleSinNumero" value="true"><span>Sin número (S/N)</span></label>
                     </div>
                 </div>
 
@@ -222,19 +227,14 @@
 
             <!-- HOJA 2 -->
             <section class="hoja">
-                <div class="nota-importante">
-                    <p><strong>NOTA IMPORTANTE: ADJUNTAR FOTOCOPIAS DE DNI AUTENTICADAS POR POLICIA, CERTIFICADOS DE RESIDENCIA ADJUNTAR FOTOGRAFIAS DEL EMPRENDIMIENTO. SI TUVIESE CAPACITACION SOBRE EL RUBRO A INICIAR, DEBE PRESENTAR UNA FOTOCOPIA AUTENTICADA POR POLICIA DE LA MISMA.</strong></p>
-                    <p>LA PRESENTACION DE LA NOTA Y LA DOCUMENTACION NO IMPLICA LA ACEPTACION DE LA MISMA, SINO QUE QUEDA SUJETA A VERIFICACION TECNICA Y SOCIAL PARA ANALIZAR LA VIABILIDAD DEL PROYECTO. TODO LO INFORMADO POR ESTE MEDIO REVISTE EL CARÁCTER DE DECLARACION JURADA DE MODO QUE NO FALSEE NI OMITA LA INFORMACION.</p>
-                </div>
-
                 <h3 class="titulo-imagenes">Imágenes del emprendimiento</h3>
                 <p class="parrafo">Adjunte fotografías del emprendimiento en reemplazo del croquis de localización. Puede seleccionar varias imágenes.</p>
 
                 <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar imágenes</label>
                 <div class="zona-archivos">
-                    <input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple>
+                    <input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple required>
                 </div>
-                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos y 16 MB en total.</small>
+                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos, 8 páginas adjuntas y 16 MB en total.</small>
 
                 <p class="parrafo revision">Antes de culminar el llenado de la presente nota, revise si todos los campos fueron completados de acuerdo a lo solicitado.</p>
 
