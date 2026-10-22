@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import dns from 'node:dns/promises';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, PDFEmbeddedPage, StandardFonts, rgb } from 'pdf-lib';
 import {
   modelRegistrarSolicitudInicio,
   modelObtenerSolicitudDeUsuario,
@@ -659,7 +659,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       const x = area.x + columna * (anchoCelda + espacio) + (anchoCelda - anchoFinal) / 2;
       const y = area.y + area.height - (fila + 1) * altoCelda - fila * espacio + (altoCelda - altoFinal) / 2;
 
-      if (typeof contenido.scale === 'function') {
+      if (contenido instanceof PDFEmbeddedPage) {
         paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
       } else {
         paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
@@ -684,7 +684,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       const altoFinal = alto * escala;
       const x = area.x + columna * (anchoCelda + espacio) + (anchoCelda - anchoFinal) / 2;
       const y = area.y + area.height - (fila + 1) * altoCelda - fila * espacio + (altoCelda - altoFinal) / 2;
-      if (typeof contenido.scale === 'function') {
+      if (contenido instanceof PDFEmbeddedPage) {
         paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
       } else {
         paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
@@ -708,7 +708,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       const altoFinal = alto * escala;
       const x = (595.28 - anchoFinal) / 2;
       const y = 765 - altoFinal;
-      if (typeof contenido.scale === 'function') {
+      if (contenido instanceof PDFEmbeddedPage) {
         paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
       } else {
         paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
