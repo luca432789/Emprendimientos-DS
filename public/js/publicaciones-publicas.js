@@ -11,7 +11,7 @@ const escaparPub = (texto) => String(texto ?? '').replace(/[&<>"']/g, (c) => ({
 // Minúsculas y sin tildes, para buscar sin errores de escritura
 const normalizarPub = (texto) => String(texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-const urlPerfil = (id) => `/VISTA%20USUARIO/CdE-Perfil%20Emprendedor.html?id=${encodeURIComponent(id)}`;
+const urlPerfil = (id) => `/Emprendedor-Perfil?id=${encodeURIComponent(id)}`;
 
 let todasLasPublicaciones = [];
 

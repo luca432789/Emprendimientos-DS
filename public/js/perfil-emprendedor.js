@@ -142,7 +142,7 @@ function pintarCabecera() {
         const url = new URL(enlace.getAttribute('href'), window.location.href);
         if (Perfil.esDueno) url.searchParams.delete('id');
         else url.searchParams.set('id', emprendimiento.idEmprendimiento);
-        enlace.setAttribute('href', url.pathname.split('/').pop() + url.search);
+        enlace.setAttribute('href', url.pathname + url.search);
     });
 }
 
@@ -174,7 +174,7 @@ function pintarAcerca() {
                 <li><i class="fa-solid fa-location-dot"></i> ${esc(textoDireccion(e.direccion))}</li>
                 ${e.contacto.nombre ? `<li><i class="fa-solid fa-user"></i> ${esc(e.contacto.nombre)}</li>` : ''}
             </ul>
-            <p class="perfil-ver-mas"><a href="Contacto.html${Perfil.esDueno ? '' : `?id=${e.idEmprendimiento}`}">Ver datos de contacto <i class="fa-solid fa-arrow-right"></i></a></p>`;
+            <p class="perfil-ver-mas"><a href="/Emprendedor-Contacto${Perfil.esDueno ? '' : `?id=${e.idEmprendimiento}`}">Ver datos de contacto <i class="fa-solid fa-arrow-right"></i></a></p>`;
     }
 
     // Últimas publicaciones aprobadas (el formulario de esta pestaña lo maneja publicaciones.js)

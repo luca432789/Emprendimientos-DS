@@ -12,7 +12,7 @@ import {
 } from '../models/solicitudesInicioModel.js';
 import fs from 'fs/promises';
 import { guardarPdfEnUploads } from '../helpers/archivosPdf.js';
-import { departamentosSantiago } from '../helpers/departamentos.js';
+import { departamentosSantiago, coordenadasEnSantiago, mensajeFueraDeSantiago } from '../helpers/departamentos.js';
 
 const responderErrorEtapaMinistro = (res, error, mensajeGenerico) => {
     if (['REVIEWER_NOT_ACTIVE', 'REVIEWER_ROLE_INVALID', 'REVIEW_NOT_ASSIGNED'].includes(error.code)) {
@@ -154,6 +154,9 @@ export const resolverRevisionArea = async (req, res) => {
         }
         if (!Number.isFinite(longitud) || longitud < -180 || longitud > 180) {
             return res.status(400).json({ error: 'La longitud debe ser un número entre -180 y 180.' });
+        }
+        if (!coordenadasEnSantiago(latitud, longitud)) {
+            return res.status(400).json({ error: mensajeFueraDeSantiago });
         }
     }
 
@@ -390,6 +393,7 @@ const validarCargaHistorica = (cuerpo) => {
     const latitud = numeroOpcional(e.latitud, 'Latitud', -90, 90);
     const longitud = numeroOpcional(e.longitud, 'Longitud', -180, 180);
     if ((latitud === null) !== (longitud === null)) throw new ErrorCargaHistorica('Complete latitud y longitud juntas, o deje ambas vacías.');
+    if (latitud !== null && !coordenadasEnSantiago(latitud, longitud)) throw new ErrorCargaHistorica(mensajeFueraDeSantiago);
 
     const a = cuerpo.ayuda || {};
     if (!['Subsidio', 'Credito'].includes(a.tipo)) throw new ErrorCargaHistorica('Elija Subsidio o Crédito como tipo de ayuda.');

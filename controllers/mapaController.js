@@ -2,6 +2,7 @@ import {
     obtenerEmprendimientosMapa,
     actualizarUbicacionEmprendimiento
 } from '../models/mapaModel.js';
+import { coordenadasEnSantiago, mensajeFueraDeSantiago } from '../helpers/departamentos.js';
 
 export const getEmprendimientosMapa = async (req, res) => {
     try {
@@ -25,6 +26,9 @@ export const putUbicacionEmprendimiento = async (req, res) => {
             longitud < -180 || longitud > 180
         ) {
             return res.status(400).json({ mensaje: 'Coordenadas inválidas.' });
+        }
+        if (!coordenadasEnSantiago(latitud, longitud)) {
+            return res.status(400).json({ mensaje: mensajeFueraDeSantiago });
         }
 
         const datosAuditoria = {

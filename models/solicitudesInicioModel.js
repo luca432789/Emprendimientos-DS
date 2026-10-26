@@ -26,19 +26,32 @@ export const ModelObtenerSinExpediente = async () => {
 };
 
 // 2. Insertar el expediente en su respectiva tabla y activar los Triggers de Auditoría
+// Usa una conexión dedicada: @usuario_id / @usuario_ip viven por conexión y el trigger
+// de auditoría tiene que leerlos en la misma conexión que hace el INSERT.
 export const ModelAsignarExpediente = async (idSolicitud, nroExpediente, idUsuario, ipCliente) => {
-    await pool.query("SET @usuario_id = ?;", [idUsuario]);
-    await pool.query("SET @usuario_ip = ?;", [ipCliente]);
+    const conexion = await pool.getConnection();
 
-    const querySQL = `
-        INSERT INTO Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
-        VALUES (?, ?, NOW(), ?);
-    `;
-    
-    const [resultado] = await pool.query(querySQL, [nroExpediente, idSolicitud, idUsuario]);
-    
-    // Para mantener la compatibilidad con el controlador que verifica "affectedRows"
-    return resultado;
+    try {
+        await conexion.beginTransaction();
+        await conexion.query('SET @usuario_id = ?;', [idUsuario]);
+        await conexion.query('SET @usuario_ip = ?;', [ipCliente]);
+
+        const [resultado] = await conexion.query(
+            `INSERT INTO Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+             VALUES (?, ?, NOW(), ?);`,
+            [nroExpediente, idSolicitud, idUsuario]
+        );
+
+        await conexion.commit();
+        // Para mantener la compatibilidad con el controlador que verifica "affectedRows"
+        return resultado;
+    } catch (error) {
+        await conexion.rollback();
+        throw error;
+    } finally {
+        await conexion.query('SET @usuario_id = NULL, @usuario_ip = NULL;').catch(() => {});
+        conexion.release();
+    }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -301,7 +314,7 @@ const errorAprobacion = (mensaje, codigo) => {
 
 // TEMPORAL: contraseña genérica de las cuentas de emprendedor creadas al aprobar el Ministro.
 // Reemplazar cuando exista el envío por correo del enlace para que el emprendedor defina la suya.
-const CONTRASEÑA_INICIAL_EMPRENDEDOR = '1234Emprend--2';
+const CONTRASEÑA_INICIAL_EMPRENDEDOR = '1234Empre--2';
 
 // Verifica duplicados e inserta Emprendimiento, Emprendedor y la cuenta de Usuario del emprendedor.
 // Lo usan la aprobación del Ministro y la carga histórica de emprendimientos antiguos.

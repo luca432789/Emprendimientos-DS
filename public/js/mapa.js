@@ -318,7 +318,7 @@ function renderizarTodo(lista) {
             <i style="font-size: 13px; color: #555;">${actividad}</i><br>
             <span id="pop-dir-${id}" style="font-size: 13px;">📍 ${direccionCompleta}</span><br>
             <small style="font-size: 12px; font-weight: bold; color: #27ae60;">${localidad}</small>
-            <a href="/VISTA%20USUARIO/CdE-Perfil%20Emprendedor.html?id=${encodeURIComponent(id)}"
+            <a href="/Emprendedor-Perfil?id=${encodeURIComponent(id)}"
                style="display: block; margin-top: 8px; font-size: 13px; font-weight: bold; color: #2f4e78;">Ver perfil del emprendimiento →</a>
           </div>
         `, { maxWidth: 260 });

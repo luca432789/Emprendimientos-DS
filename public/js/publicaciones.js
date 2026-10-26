@@ -40,7 +40,7 @@ function actualizarCupo(Perfil, formulario) {
     const lleno = usadas >= maximo;
     formulario.style.display = lleno ? 'none' : '';
     aviso.innerHTML = lleno
-        ? `Ya usaste tus ${maximo} publicaciones. Para publicar algo nuevo, <a href="Publicaciones.html">editá una de ellas</a>.`
+        ? `Ya usaste tus ${maximo} publicaciones. Para publicar algo nuevo, <a href="/Emprendedor-Publicaciones">editá una de ellas</a>.`
         : `Podés tener hasta ${maximo} publicaciones (te ${maximo - usadas === 1 ? 'queda 1' : `quedan ${maximo - usadas}`}). Cada una la revisa el Ministerio antes de mostrarse.`;
 }
 
