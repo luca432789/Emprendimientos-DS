@@ -271,3 +271,23 @@
   0%, 40% { box-shadow: 0 0 0 4px #f6ad55; }
   100% { box-shadow: 0 0 0 0 rgba(246, 173, 85, 0); }
 }
+
+/* Textos largos sin espacios (ej. una descripción mal cargada) se cortan en vez de
+   ensanchar la columna y empujar el contenido fuera de la pantalla en celulares */
+.perfil-content > * {
+  min-width: 0;
+}
+
+.perfil-content p,
+.perfil-content li,
+.perfil-content h2,
+.perfil-content h3 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .perfil-content {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 15px 12px;
+  }
+}

@@ -205,6 +205,7 @@ function toggleAcordeon(categoriaElemento) {
 // 4. CAMBIO DINÁMICO DE SECCIONES (MUTACIÓN DEL CONTENIDO CENTRAL)
 // ======================================================================
 function cargarSección(codigoSeccion, tituloSeccion) {
+    cerrarMenuMovil();
     document.getElementById('dinamico-titulo-seccion').innerText = tituloSeccion;
     
     // Controlar el estilo de item activo de forma limpia
@@ -770,3 +771,29 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         `;
     }
 }
+
+
+// ======================================================================
+// MENÚ LATERAL EN CELULARES: se abre con el botón "Menú del panel" y se
+// cierra solo al elegir una sección, mostrando el contenido elegido
+// ======================================================================
+const esPantallaChica = () => window.matchMedia('(max-width: 768px)').matches;
+
+function cerrarMenuMovil() {
+    const sidebar = document.getElementById('sidebar-empleado');
+    const boton = document.getElementById('btn-menu-movil');
+    if (!sidebar || !boton || !esPantallaChica() || !sidebar.classList.contains('abierto')) return;
+    sidebar.classList.remove('abierto');
+    boton.setAttribute('aria-expanded', 'false');
+    document.querySelector('.main-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.getElementById('sidebar-empleado');
+    const boton = document.getElementById('btn-menu-movil');
+    if (!sidebar || !boton) return;
+    boton.addEventListener('click', () => {
+        const abierto = sidebar.classList.toggle('abierto');
+        boton.setAttribute('aria-expanded', String(abierto));
+    });
+});

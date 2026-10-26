@@ -273,3 +273,86 @@ footer {
   background-size: cover;
   background-position: center;
 }
+/* ==========================================
+   CELULARES: menú lateral desplegable y contenido a todo el ancho
+   ========================================== */
+.btn-menu-movil {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* align-content: start evita que la altura mínima del panel estire el botón del menú */
+    .dashboard-container {
+        grid-template-columns: minmax(0, 1fr);
+        align-content: start;
+    }
+
+    /* Mismo aspecto que las categorías del menú lateral en la computadora */
+    .btn-menu-movil {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 12px 20px;
+        border: none;
+        border-bottom: 1px solid #9cb0c5;
+        background-color: #b0c0d0;
+        color: #2c3e50;
+        font: inherit;
+        font-weight: bold;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .btn-menu-movil .flecha {
+        transition: transform 0.2s;
+    }
+
+    .btn-menu-movil[aria-expanded="true"] .flecha {
+        transform: rotate(180deg);
+    }
+
+    /* Cerrado por defecto: se abre con el botón */
+    .sidebar {
+        display: none;
+        border-right: none;
+        border-bottom: 1px solid #b8c4d4;
+        padding-top: 0;
+    }
+
+    .sidebar.abierto {
+        display: block;
+    }
+
+    .main-content {
+        min-width: 0;
+        padding: 12px;
+    }
+
+    .content-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .content-header h2 {
+        font-size: 20px;
+    }
+
+    .tabla-filtros {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    /* Las tablas con muchas columnas se deslizan dentro de su recuadro */
+    .tabla-datos {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tabla-datos th,
+    .tabla-datos td {
+        padding: 10px 8px;
+        white-space: nowrap;
+    }
+}

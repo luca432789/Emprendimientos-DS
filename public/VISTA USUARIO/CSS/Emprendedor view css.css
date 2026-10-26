@@ -479,14 +479,23 @@ body {
     grid-template-columns: 1fr;
   }
   
+  /* Las 5 pestañas en una sola fila, como en la computadora */
   .perfil-subnav ul {
-    flex-wrap: wrap;
-    padding-left: 0;
+    flex-wrap: nowrap;
+    padding: 0;
+    margin: 0;
   }
-  
+
   .perfil-subnav ul li {
     flex: 1 1 auto;
+    min-width: 0;
     text-align: center;
+  }
+
+  .perfil-subnav ul li a {
+    padding: 12px 4px;
+    font-size: clamp(11px, 3.3vw, 15px);
+    white-space: nowrap;
   }
 }
 

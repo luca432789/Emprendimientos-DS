@@ -275,3 +275,20 @@ body {
     font-size: 13px;
     color: #666;
 }
+/* Celulares: el mapa arriba y el panel de filtros debajo, a todo el ancho.
+   (!important porque la grilla de mapa.ejs está definida con estilo en línea) */
+@media (max-width: 768px) {
+    .main-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        padding: 12px !important;
+    }
+
+    .main-grid > * {
+        min-width: 0;
+    }
+
+    #map {
+        height: 60vh;
+        min-height: 320px;
+    }
+}
