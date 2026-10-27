@@ -145,6 +145,24 @@ main{
   box-shadow: 0 0 6px rgba(47, 78, 120, 0.2);
 }
 
+/* AVISO DE SESIÓN VENCIDA */
+.login-box .aviso-sesion{
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
+  padding: 14px 20px;
+  border: 1px solid #e6a5a0;
+  border-radius: 8px;
+  background: #f6d6d3;
+  color: #6b1d17;
+  font-size: 14px;
+  text-align: left;
+}
+
+.login-box .aviso-sesion[hidden]{
+  display: none;
+}
+
 /* TILDE MOSTRAR CONTRASEÑA (alineado a la izquierda bajo el campo) */
 .login-box .mostrar-contrasena{
   width: 100%;

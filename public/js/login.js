@@ -2,6 +2,13 @@
 // Lógica para el formulario de Inicio de Sesión
 const loginForm = document.getElementById('loginForm');
 
+// Llegó por sesión vencida (navbar.js redirige a /login?sesion=vencida): se muestra el aviso
+const avisoSesionVencida = document.getElementById('aviso-sesion-vencida');
+if (avisoSesionVencida && new URLSearchParams(window.location.search).get('sesion') === 'vencida') {
+    avisoSesionVencida.hidden = false;
+    history.replaceState(null, '', window.location.pathname); // al recargar ya no se muestra
+}
+
 // Tilde "Mostrar contraseña": deja ver lo escrito para corregir solo lo que está mal
 const mostrarPassword = document.getElementById('mostrar-password');
 if (mostrarPassword) {

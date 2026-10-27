@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = jwtDecode(token);
             tipoUsuario = payload.tipoUsuario; // Extraemos el rol real guardado en el backend
             idUsuario = payload.idUsuario;
+            if (payload.exp) vigilarVencimientoSesion(payload.exp);
         } catch (error) {
             console.error("Error al decodificar un token alterado:", error);
             sessionStorage.clear();
@@ -107,6 +108,46 @@ document.addEventListener('DOMContentLoaded', () => {
         iniciarNotificaciones(token, tipoUsuario, idUsuario);
     }
 });
+
+// ==========================================
+// SESIÓN VENCIDA: cuando llega la hora de vencimiento del token se cierra la sesión
+// y se lleva al login, que muestra "Su sesión ha excedido el tiempo límite..."
+// ==========================================
+let sesionVencidaEnCurso = false;
+function cerrarSesionVencida() {
+    if (sesionVencidaEnCurso) return;
+    sesionVencidaEnCurso = true;
+    ['token_ministerio', 'notif_ultimo_id', 'notif_avisadas', 'notif_pendientes_vistas']
+        .forEach((clave) => sessionStorage.removeItem(clave));
+    window.location.href = '/login?sesion=vencida';
+}
+
+function vigilarVencimientoSesion(exp) {
+    const vence = exp * 1000;
+    const vencida = () => Date.now() >= vence;
+    if (vencida()) {
+        cerrarSesionVencida();
+        return;
+    }
+    setTimeout(cerrarSesionVencida, Math.min(vence - Date.now(), 2147483647));
+    // Con la pestaña en segundo plano el navegador puede demorar el temporizador:
+    // al volver a ella se revisa enseguida
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && vencida()) cerrarSesionVencida();
+    });
+
+    // Si el servidor responde que la sesión expiró (ej. reloj de la PC adelantado o atrasado),
+    // también se cierra con el mismo aviso
+    const fetchOriginal = window.fetch;
+    window.fetch = async (...argumentos) => {
+        const respuesta = await fetchOriginal(...argumentos);
+        if (respuesta.status === 401 && sessionStorage.getItem('token_ministerio')) {
+            const datos = await respuesta.clone().json().catch(() => ({}));
+            if (/expirad/i.test(datos.error || '')) cerrarSesionVencida();
+        }
+        return respuesta;
+    };
+}
 
 // ==========================================
 // NOTIFICACIONES (campanita)

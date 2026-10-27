@@ -50,6 +50,11 @@
                 <!-- FORMULARIO -->
                 <form id="loginForm">
 
+                    <!-- Aviso cuando se llega por sesión vencida (/login?sesion=vencida) -->
+                    <div id="aviso-sesion-vencida" class="aviso-sesion" role="alert" hidden>
+                        Su sesión ha excedido el tiempo límite. Por favor, inicie sesión de nuevo.
+                    </div>
+
                     <input type="text" id="usuario" placeholder="Correo electronico" required>
 
                     <input type="password" id="password" placeholder="Contraseña" required>
