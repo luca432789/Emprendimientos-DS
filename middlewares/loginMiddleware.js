@@ -1,6 +1,18 @@
 // middlewares/authMiddleware.js
 import jwt from 'jsonwebtoken';
 
+// Para rutas que también se usan sin sesión (ej. registro de usuario): devuelve los datos del
+// usuario si mandó un token válido, o null si no hay sesión (no corta el pedido)
+export const usuarioDelTokenOpcional = (req) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) return null;
+    try {
+        return jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return null;
+    }
+};
+
 export const verificarToken = (req, res, next) => {
     // 1. Extraer el encabezado de autorización de la petición HTTP
     const authHeader = req.headers['authorization'];

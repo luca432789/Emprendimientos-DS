@@ -11,6 +11,7 @@ import {
     modelModerarPublicacion
 } from '../models/publicacionesModel.js';
 import { ErrorImagen, validarImagenes, guardarImagenes, listarFotos, borrarSubida } from '../helpers/imagenes.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 // Roles que pueden aprobar o rechazar publicaciones
 const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
@@ -19,7 +20,7 @@ const TITULO_POR_DEFECTO = 'Novedades del Emprendimiento';
 
 const datosAuditoriaDe = (req) => ({
     idUsuario: req.usuarioLogueado.idUsuario,
-    ipCliente: req.ip || '127.0.0.1'
+    ipCliente: obtenerIpCliente(req)
 });
 const esModerador = (req) => ROLES_MODERADORES.includes(req.usuarioLogueado?.tipoUsuario);
 

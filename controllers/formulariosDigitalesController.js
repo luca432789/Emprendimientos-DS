@@ -12,6 +12,7 @@ import {
 } from '../models/formulariosDigitalesModel.js';
 import { escribirConNumero } from '../helpers/archivosPdf.js';
 import { departamentosSantiago } from '../helpers/departamentos.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 // Los PDF se guardan junto a los demás documentos subidos (servidos en /uploads)
 // con un nombre base y un número correlativo (ej: SolicitudInicialFormIni12.pdf)
@@ -854,7 +855,7 @@ export const crearFormularioInicio = async (req, res) => {
     await validarDominioCorreo(datos.correo);
 
     const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);
-    const datosAuditoria = { idUsuario: null, ipCliente: req.ip || '127.0.0.1' };
+    const datosAuditoria = { idUsuario: null, ipCliente: obtenerIpCliente(req) };
 
     await guardarYResponder(res, tipoFormulario, bytesPdf,
       (direccionWeb) => modelRegistrarSolicitudInicio(direccionWeb, datos, datosAuditoria));
@@ -919,7 +920,7 @@ export const crearFormularioAyuda = async (req, res) => {
     const monto = validarMonto(datos.montoSolicitado);
 
     const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);
-    const datosAuditoria = { idUsuario: req.usuarioLogueado.idUsuario, ipCliente: req.ip || '127.0.0.1' };
+    const datosAuditoria = { idUsuario: req.usuarioLogueado.idUsuario, ipCliente: obtenerIpCliente(req) };
 
     await guardarYResponder(res, tipoFormulario, bytesPdf,
       (direccionWeb) => modelRegistrarPedidoAyuda(tipo, direccionWeb, monto, idSolicitudInicio, datosAuditoria));

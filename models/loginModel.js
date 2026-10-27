@@ -1,5 +1,5 @@
 // models/usuarioModel.js
-import { pool } from '../config/db.js';
+import { pool, consultaConAuditoria } from '../config/db.js';
 
 // 🔍 MODELO: Buscar un usuario web por Correo (Para el Login y Duplicados)
 export const modelObtenerUsuarioPorCorreo = async (correo) => {
@@ -16,26 +16,21 @@ export const modelVerificarPersonaFisica = async (tablaBusqueda, columnaId, corr
     return personas[0] || null;
 };
 
-// 📥 MODELO: Insertar un nuevo usuario web y registrar su sesión de auditoría
+// 📥 MODELO: Insertar un nuevo usuario web (el trigger lo registra en Auditoria con
+// el usuario que lo creó, o null si se registró desde la página pública, y su IP)
 export const modelInsertarUsuarioWeb = async (datos, datosAuditoria) => {
-    // Definimos las variables de sesión para los triggers de auditoría de MySQL
-    await pool.query("SET @usuario_id = ?;", [datosAuditoria.idAuditor]);
-    await pool.query("SET @usuario_ip = ?;", [datosAuditoria.ipCliente]);
-
     const sqlInsertar = `
-        INSERT INTO Usuario (Correo, Contraseña, TipoUsuario, idEmprendedor, idEmpleado) 
+        INSERT INTO Usuario (Correo, Contraseña, TipoUsuario, idEmprendedor, idEmpleado)
         VALUES (?, ?, ?, ?, ?)
     `;
-    
-    const [resultado] = await pool.query(sqlInsertar, [
-        datos.correo, 
-        datos.passwordEncriptada, 
-        datos.tipoUsuario, 
-        datos.idEmprendedorFK, 
+
+    return consultaConAuditoria(datosAuditoria, sqlInsertar, [
+        datos.correo,
+        datos.passwordEncriptada,
+        datos.tipoUsuario,
+        datos.idEmprendedorFK,
         datos.idEmpleadoFK
     ]);
-    
-    return resultado;
 };
 
 const expresionPersonaUsuario = `COALESCE(
@@ -194,13 +189,11 @@ export const modelActualizarUsuarioAdministracion = async (idUsuario, cambios, d
 };
 
 // 📝 MODELO: Registrar Auditoría del Login (Ya que no se genera por Trigger al no ser un INSERT/UPDATE común de tabla)
+// (inserta directo con el usuario y la IP, no hace falta cargar las variables de los triggers)
 export const modelRegistrarAuditoriaLogin = async (idUsuario, ipCliente) => {
-    await pool.query("SET @usuario_id = ?;", [idUsuario]);
-    await pool.query("SET @usuario_ip = ?;", [ipCliente]);
-
     const sqlAuditoria = `
-        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, Detalle, DireccionIP) 
-        VALUES (?, 'LOGIN', 'Ninguna', 'Inicio de sesión exitoso con generación de token seguro de 5 min.', ?)
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, Detalle, DireccionIP)
+        VALUES (?, 'LOGIN', 'Ninguna', 'Inicio de sesión exitoso.', ?)
     `;
     await pool.query(sqlAuditoria, [idUsuario, ipCliente]);
 };

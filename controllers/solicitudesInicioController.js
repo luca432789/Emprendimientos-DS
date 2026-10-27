@@ -12,6 +12,7 @@ import {
 } from '../models/solicitudesInicioModel.js';
 import fs from 'fs/promises';
 import { guardarPdfEnUploads } from '../helpers/archivosPdf.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
 import { departamentosSantiago, coordenadasEnSantiago, mensajeFueraDeSantiago } from '../helpers/departamentos.js';
 
 const responderErrorEtapaMinistro = (res, error, mensajeGenerico) => {
@@ -50,7 +51,7 @@ export const registrarEnvioMinistro = async (req, res) => {
     }
 
     try {
-        await ModelRegistrarEnvioMinistro(idSolicitud, idUsuario, req.ip || req.socket.remoteAddress || '127.0.0.1');
+        await ModelRegistrarEnvioMinistro(idSolicitud, idUsuario, obtenerIpCliente(req));
         return res.status(200).json({ mensaje: 'Se registró el envío de la solicitud al Ministro.' });
     } catch (error) {
         return responderErrorEtapaMinistro(res, error, 'No se pudo registrar el envío al Ministro.');
@@ -91,7 +92,7 @@ export const registrarResolucionMinistro = async (req, res) => {
             idSolicitud,
             idUsuario,
             aprobacionMinistro,
-            req.ip || req.socket.remoteAddress || '127.0.0.1',
+            obtenerIpCliente(req),
             nroProyecto,
             idRubro
         );
@@ -167,7 +168,7 @@ export const resolverRevisionArea = async (req, res) => {
             aprobacionArea,
             latitud,
             longitud,
-            req.ip || req.socket.remoteAddress || '127.0.0.1'
+            obtenerIpCliente(req)
         );
 
         return res.status(200).json({
@@ -224,7 +225,7 @@ export const iniciarRevisionArea = async (req, res) => {
             idSolicitud,
             idUsuario,
             idEmpleadoCompañero,
-            req.ip || req.socket.remoteAddress || '127.0.0.1'
+            obtenerIpCliente(req)
         );
 
         return res.status(200).json({
@@ -266,7 +267,7 @@ export const asignarExpedienteGED = async (req, res) => {
     
     // Datos inyectados automáticamente por tu middleware de login
     const idUsuario = req.usuarioLogueado.idUsuario || req.usuarioLogueado.id; 
-    const ipCliente = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const ipCliente = obtenerIpCliente(req);
 
     if (!nroExpediente) {
         return res.status(400).json({ error: "El número de expediente GED es obligatorio." });
@@ -484,7 +485,7 @@ export const registrarEmprendimientoHistorico = async (req, res) => {
 
         const { idSolicitud, idEmprendimiento } = await ModelRegistrarEmprendimientoHistorico(
             idUsuario,
-            req.ip || req.socket.remoteAddress || '127.0.0.1',
+            obtenerIpCliente(req),
             {
                 ...carga,
                 direccionPdfSolicitud: pdfSolicitud.direccionWeb,

@@ -6,6 +6,7 @@ import {
     ModelObtenerEmpleadosPorCargo,
     ModelRegistrarEmpleado
 } from '../models/empleadoModel.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 const cargosEmpleado = ['Mesa de Entrada', 'Técnico', 'Social', 'Administrador'];
 
@@ -119,7 +120,7 @@ export const CtrlActualizarEmpleadoAdministracion = async (req, res) => {
     try {
         const resultado = await ModelActualizarEmpleadoAdministracion(idEmpleado, datosEmpleado, {
             idUsuario: req.usuarioLogueado.idUsuario,
-            ipCliente: req.ip || req.socket.remoteAddress || '127.0.0.1'
+            ipCliente: obtenerIpCliente(req)
         });
 
         const mensajes = ['Datos del empleado actualizados correctamente.'];
@@ -197,7 +198,7 @@ export const CtrlRegistrarEmpleado = async (req, res) => {
     try {
         const idEmpleado = await ModelRegistrarEmpleado(datosEmpleado, {
             idUsuario: req.usuarioLogueado.idUsuario,
-            ipCliente: req.ip || req.socket.remoteAddress || '127.0.0.1'
+            ipCliente: obtenerIpCliente(req)
         });
 
         return res.status(201).json({

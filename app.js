@@ -28,7 +28,11 @@ import ayudasRouter from './routes/ayudasRoutes.js';
 // Inicializamos la app express
 const app = express();
 
-app.set('trust proxy', true); // para captura de ip
+// Captura de IP para auditoría: solo se cree el encabezado X-Forwarded-For que agrega un proxy
+// propio (Render tiene uno adelante). Con 'true' cualquiera podía inventar su IP mandando ese
+// encabezado. TRUST_PROXY en el .env permite cambiarlo (ej. 2 si hay dos proxys).
+const trustProxy = process.env.TRUST_PROXY ?? (process.env.RENDER ? '1' : 'false');
+app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy === 'true');
 
 // Configuración del motor de plantillas EJS
 app.set('view engine', 'ejs');

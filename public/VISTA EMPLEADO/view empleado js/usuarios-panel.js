@@ -45,7 +45,9 @@ function inicializarEscuchaRegistro() {
         fetch('/api/register', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                // Así la auditoría registra qué administrador creó el usuario
+                'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio')}`
             },
             body: JSON.stringify(nuevoUsuarioWeb)
         })

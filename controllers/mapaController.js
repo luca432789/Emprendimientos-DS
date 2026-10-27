@@ -3,6 +3,7 @@ import {
     actualizarUbicacionEmprendimiento
 } from '../models/mapaModel.js';
 import { coordenadasEnSantiago, mensajeFueraDeSantiago } from '../helpers/departamentos.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 export const getEmprendimientosMapa = async (req, res) => {
     try {
@@ -33,7 +34,7 @@ export const putUbicacionEmprendimiento = async (req, res) => {
 
         const datosAuditoria = {
             idUsuario: req.usuarioLogueado.idUsuario,
-            ipCliente: req.ip || req.socket.remoteAddress || '127.0.0.1'
+            ipCliente: obtenerIpCliente(req)
         };
 
         const resultado = await actualizarUbicacionEmprendimiento(id, latitud, longitud, datosAuditoria);

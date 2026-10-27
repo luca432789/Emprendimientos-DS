@@ -6,10 +6,11 @@ import {
     modelCambiarEstadoProducto
 } from '../models/productosModel.js';
 import { ErrorImagen, validarImagenes, guardarImagenes, borrarSubida } from '../helpers/imagenes.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 const datosAuditoriaDe = (req) => ({
     idUsuario: req.usuarioLogueado.idUsuario,
-    ipCliente: req.ip || '127.0.0.1'
+    ipCliente: obtenerIpCliente(req)
 });
 
 // El emprendedor logueado y su emprendimiento (o responde el error)

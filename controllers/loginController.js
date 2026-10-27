@@ -9,6 +9,8 @@ import {
     modelContarUsuariosAdministracion,
     modelActualizarUsuarioAdministracion
 } from '../models/loginModel.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
+import { usuarioDelTokenOpcional } from '../middlewares/loginMiddleware.js';
 
 // La sesión dura JWT_EXPIRES_IN (10 minutos por defecto) y el navegador la renueva mientras
 // la persona usa el sistema: así se cierra sola después de ese tiempo sin actividad.
@@ -46,7 +48,7 @@ export const loginUsuario = async (req, res) => {
         const token = firmarToken(usuarioBD);
 
         // Registrar rastro en la tabla auditoría mediante el modelo
-        const ipCliente = req.ip || '127.0.0.1';
+        const ipCliente = obtenerIpCliente(req);
         await modelRegistrarAuditoriaLogin(usuarioBD.idUsuario, ipCliente);
         
         res.json({
@@ -158,8 +160,10 @@ export const registrarUsuario = async (req, res) => {
         };
 
         const datosAuditoria = {
-            idAuditor: 1, // ID por defecto de administrador que realiza la acción en pruebas
-            ipCliente: req.ip || '127.0.0.1'
+            // Quien lo crea desde el panel (administrador logueado) o null si se registró
+            // desde la página pública; la IP se guarda siempre
+            idUsuario: usuarioDelTokenOpcional(req)?.idUsuario ?? null,
+            ipCliente: obtenerIpCliente(req)
         };
 
         await modelInsertarUsuarioWeb(datosNuevoUsuario, datosAuditoria);
@@ -286,7 +290,7 @@ export const actualizarUsuarioAdministracion = async (req, res) => {
     try {
         const resultado = await modelActualizarUsuarioAdministracion(idUsuario, cambios, {
             idUsuario: req.usuarioLogueado.idUsuario,
-            ipCliente: req.ip || req.socket.remoteAddress || '127.0.0.1'
+            ipCliente: obtenerIpCliente(req)
         });
 
         return res.status(200).json({
