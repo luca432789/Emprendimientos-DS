@@ -14,7 +14,8 @@
 const Perfil = {
     datos: null,
     esDueno: false,
-    token: sessionStorage.getItem('token_ministerio'),
+    // Siempre el token vigente (navbar.js lo renueva mientras hay actividad)
+    get token() { return sessionStorage.getItem('token_ministerio'); },
 
     escapar(texto) {
         return String(texto ?? '').replace(/[&<>"']/g, (c) => ({

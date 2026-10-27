@@ -10,6 +10,14 @@ import {
     modelActualizarUsuarioAdministracion
 } from '../models/loginModel.js';
 
+// La sesión dura JWT_EXPIRES_IN (10 minutos por defecto) y el navegador la renueva mientras
+// la persona usa el sistema: así se cierra sola después de ese tiempo sin actividad.
+const firmarToken = (usuario) => jwt.sign(
+    { idUsuario: usuario.idUsuario, tipoUsuario: usuario.TipoUsuario, correo: usuario.Correo },
+    process.env.JWT_SECRET || 'ClaveSeguridadPorDefecto123!',
+    { expiresIn: process.env.JWT_EXPIRES_IN || '10m' }
+);
+
 // CONTROLADOR DE LOG IN
 export const loginUsuario = async (req, res) => {
     try {
@@ -34,18 +42,8 @@ export const loginUsuario = async (req, res) => {
             return res.status(401).json({ error: "Credenciales incorrectas" });
         }
 
-        // 🔐 GENERACIÓN DEL TOKEN (JWT) 
-        // Usamos la clave secreta guardada en el archivo .env externo
-        const tokenSecret = process.env.JWT_SECRET || 'ClaveSeguridadPorDefecto123!';
-        
-        const payload = {
-            idUsuario: usuarioBD.idUsuario,
-            tipoUsuario: usuarioBD.TipoUsuario,
-            correo: usuarioBD.Correo
-        };
-
-        // Ponemos la caducidad exacta por inactividad/tiempo: 5 minutos
-        const token = jwt.sign(payload, tokenSecret, { expiresIn: process.env.JWT_EXPIRES_IN || '5m' });
+        // 🔐 GENERACIÓN DEL TOKEN (JWT) con la clave secreta del archivo .env
+        const token = firmarToken(usuarioBD);
 
         // Registrar rastro en la tabla auditoría mediante el modelo
         const ipCliente = req.ip || '127.0.0.1';
@@ -60,6 +58,22 @@ export const loginUsuario = async (req, res) => {
     } catch (error) {
         console.error("Error en el proceso de Login:", error);
         res.status(500).json({ error: "Error interno del servidor al procesar el ingreso" });
+    }
+};
+
+
+// POST /api/login/renovar: entrega un token nuevo mientras la sesión siga vigente y la
+// cuenta siga activa (lo pide el navegador cuando hay actividad)
+export const renovarSesion = async (req, res) => {
+    try {
+        const usuarioBD = await modelObtenerUsuarioPorCorreo(req.usuarioLogueado.correo);
+        if (!usuarioBD || usuarioBD.idUsuario !== req.usuarioLogueado.idUsuario || !usuarioBD.Activa) {
+            return res.status(401).json({ error: "Su sesión ha expirado. Por favor, ingrese nuevamente." });
+        }
+        res.json({ token: firmarToken(usuarioBD) });
+    } catch (error) {
+        console.error("Error al renovar la sesión:", error);
+        res.status(500).json({ error: "No se pudo renovar la sesión." });
     }
 };
 

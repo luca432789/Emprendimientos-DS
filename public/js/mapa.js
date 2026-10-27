@@ -662,7 +662,7 @@ if (selectEmp && btnGuardar) {
 
       if (res.status === 401) {
         const r = await aviso('warning', 'Sesión vencida',
-          'Tu sesión venció (dura 5 minutos). Volvé a iniciar sesión para guardar.', {
+          'Tu sesión venció por inactividad. Volvé a iniciar sesión para guardar.', {
             showCancelButton: true,
             confirmButtonText: 'Iniciar sesión',
             cancelButtonText: 'Cerrar'

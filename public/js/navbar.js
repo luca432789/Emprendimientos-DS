@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = jwtDecode(token);
             tipoUsuario = payload.tipoUsuario; // Extraemos el rol real guardado en el backend
             idUsuario = payload.idUsuario;
-            if (payload.exp) vigilarVencimientoSesion(payload.exp);
+            if (payload.exp) vigilarVencimientoSesion(payload);
         } catch (error) {
             console.error("Error al decodificar un token alterado:", error);
             sessionStorage.clear();
@@ -110,9 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// SESIÓN VENCIDA: cuando llega la hora de vencimiento del token se cierra la sesión
-// y se lleva al login, que muestra "Su sesión ha excedido el tiempo límite..."
+// SESIÓN POR INACTIVIDAD: el token dura JWT_EXPIRES_IN (10 minutos) y se renueva mientras
+// la persona usa la página (clic, teclado, mouse, scroll o toque). Si pasa ese tiempo sin
+// actividad, el token vence: se cierra la sesión y se lleva al login, que muestra
+// "Su sesión ha excedido el tiempo límite..."
 // ==========================================
+const RENOVAR_SESION_CADA = 60 * 1000; // como mucho una renovación por minuto
+const EVENTOS_ACTIVIDAD = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'];
 let sesionVencidaEnCurso = false;
 function cerrarSesionVencida() {
     if (sesionVencidaEnCurso) return;
@@ -122,28 +126,68 @@ function cerrarSesionVencida() {
     window.location.href = '/login?sesion=vencida';
 }
 
-function vigilarVencimientoSesion(exp) {
-    const vence = exp * 1000;
+function vigilarVencimientoSesion(payload) {
+    let vence = payload.exp * 1000;
+    let emitido = (payload.iat ?? payload.exp) * 1000;
+    let temporizador = null;
+    let renovando = false;
     const vencida = () => Date.now() >= vence;
+    const programarCierre = () => {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(cerrarSesionVencida, Math.min(vence - Date.now(), 2147483647));
+    };
+
     if (vencida()) {
         cerrarSesionVencida();
         return;
     }
-    setTimeout(cerrarSesionVencida, Math.min(vence - Date.now(), 2147483647));
+    programarCierre();
     // Con la pestaña en segundo plano el navegador puede demorar el temporizador:
     // al volver a ella se revisa enseguida
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && vencida()) cerrarSesionVencida();
     });
 
-    // Si el servidor responde que la sesión expiró (ej. reloj de la PC adelantado o atrasado),
-    // también se cierra con el mismo aviso
     const fetchOriginal = window.fetch;
+
+    // Hubo actividad: si el token tiene más de un minuto, se pide uno nuevo con el tiempo completo
+    const renovar = async () => {
+        if (renovando || vencida() || Date.now() - emitido < RENOVAR_SESION_CADA) return;
+        renovando = true;
+        try {
+            const respuesta = await fetchOriginal('/api/login/renovar', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio')}` }
+            });
+            if (!respuesta.ok) return; // si ya no es válida, el temporizador cierra la sesión
+            const { token } = await respuesta.json();
+            const nuevo = jwtDecode(token);
+            sessionStorage.setItem('token_ministerio', token);
+            vence = nuevo.exp * 1000;
+            emitido = nuevo.iat * 1000;
+            programarCierre();
+        } catch (error) {
+            console.error('No se pudo renovar la sesión:', error);
+        } finally {
+            renovando = false;
+        }
+    };
+    EVENTOS_ACTIVIDAD.forEach((evento) => {
+        document.addEventListener(evento, renovar, { capture: true, passive: true });
+    });
+
+    // Si el servidor responde que la sesión expiró (ej. reloj de la PC adelantado o atrasado),
+    // también se cierra con el mismo aviso. Solo cuenta si se usó el token vigente: un pedido
+    // que salió con el token anterior a una renovación no cierra la sesión.
     window.fetch = async (...argumentos) => {
         const respuesta = await fetchOriginal(...argumentos);
-        if (respuesta.status === 401 && sessionStorage.getItem('token_ministerio')) {
-            const datos = await respuesta.clone().json().catch(() => ({}));
-            if (/expirad/i.test(datos.error || '')) cerrarSesionVencida();
+        if (respuesta.status === 401) {
+            const encabezados = new Headers(argumentos[1]?.headers ?? (argumentos[0] instanceof Request ? argumentos[0].headers : {}));
+            const tokenUsado = (encabezados.get('Authorization') || '').split(' ')[1];
+            if (tokenUsado && tokenUsado === sessionStorage.getItem('token_ministerio')) {
+                const datos = await respuesta.clone().json().catch(() => ({}));
+                if (/expirad/i.test(datos.error || '')) cerrarSesionVencida();
+            }
         }
         return respuesta;
     };
@@ -161,8 +205,9 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
 
     const consultar = async () => {
         try {
+            // Token vigente (se renueva mientras hay actividad), no el de cuando se abrió la página
             const respuesta = await fetch('/api/notificaciones', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio') || token}` }
             });
             // Sesión vencida o sin permiso: se deja de consultar
             if (respuesta.status === 401 || respuesta.status === 403) {
@@ -204,7 +249,6 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
     });
     // Otras partes de la página (ej. al cargar un expediente) pueden pedir que se actualice
     window.actualizarNotificaciones = consultar;
-    window.tokenNotificaciones = token; // para marcar como vistas en el servidor
 }
 
 function escaparNotif(texto) {
@@ -404,10 +448,11 @@ function marcarVistas(idUsuario, claves) {
     guardarLista(localStorage, claveVistas(idUsuario), [...vistas]);
 
     // En la base (tabla NotificacionVista): así no reaparecen al entrar desde otra computadora
-    if (window.tokenNotificaciones && claves.length) {
+    const tokenActual = sessionStorage.getItem('token_ministerio');
+    if (tokenActual && claves.length) {
         fetch('/api/notificaciones/vistas', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.tokenNotificaciones}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tokenActual}` },
             body: JSON.stringify({ claves }),
             keepalive: true // se envía aunque el clic cambie de página
         }).catch(() => {});

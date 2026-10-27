@@ -16,7 +16,7 @@ export const verificarToken = (req, res, next) => {
 
     try {
         // 2. Verificar el token usando la clave secreta del .env
-        // Si pasaron los 5 minutos fijados en el login, jwt.verify() arrojará un error automáticamente
+        // Si pasó el tiempo de la sesión sin renovarse (JWT_EXPIRES_IN), jwt.verify() arrojará un error automáticamente
         const tokenSecret = process.env.JWT_SECRET;
         const datosUsuarioDecodificados = jwt.verify(token, tokenSecret);
 
@@ -32,7 +32,7 @@ export const verificarToken = (req, res, next) => {
         // Capturamos específicamente si el error es por vencimiento del tiempo ('TokenExpiredError')
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({ 
-                error: "Su sesión ha expirado por inactividad de 5 minutos. Por favor, ingrese nuevamente." 
+                error: "Su sesión ha expirado por inactividad. Por favor, ingrese nuevamente."
             });
         }
 
