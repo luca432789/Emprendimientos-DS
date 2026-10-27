@@ -4,7 +4,8 @@ import dns from 'node:dns/promises';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import {
   modelRegistrarSolicitudInicio,
-  modelObtenerSolicitudDeUsuario,
+  modelEmprendimientosParaAyuda,
+  modelObtenerSolicitudDeEmprendimiento,
   modelTienePedidoPendiente,
   modelRegistrarPedidoAyuda,
   modelExisteEmprendedorConCorreo
@@ -863,9 +864,25 @@ export const crearFormularioInicio = async (req, res) => {
 };
 
 // POST /api/formularios-digitales/ayuda (requiere emprendedor logueado)
+// Subsidios y créditos los carga el Ministerio a nombre de un emprendimiento
+const ROLES_CARGA_AYUDA = ['Empleado de Area', 'Administrador'];
+
+// GET /api/formularios-digitales/emprendimientos -> lista para elegir el emprendimiento del pedido
+export const listarEmprendimientosParaAyuda = async (req, res) => {
+  if (!ROLES_CARGA_AYUDA.includes(req.usuarioLogueado.tipoUsuario)) {
+    return res.status(403).json({ error: 'Solo el Empleado de Área o el Administrador pueden cargar subsidios o créditos.' });
+  }
+  try {
+    res.json(await modelEmprendimientosParaAyuda());
+  } catch (error) {
+    console.error('Error al listar emprendimientos para subsidios y créditos:', error);
+    res.status(500).json({ error: 'No se pudieron cargar los emprendimientos.' });
+  }
+};
+
 export const crearFormularioAyuda = async (req, res) => {
   try {
-    const { tipoFormulario, imagenes = [], documentoExtranjero = false, ...datos } = req.body;
+    const { tipoFormulario, imagenes = [], documentoExtranjero = false, idEmprendimiento, ...datos } = req.body;
     const tiposAyuda = {
       'Formulario de Subsidios no Reintegrables': 'Subsidio',
       'Formulario de Creditos Reintegrables': 'Credito'
@@ -875,16 +892,20 @@ export const crearFormularioAyuda = async (req, res) => {
     if (!tipo) {
       return res.status(400).json({ error: 'Tipo de formulario invalido' });
     }
-    if (req.usuarioLogueado.tipoUsuario !== 'Emprendedor') {
-      return res.status(403).json({ error: 'Solo un emprendedor puede solicitar subsidios o créditos.' });
+    if (!ROLES_CARGA_AYUDA.includes(req.usuarioLogueado.tipoUsuario)) {
+      return res.status(403).json({ error: 'Solo el Empleado de Área o el Administrador pueden cargar subsidios o créditos.' });
     }
 
-    const idSolicitudInicio = await modelObtenerSolicitudDeUsuario(req.usuarioLogueado.idUsuario);
+    const id = Number(idEmprendimiento);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'Seleccione el emprendimiento al que corresponde el pedido.' });
+    }
+    const idSolicitudInicio = await modelObtenerSolicitudDeEmprendimiento(id);
     if (!idSolicitudInicio) {
-      return res.status(404).json({ error: 'Su usuario no tiene un emprendimiento con solicitud de inicio asociada.' });
+      return res.status(404).json({ error: 'El emprendimiento elegido no existe o no tiene un emprendedor asignado.' });
     }
     if (await modelTienePedidoPendiente(tipo, idSolicitudInicio)) {
-      return res.status(409).json({ error: `Ya tiene un pedido de ${tipo === 'Subsidio' ? 'subsidio' : 'crédito'} pendiente de resolución.` });
+      return res.status(409).json({ error: `Ese emprendimiento ya tiene un pedido de ${tipo === 'Subsidio' ? 'subsidio' : 'crédito'} pendiente de resolución.` });
     }
 
     validarDocumentoYTelefono(datos, documentoExtranjero, false);

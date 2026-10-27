@@ -27,6 +27,19 @@
     flex-direction: column;
 }
 
+/* Subsidios y Créditos: emprendimiento a cuyo nombre se carga el pedido */
+.formulario-inicio .selector-emprendimiento {
+    background: white;
+    padding: 6px 24px 22px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid var(--azul);
+}
+
+.formulario-inicio .selector-emprendimiento select.linea {
+    text-overflow: ellipsis;
+}
+
 /* Encabezado de la nota */
 .formulario-inicio .fecha-lugar {
     text-align: right;

@@ -2,6 +2,14 @@
 // Lógica para el formulario de Inicio de Sesión
 const loginForm = document.getElementById('loginForm');
 
+// Tilde "Mostrar contraseña": deja ver lo escrito para corregir solo lo que está mal
+const mostrarPassword = document.getElementById('mostrar-password');
+if (mostrarPassword) {
+    mostrarPassword.addEventListener('change', () => {
+        document.getElementById('password').type = mostrarPassword.checked ? 'text' : 'password';
+    });
+}
+
 if (loginForm) {
     loginForm.addEventListener('submit', function(evento) {
         evento.preventDefault(); // Evitamos que refresque la pantalla

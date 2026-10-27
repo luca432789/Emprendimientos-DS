@@ -58,14 +58,27 @@ export const modelExisteEmprendedorConCorreo = async (correo) => {
 };
 
 // Busca la solicitud de inicio vinculada al usuario emprendedor logueado
-export const modelObtenerSolicitudDeUsuario = async (idUsuario) => {
+// Emprendimientos con emprendedor asignado, para que Área / Administrador elijan
+// a nombre de cuál cargan un pedido de subsidio o crédito
+export const modelEmprendimientosParaAyuda = async () => {
+    const [filas] = await pool.query(
+        `SELECT e.idEmprendimiento, e.Nombre, e.NroProyecto, e.Departamento,
+                em.Nombre AS NombreEmprendedor, em.Apellido AS ApellidoEmprendedor, em.DNI
+         FROM Emprendimiento e
+         INNER JOIN Emprendedor em ON em.idEmprendimiento = e.idEmprendimiento
+         ORDER BY e.Nombre, e.idEmprendimiento;`
+    );
+    return filas;
+};
+
+// Solicitud de inicio del emprendimiento elegido (solo si tiene emprendedor asignado)
+export const modelObtenerSolicitudDeEmprendimiento = async (idEmprendimiento) => {
     const [filas] = await pool.query(
         `SELECT e.idSolicitudInicio
-         FROM Usuario u
-         INNER JOIN Emprendedor em ON em.idEmprendedor = u.idEmprendedor
-         INNER JOIN Emprendimiento e ON e.idEmprendimiento = em.idEmprendimiento
-         WHERE u.idUsuario = ? AND u.TipoUsuario = 'Emprendedor' AND u.Activa = 1;`,
-        [idUsuario]
+         FROM Emprendimiento e
+         INNER JOIN Emprendedor em ON em.idEmprendimiento = e.idEmprendimiento
+         WHERE e.idEmprendimiento = ?;`,
+        [idEmprendimiento]
     );
     return filas[0]?.idSolicitudInicio;
 };

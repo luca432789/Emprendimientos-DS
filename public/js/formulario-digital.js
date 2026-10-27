@@ -317,15 +317,44 @@ if (form) {
     input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); });
   });
 
+  // Subsidios y Créditos: Área / Administrador eligen a nombre de qué emprendimiento cargan el pedido
+  const selectorEmprendimiento = form.querySelector('select[name="idEmprendimiento"]');
+  const cargarEmprendimientos = async () => {
+    const token = sessionStorage.getItem('token_ministerio');
+    if (!selectorEmprendimiento || !token) return;
+    try {
+      const respuesta = await fetch(`${apiBaseUrl}/api/formularios-digitales/emprendimientos`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const lista = await respuesta.json();
+      if (!respuesta.ok) throw new Error(lista.error || 'No se pudieron cargar los emprendimientos.');
+
+      selectorEmprendimiento.replaceChildren(new Option(lista.length ? 'Seleccione un emprendimiento...' : 'No hay emprendimientos con emprendedor asignado', ''));
+      lista.forEach((e) => selectorEmprendimiento.add(new Option(
+        `${e.Nombre} · Proyecto ${e.NroProyecto} · ${e.ApellidoEmprendedor}, ${e.NombreEmprendedor} (DNI ${e.DNI}) · ${e.Departamento}`,
+        e.idEmprendimiento
+      )));
+      selectorEmprendimiento.disabled = lista.length === 0;
+    } catch (error) {
+      selectorEmprendimiento.replaceChildren(new Option(error.message || 'No se pudieron cargar los emprendimientos.', ''));
+    }
+  };
+  cargarEmprendimientos();
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Inicio es público; Subsidios y Créditos se registran a nombre del emprendedor logueado
+    // Inicio es público; Subsidios y Créditos los carga Área / Administrador a nombre de un emprendimiento
     const esInicio = form.querySelector('input[name="tipoFormulario"]')?.value === 'Formulario de Inicio';
     const esSubsidio = esFormularioSubsidio;
     const token = sessionStorage.getItem('token_ministerio');
     if (!esInicio && !token) {
-      resultado.innerHTML = 'Debe <a href="/login">iniciar sesión</a> como emprendedor para enviar este formulario.';
+      resultado.innerHTML = 'Debe <a href="/login">iniciar sesión</a> como Empleado de Área o Administrador para enviar este formulario.';
+      return;
+    }
+    if (selectorEmprendimiento && !selectorEmprendimiento.value) {
+      resultado.textContent = 'Seleccione el emprendimiento al que corresponde el pedido.';
+      selectorEmprendimiento.focus();
       return;
     }
     if ((esInicio || esSubsidio) && localidad && localidadPersona.cargando()) {

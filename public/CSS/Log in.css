@@ -145,6 +145,29 @@ main{
   box-shadow: 0 0 6px rgba(47, 78, 120, 0.2);
 }
 
+/* TILDE MOSTRAR CONTRASEÑA (alineado a la izquierda bajo el campo) */
+.login-box .mostrar-contrasena{
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 20px;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-box .mostrar-contrasena input{
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
 /* BOTON */
 .login-box button{
   width: 220px;

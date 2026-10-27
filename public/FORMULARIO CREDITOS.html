@@ -32,12 +32,26 @@
         </ul>
     </nav>
 
-    <main class="contenedor-formulario">
+    <!-- Sin sesión de Área / Administrador: solo este aviso -->
+    <main class="contenedor-formulario" data-sin-acceso>
         <h2>Formulario de Créditos Reintegrables</h2>
-        <p class="texto">Complete los campos del formulario oficial. Debe haber iniciado sesión como emprendedor: el pedido queda registrado a nombre de su emprendimiento y se descarga el PDF.</p>
+        <p class="texto">Este formulario solo está disponible para el personal del Área y la Administración del Ministerio. <a href="/formularios">Volver a Formularios</a></p>
+    </main>
+
+    <main class="contenedor-formulario" data-solo-area style="display:none">
+        <h2>Formulario de Créditos Reintegrables</h2>
+        <p class="texto">Complete los campos del formulario oficial. Elija el emprendimiento al que corresponde: el pedido de crédito queda registrado a su nombre y se descarga el PDF.</p>
 
         <form id="formulario-digital" class="formulario-inicio">
             <input type="hidden" name="tipoFormulario" value="Formulario de Creditos Reintegrables">
+
+            <!-- A nombre de qué emprendimiento se carga el pedido (Área / Administrador) -->
+            <div class="selector-emprendimiento">
+                <label class="etiqueta subrayada" for="selector-emprendimiento">Emprendimiento que solicita:</label>
+                <select id="selector-emprendimiento" name="idEmprendimiento" class="linea" required disabled>
+                    <option value="">Cargando emprendimientos...</option>
+                </select>
+            </div>
 
             <!-- HOJA 1: CARÁTULA -->
             <section class="hoja">
@@ -218,6 +232,7 @@
         </div>
     </footer>
 
+    <script src="js/acceso-formularios-ayuda.js"></script>
     <script src="js/formulario-digital.js"></script>
 </body>
 </html>
