@@ -5,7 +5,7 @@ import {
     modelClavesVistas,
     modelMarcarVistas
 } from '../models/notificacionesModel.js';
-import { ModelObtenerSolicitudesParaArea } from '../models/solicitudesInicioModel.js';
+import { ModelObtenerSolicitudesParaArea, ModelListarRevisionesAsignadas } from '../models/solicitudesInicioModel.js';
 import { modelAyudasSinRevisar } from '../models/ayudasModel.js';
 
 // Roles que moderan publicaciones (mismos que en publicacionesController)
@@ -41,15 +41,28 @@ const notificacionesMesa = async () => {
     return { total, ultimoId, notificaciones };
 };
 
+// Solicitudes de inicio en revisión asignadas al empleado (las mismas de "En revisión - Inicio").
+// Si la cuenta no puede revisar (cargo o rol no habilitado) no tiene ninguna.
+const revisionesAsignadas = async (idUsuario) => {
+    try {
+        return (await ModelListarRevisionesAsignadas(idUsuario)).solicitudes;
+    } catch (error) {
+        if (error.code === 'REVIEWER_NOT_ACTIVE' || error.code === 'REVIEWER_ROLE_INVALID') return [];
+        throw error;
+    }
+};
+
 // Empleado de Área / Administrador: una notificación por cada cosa que espera revisión
-// (solicitudes de inicio, subsidios, créditos y publicaciones), con su contador.
+// (solicitudes de inicio, subsidios, créditos, publicaciones y las solicitudes en revisión
+// que tiene asignadas), con su contador.
 // "pendientes" trae una clave por elemento para avisar cuando llega uno nuevo.
-const notificacionesModerador = async () => {
-    const [inicios, subsidios, creditos, publicaciones] = await Promise.all([
+const notificacionesModerador = async (idUsuario) => {
+    const [inicios, subsidios, creditos, publicaciones, enRevision] = await Promise.all([
         ModelObtenerSolicitudesParaArea(),
         modelAyudasSinRevisar('subsidio'),
         modelAyudasSinRevisar('credito'),
-        modelPublicacionesEnEspera()
+        modelPublicacionesEnEspera(),
+        revisionesAsignadas(idUsuario)
     ]);
 
     const categorias = [
@@ -59,6 +72,8 @@ const notificacionesModerador = async () => {
           claves: subsidios.map((s) => `sub-${s.id}`) },
         { seccion: 'creditos-sin-revisar', nombre: 'Solicitudes de Créditos', singular: 'solicitud de crédito sin revisar', plural: 'solicitudes de crédito sin revisar',
           claves: creditos.map((c) => `cre-${c.id}`) },
+        { seccion: 'inicio-en-revision', nombre: 'En Revisión - Inicio', singular: 'solicitud de inicio en revisión', plural: 'solicitudes de inicio en revisión',
+          claves: enRevision.map((s) => `rev-${s.idSolicitudInicio}`) },
         { seccion: 'publicaciones-espera', nombre: 'Publicaciones en Espera', singular: 'publicación para revisar', plural: 'publicaciones para revisar',
           claves: publicaciones.map((p) => `pend-${p.idPublicacion}-${fechaISO(p.FechaSolicitud)}-${huella(`${p.TituloPendiente}|${p.DescripcionPendiente}`)}`) }
     ];
@@ -112,7 +127,7 @@ export const obtenerNotificaciones = async (req, res) => {
         const { tipoUsuario, idUsuario } = req.usuarioLogueado;
 
         if (tipoUsuario === 'Empleado de Mesa') return res.json(await notificacionesMesa());
-        if (ROLES_MODERADORES.includes(tipoUsuario)) return res.json(await notificacionesModerador());
+        if (ROLES_MODERADORES.includes(tipoUsuario)) return res.json(await notificacionesModerador(idUsuario));
         if (tipoUsuario === 'Emprendedor') return res.json(await notificacionesEmprendedor(idUsuario));
 
         res.json({ total: 0, ultimoId: 0, notificaciones: [] });

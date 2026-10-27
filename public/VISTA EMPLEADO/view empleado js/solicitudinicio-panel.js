@@ -390,6 +390,10 @@ function verPdfYRevisionArea(idSolicitud, urlPdf) {
             const resultado = await respuesta.json();
             if (!respuesta.ok) throw new Error(resultado.error || 'No se pudo iniciar la revisión.');
 
+            // La tomó este usuario: pasa a "En revisión" sin el aviso de "llegó una solicitud"
+            window.marcarPendientesConocidas?.([`rev-${idSolicitud}`]);
+            window.actualizarNotificaciones?.();
+
             await Swal.fire({
                 icon: 'success',
                 title: '¡Revisión iniciada!',
@@ -748,6 +752,8 @@ async function cargarRevisionesAsignadas() {
         const resultado = await respuesta.json();
         if (!respuesta.ok) throw new Error(resultado.error || 'No se pudieron cargar las revisiones.');
         if (!cuerpo.isConnected) return;
+        // Tras resolver o enviar al Ministro, el contador de "En revisión" se actualiza enseguida
+        window.actualizarNotificaciones?.();
 
         const departamentoActual = filtroDepartamento.value;
         filtroDepartamento.replaceChildren(new Option('Todos los departamentos', ''));

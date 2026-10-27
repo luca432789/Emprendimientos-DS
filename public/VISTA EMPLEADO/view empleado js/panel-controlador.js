@@ -65,13 +65,13 @@ function inicializarPanelPorRol(rol) {
             </li>
             <li class="menu-item-contenedor">
                 <div class="menu-categoria" onclick="toggleAcordeon(this)">
-                    <span><i class="fa-solid fa-spinner" style="margin-right: 8px;"></i> En revisión</span>
+                    <span id="categoria-en-revision"><i class="fa-solid fa-spinner" style="margin-right: 8px;"></i> En revisión</span>
                     <i class="fa-solid fa-chevron-down flecha"></i>
                 </div>
                 <ul class="menu-subitems">
-                    <li><a href="#" onclick="cargarSección('inicio-en-revision', 'En Revisión - Inicio')">• Solicitudes de Inicio</a></li>
-                    <li><a href="#" onclick="cargarSección('subsidio-en-revision', 'En Revisión - Subsidio')">• Solicitudes de Subsidio</a></li>
-                    <li><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
+                    <li id="item-inicio-en-revision"><a href="#" onclick="cargarSección('inicio-en-revision', 'En Revisión - Inicio')">• Solicitudes de Inicio</a></li>
+                    <li id="item-subsidio-en-revision"><a href="#" onclick="cargarSección('subsidio-en-revision', 'En Revisión - Subsidio')">• Solicitudes de Subsidio</a></li>
+                    <li id="item-creditos-en-revision"><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
             </li>
             <li class="item-simple" id="item-publicaciones-espera">
@@ -107,13 +107,13 @@ function inicializarPanelPorRol(rol) {
             </li>
             <li class="menu-item-contenedor">
                 <div class="menu-categoria" onclick="toggleAcordeon(this)">
-                    <span><i class="fa-solid fa-spinner" style="margin-right: 8px;"></i> En revisión</span>
+                    <span id="categoria-en-revision"><i class="fa-solid fa-spinner" style="margin-right: 8px;"></i> En revisión</span>
                     <i class="fa-solid fa-chevron-down flecha"></i>
                 </div>
                 <ul class="menu-subitems">
-                    <li><a href="#" onclick="cargarSección('inicio-en-revision', 'En Revisión - Inicio')">• Solicitudes de Inicio</a></li>
-                    <li><a href="#" onclick="cargarSección('subsidio-en-revision', 'En Revisión - Subsidio')">• Solicitudes de Subsidio</a></li>
-                    <li><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
+                    <li id="item-inicio-en-revision"><a href="#" onclick="cargarSección('inicio-en-revision', 'En Revisión - Inicio')">• Solicitudes de Inicio</a></li>
+                    <li id="item-subsidio-en-revision"><a href="#" onclick="cargarSección('subsidio-en-revision', 'En Revisión - Subsidio')">• Solicitudes de Subsidio</a></li>
+                    <li id="item-creditos-en-revision"><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
             </li>
             <li class="item-simple" id="item-publicaciones-espera">
@@ -168,7 +168,8 @@ function inicializarPanelPorRol(rol) {
         'solicitudes-sin-expediente': 'Carga de Expedientes GED',
         'inicio-sin-revisar': 'Solicitudes de Inicio',
         'subsidio-sin-revisar': 'Solicitudes de Subsidio',
-        'creditos-sin-revisar': 'Solicitudes de Créditos'
+        'creditos-sin-revisar': 'Solicitudes de Créditos',
+        'inicio-en-revision': 'En Revisión - Inicio'
     };
     const seccionPedida = window.location.hash.slice(1);
     if (seccionesPorEnlace[seccionPedida] && document.getElementById(`item-${seccionPedida}`)) {

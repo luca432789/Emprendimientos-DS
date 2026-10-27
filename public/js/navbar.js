@@ -144,6 +144,7 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
                 const sinRevisar = ['inicio-sin-revisar', 'subsidio-sin-revisar', 'creditos-sin-revisar']
                     .reduce((suma, seccion) => suma + (contadores[seccion] || 0), 0);
                 ponerContador(document.getElementById('categoria-sin-revisar'), sinRevisar);
+                ponerContador(document.getElementById('categoria-en-revision'), contadores['inicio-en-revision'] || 0);
                 avisarPublicacionesNuevas(datos.pendientes || []);
                 return;
             }
@@ -205,7 +206,8 @@ const SECCIONES_PANEL = {
     'publicaciones-espera': 'Publicaciones en Espera',
     'inicio-sin-revisar': 'Solicitudes de Inicio',
     'subsidio-sin-revisar': 'Solicitudes de Subsidio',
-    'creditos-sin-revisar': 'Solicitudes de Créditos'
+    'creditos-sin-revisar': 'Solicitudes de Créditos',
+    'inicio-en-revision': 'En Revisión - Inicio'
 };
 
 // Si ya estamos en el Panel de Control, se abre la sección sin recargar la página;
@@ -251,11 +253,12 @@ function avisarPublicacionesNuevas(pendientes) {
     const nuevas = pendientes.filter((c) => !conocidas.has(c));
     if (!nuevas.length) return;
 
-    // Qué llegó, según el prefijo de la clave (ini- / sub- / cre- / pend-)
+    // Qué llegó, según el prefijo de la clave (ini- / sub- / cre- / rev- / pend-)
     const tipos = {
         ini: { seccion: 'inicio-sin-revisar', uno: 'una solicitud de inicio', varios: 'solicitudes de inicio' },
         sub: { seccion: 'subsidio-sin-revisar', uno: 'una solicitud de subsidio', varios: 'solicitudes de subsidio' },
         cre: { seccion: 'creditos-sin-revisar', uno: 'una solicitud de crédito', varios: 'solicitudes de crédito' },
+        rev: { seccion: 'inicio-en-revision', uno: 'una solicitud de inicio asignada a vos', varios: 'solicitudes de inicio asignadas a vos' },
         pend: { seccion: 'publicaciones-espera', uno: 'una publicación', varios: 'publicaciones' }
     };
     const prefijos = [...new Set(nuevas.map((c) => c.split('-')[0]))].filter((pre) => tipos[pre]);
@@ -278,6 +281,16 @@ function avisarPublicacionesNuevas(pendientes) {
         );
     }
 }
+
+// Claves que el propio usuario generó (ej. al iniciar una revisión): se dan por conocidas
+// para que no aparezca el aviso de "llegó" por algo que hizo en esta misma sesión
+window.marcarPendientesConocidas = (claves) => {
+    const guardado = sessionStorage.getItem(CLAVE_PENDIENTES_VISTAS);
+    if (guardado === null) return; // todavía no hubo primera consulta: no se avisa nada igual
+    sessionStorage.setItem(CLAVE_PENDIENTES_VISTAS, JSON.stringify([
+        ...new Set([...JSON.parse(guardado), ...claves])
+    ].slice(-300)));
+};
 
 // Muestra un aviso cuando llega un formulario nuevo (id mayor al último visto en la sesión)
 function avisarSiHayNuevas(total, ultimoId, notificaciones) {
