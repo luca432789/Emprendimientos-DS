@@ -367,3 +367,16 @@ primary key (idUsuario, Clave),
 constraint fk_NotificacionVista_Usuario
 	foreign key (idUsuario) references Usuario(idUsuario)
 );
+
+-- EnlaceContrasena (idEnlace (PK), idUsuario (FK), TokenHash, Vence, Usado, FechaCreacion)
+-- Enlace que se envía por correo al emprendedor aprobado para que cree su contraseña
+create table if not exists EnlaceContrasena (
+idEnlace int auto_increment primary key,
+idUsuario int not null,
+TokenHash char(64) not null unique,     -- SHA-256 del código del enlace: el código real solo viaja en el correo
+Vence datetime not null,                -- después de esta fecha el enlace ya no sirve
+Usado boolean not null default false,   -- cada enlace sirve una sola vez
+FechaCreacion timestamp not null default current_timestamp,
+constraint fk_EnlaceContrasena_Usuario
+	foreign key (idUsuario) references Usuario(idUsuario)
+);

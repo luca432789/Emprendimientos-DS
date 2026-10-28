@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { pool } from '../config/db.js';
 
 // 1. Buscar las solicitudes iniciales que NO tienen asignado un expediente electrónico todavía
@@ -312,9 +313,9 @@ const errorAprobacion = (mensaje, codigo) => {
     return error;
 };
 
-// TEMPORAL: contraseña genérica de las cuentas de emprendedor creadas al aprobar el Ministro.
-// Reemplazar cuando exista el envío por correo del enlace para que el emprendedor defina la suya.
-const CONTRASEÑA_INICIAL_EMPRENDEDOR = '1234Empre--2';
+// La cuenta del emprendedor se crea con una contraseña aleatoria que nadie conoce (no se puede
+// iniciar sesión con ella). El emprendedor crea la suya con el enlace que recibe por correo.
+const contraseñaInutilizable = () => bcrypt.hash(crypto.randomBytes(32).toString('base64url'), 10);
 
 // Verifica duplicados e inserta Emprendimiento, Emprendedor y la cuenta de Usuario del emprendedor.
 // Lo usan la aprobación del Ministro y la carga histórica de emprendimientos antiguos.
@@ -367,14 +368,17 @@ const insertarEmprendimientoConEmprendedor = async (conexion, idSolicitud, empre
         ]
     );
 
-    const contraseñaEncriptada = await bcrypt.hash(CONTRASEÑA_INICIAL_EMPRENDEDOR, 10);
-    await conexion.query(
+    const [filaUsuario] = await conexion.query(
         `INSERT INTO Usuario (Correo, Contraseña, TipoUsuario, Activa, idEmprendedor, idEmpleado)
          VALUES (?, ?, 'Emprendedor', TRUE, ?, NULL)`,
-        [emprendedor.correo, contraseñaEncriptada, filaEmprendedor.insertId]
+        [emprendedor.correo, await contraseñaInutilizable(), filaEmprendedor.insertId]
     );
 
-    return { idEmprendimiento: filaEmprendimiento.insertId, idEmprendedor: filaEmprendedor.insertId };
+    return {
+        idEmprendimiento: filaEmprendimiento.insertId,
+        idEmprendedor: filaEmprendedor.insertId,
+        idUsuarioEmprendedor: filaUsuario.insertId
+    };
 };
 
 // Crea el Emprendimiento, su Emprendedor y la cuenta de Usuario a partir de los datos del formulario de inicio
@@ -388,7 +392,7 @@ const crearEmprendimientoAprobado = async (conexion, idSolicitud, nroProyecto, i
         throw errorAprobacion('No se encontraron los datos del formulario de inicio de la solicitud.', 'REVIEW_DATA_NOT_FOUND');
     }
 
-    await insertarEmprendimientoConEmprendedor(conexion, idSolicitud, {
+    return insertarEmprendimientoConEmprendedor(conexion, idSolicitud, {
         nombre: datos.EmprendimientoNombre,
         nroProyecto,
         calle: datos.EmprendimientoCalle,
@@ -440,11 +444,13 @@ export const ModelRegistrarResolucionMinistro = async (idSolicitud, idUsuario, a
             [aprobacionMinistro, idSolicitud]
         );
 
-        if (aprobacionMinistro === 1) {
-            await crearEmprendimientoAprobado(conexion, idSolicitud, nroProyecto, idRubro);
-        }
+        // Si aprobó: se crean emprendimiento, emprendedor y cuenta (para enviarle el correo)
+        const creado = aprobacionMinistro === 1
+            ? await crearEmprendimientoAprobado(conexion, idSolicitud, nroProyecto, idRubro)
+            : null;
 
         await conexion.commit();
+        return { idUsuarioEmprendedor: creado?.idUsuarioEmprendedor ?? null };
     } catch (error) {
         await conexion.rollback();
         throw error;
@@ -486,7 +492,7 @@ export const ModelRegistrarEmprendimientoHistorico = async (idUsuario, ipCliente
             [carga.nroExpediente, idSolicitud, idUsuario]
         );
 
-        const { idEmprendimiento } = await insertarEmprendimientoConEmprendedor(
+        const { idEmprendimiento, idUsuarioEmprendedor } = await insertarEmprendimientoConEmprendedor(
             conexion, idSolicitud, carga.emprendimiento, carga.emprendedor
         );
 
@@ -508,7 +514,7 @@ export const ModelRegistrarEmprendimientoHistorico = async (idUsuario, ipCliente
         );
 
         await conexion.commit();
-        return { idSolicitud, idEmprendimiento };
+        return { idSolicitud, idEmprendimiento, idUsuarioEmprendedor };
     } catch (error) {
         await conexion.rollback();
         throw error;

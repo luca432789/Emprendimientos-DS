@@ -163,6 +163,46 @@ main{
   display: none;
 }
 
+/* CREAR CONTRASEÑA (enlace del correo) */
+.login-box .texto-cuenta{
+  width: 100%;
+  max-width: 500px;
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.login-box .texto-cuenta.requisitos{
+  font-size: 13px;
+  color: #666;
+  text-align: left;
+  padding-left: 20px;
+  box-sizing: border-box;
+}
+
+.login-box .aviso-exito{
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  border: 1px solid #9fd3ad;
+  border-radius: 8px;
+  background: #dcf1e2;
+  color: #1d5a2c;
+  font-size: 15px;
+}
+
+.login-box .aviso-sesion,
+.login-box .aviso-exito{
+  box-sizing: border-box;
+}
+
+.login-box .aviso-exito[hidden],
+.login-box form[hidden],
+.login-box .texto-cuenta[hidden]{
+  display: none;
+}
+
 /* TILDE MOSTRAR CONTRASEÑA (alineado a la izquierda bajo el campo) */
 .login-box .mostrar-contrasena{
   width: 100%;

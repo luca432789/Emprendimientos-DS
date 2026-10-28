@@ -24,6 +24,7 @@ import auditoriaRouter from './routes/auditoriaRoutes.js';
 import productosRouter from './routes/productosRoutes.js';
 import perfilRouter from './routes/perfilRoutes.js';
 import ayudasRouter from './routes/ayudasRoutes.js';
+import cuentaRouter from './routes/cuentaRoutes.js';
 
 // Inicializamos la app express
 const app = express();
@@ -60,6 +61,7 @@ app.use('/api', auditoriaRouter);
 app.use('/api', productosRouter); // Productos del emprendedor (/api/productos)
 app.use('/api', perfilRouter);    // Perfil del emprendimiento: público y del dueño (/api/perfil)
 app.use('/api', ayudasRouter);     // Subsidios y créditos sin revisar para el área (/api/ayudas)
+app.use('/api', cuentaRouter);     // Enlace por correo para que el emprendedor aprobado cree su contraseña (/api/cuenta)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)
@@ -98,6 +100,11 @@ app.get('/contactos', (req, res) => {
 // 5. Ruta para Inicio de sesión
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino LOG IN.html'));
+});
+
+// 5b. Página para que el emprendedor aprobado cree su contraseña (enlace del correo)
+app.get('/crear-contrasena', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Camino CREAR CONTRASENA.html'));
 });
 
 // 6. Ruta para Empleado

@@ -710,15 +710,46 @@ async function abrirResolucionMinistro(solicitud) {
 
     try {
         const resultado = await enviarEtapaMinistro(solicitud.id, 'resolucion-ministro', cuerpo);
-        await Swal.fire({
-            icon: 'success',
-            title: 'Resolución registrada',
-            text: resultado.mensaje,
-            confirmButtonColor: '#1a3a5f'
-        });
+        await mostrarResultadoConCorreo('Resolución registrada', resultado);
         cargarRevisionesAsignadas();
     } catch (error) {
         Swal.fire('Error', `No se pudo registrar la resolución del Ministro: ${error.message}`, 'error');
+    }
+}
+
+// Mensaje tras aprobar (Ministro o carga histórica). Si no salió el correo para que el
+// emprendedor cree su contraseña, se avisa y se ofrece "Reenviar enlace" (se puede reintentar).
+async function mostrarResultadoConCorreo(titulo, resultado) {
+    if (resultado.correoEnviado !== false || !resultado.idUsuarioEmprendedor) {
+        await Swal.fire({ icon: 'success', title: titulo, text: resultado.mensaje, confirmButtonColor: '#1a3a5f' });
+        return;
+    }
+
+    let mensaje = resultado.mensaje;
+    for (;;) {
+        const decision = await Swal.fire({
+            icon: 'warning',
+            title: titulo,
+            text: mensaje,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Reenviar enlace',
+            cancelButtonText: 'Más tarde',
+            confirmButtonColor: '#1a3a5f'
+        });
+        if (!decision.isConfirmed) return;
+
+        try {
+            const respuesta = await fetch(`/api/cuenta/reenviar-enlace/${encodeURIComponent(resultado.idUsuarioEmprendedor)}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio')}` }
+            });
+            const datos = await respuesta.json().catch(() => ({}));
+            if (!respuesta.ok) throw new Error(datos.error || 'No se pudo enviar el correo.');
+            await Swal.fire({ icon: 'success', title: 'Correo enviado', text: datos.mensaje, confirmButtonColor: '#1a3a5f' });
+            return;
+        } catch (error) {
+            mensaje = `${error.message} Puede volver a intentarlo.`;
+        }
     }
 }
 

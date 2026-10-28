@@ -13,6 +13,7 @@ import {
 import fs from 'fs/promises';
 import { guardarPdfEnUploads } from '../helpers/archivosPdf.js';
 import { obtenerIpCliente } from '../helpers/ipCliente.js';
+import { enviarCorreoActivacion, textoResultadoCorreo } from './cuentaController.js';
 import { departamentosSantiago, coordenadasEnSantiago, mensajeFueraDeSantiago } from '../helpers/departamentos.js';
 
 const responderErrorEtapaMinistro = (res, error, mensajeGenerico) => {
@@ -88,7 +89,7 @@ export const registrarResolucionMinistro = async (req, res) => {
     }
 
     try {
-        await ModelRegistrarResolucionMinistro(
+        const { idUsuarioEmprendedor } = await ModelRegistrarResolucionMinistro(
             idSolicitud,
             idUsuario,
             aprobacionMinistro,
@@ -96,10 +97,17 @@ export const registrarResolucionMinistro = async (req, res) => {
             nroProyecto,
             idRubro
         );
+        if (aprobacionMinistro !== 1) {
+            return res.status(200).json({ mensaje: 'Se registró el rechazo del Ministro.' });
+        }
+
+        // Aprobado: se le envía al emprendedor el correo con el enlace para crear su contraseña
+        const correo = await enviarCorreoActivacion(req, idUsuarioEmprendedor);
         return res.status(200).json({
-            mensaje: aprobacionMinistro === 1
-                ? `Se registró la aprobación del Ministro y se crearon el emprendimiento (Nro de Proyecto ${nroProyecto}), el emprendedor y su cuenta de usuario.`
-                : 'Se registró el rechazo del Ministro.'
+            mensaje: `Se registró la aprobación del Ministro y se crearon el emprendimiento (Nro de Proyecto ${nroProyecto}), el emprendedor y su cuenta de usuario.`
+                + textoResultadoCorreo(correo),
+            correoEnviado: correo.enviado,
+            idUsuarioEmprendedor
         });
     } catch (error) {
         return responderErrorEtapaMinistro(res, error, 'No se pudo registrar la resolución del Ministro.');
@@ -483,7 +491,7 @@ export const registrarEmprendimientoHistorico = async (req, res) => {
             : await guardarPdfEnUploads('creditos', 'SolicitudCredito', carga.ayuda.bytesPdf);
         archivosGuardados.push(pdfAyuda.rutaArchivo);
 
-        const { idSolicitud, idEmprendimiento } = await ModelRegistrarEmprendimientoHistorico(
+        const { idSolicitud, idEmprendimiento, idUsuarioEmprendedor } = await ModelRegistrarEmprendimientoHistorico(
             idUsuario,
             obtenerIpCliente(req),
             {
@@ -493,8 +501,13 @@ export const registrarEmprendimientoHistorico = async (req, res) => {
             }
         );
 
+        // El emprendedor recibe el correo con el enlace para crear su contraseña
+        const correo = await enviarCorreoActivacion(req, idUsuarioEmprendedor);
         return res.status(201).json({
-            mensaje: `Se registró el emprendimiento "${carga.emprendimiento.nombre}" (Nro de Proyecto ${carga.emprendimiento.nroProyecto}) con su emprendedor, su cuenta de usuario, la solicitud de inicio y el ${carga.ayuda.tipo === 'Subsidio' ? 'subsidio' : 'crédito'}.`,
+            mensaje: `Se registró el emprendimiento "${carga.emprendimiento.nombre}" (Nro de Proyecto ${carga.emprendimiento.nroProyecto}) con su emprendedor, su cuenta de usuario, la solicitud de inicio y el ${carga.ayuda.tipo === 'Subsidio' ? 'subsidio' : 'crédito'}.`
+                + textoResultadoCorreo(correo),
+            correoEnviado: correo.enviado,
+            idUsuarioEmprendedor,
             idSolicitud,
             idEmprendimiento
         });

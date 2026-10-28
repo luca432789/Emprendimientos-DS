@@ -93,7 +93,7 @@ function renderizarRegistroEmprendimiento(zonaRender) {
                     </div>
                 </fieldset>
 
-                <p style="margin:0 0 14px; font-size:13px; color:#555;">PDF de hasta 10 MB cada uno. La cuenta del emprendedor se crea con la contraseña inicial genérica.</p>
+                <p style="margin:0 0 14px; font-size:13px; color:#555;">PDF de hasta 10 MB cada uno. El emprendedor recibe un correo para crear la contraseña de su cuenta.</p>
                 <button type="submit" class="btn-filtro" style="width:100%; padding:12px; background-color:#1a3a5f; color:#fff; border:0; border-radius:4px; font-size:1rem; cursor:pointer;">
                     <i class="fa-solid fa-floppy-disk"></i> Registrar emprendimiento
                 </button>
@@ -271,7 +271,7 @@ function inicializarFormularioRegistroEmprendimiento() {
                     <div><b>Resolución del Ministro:</b> ${escaparDatoRevision(carga.fechaResolucionMin.split('-').reverse().join('/'))}</div>
                     <div><b>${nombreAyuda}:</b> $ ${escaparDatoRevision(Number(carga.ayuda.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 }))} · ${escaparDatoRevision(estadoAyuda.options[estadoAyuda.selectedIndex].text)}</div>
                 </div>
-                <p style="margin-top:12px;">Se creará la cuenta del emprendedor con la contraseña inicial genérica.</p>`,
+                <p style="margin-top:12px;">Se creará la cuenta del emprendedor y se le enviará un correo para que cree su contraseña.</p>`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, registrar',
@@ -298,12 +298,7 @@ function inicializarFormularioRegistroEmprendimiento() {
             const resultado = await respuesta.json().catch(() => ({}));
             if (!respuesta.ok) throw new Error(resultado.error || 'No se pudo registrar el emprendimiento.');
 
-            await Swal.fire({
-                icon: 'success',
-                title: 'Emprendimiento registrado',
-                text: resultado.mensaje,
-                confirmButtonColor: '#1a3a5f'
-            });
+            await mostrarResultadoConCorreo('Emprendimiento registrado', resultado);
             cargarSección('registrar-emprendimiento', 'Registrar Emprendimiento');
         } catch (error) {
             console.error('Error registrando emprendimiento histórico:', error);
