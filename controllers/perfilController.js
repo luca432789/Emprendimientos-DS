@@ -4,7 +4,7 @@ import {
     modelPublicacionesAprobadas,
     modelPublicacionesDeEmprendimiento
 } from '../models/publicacionesModel.js';
-import { modelProductosDeEmprendimiento } from '../models/productosModel.js';
+import { MAXIMO_PRODUCTOS, modelProductosDeEmprendimiento } from '../models/productosModel.js';
 import { conFotos } from './publicacionesController.js';
 import { listarFotos } from '../helpers/imagenes.js';
 
@@ -98,6 +98,7 @@ export const obtenerMiPerfil = async (req, res) => {
             publicaciones: aprobadas,
             misPublicaciones: propias,
             maximoPublicaciones: MAXIMO_PUBLICACIONES,
+            maximoProductos: MAXIMO_PRODUCTOS,
             productos,
             productosDisponibles,
             fotos: armarGaleria(aprobadas, productos)

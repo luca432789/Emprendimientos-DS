@@ -1,7 +1,8 @@
 // =========================================================
 // productos.js - Pestaña "Productos" del perfil
 // Necesita perfil-emprendedor.js (evento 'perfil-listo').
-//  - Dueño: carga, edita, oculta y vuelve a mostrar productos (sin aprobación del Ministerio).
+//  - Dueño: carga (máx. 4, contando los ocultos), edita, oculta y vuelve a mostrar productos
+//    (sin aprobación del Ministerio).
 //  - Visitante: ve los productos visibles.
 // =========================================================
 
@@ -20,9 +21,31 @@ document.addEventListener('perfil-listo', ({ detail: Perfil }) => {
     }
 
     if (tarjetaFormulario) tarjetaFormulario.style.display = Perfil.esDueno ? '' : 'none';
-    if (Perfil.esDueno && formulario) prepararFormularioProducto(Perfil, formulario);
+    if (Perfil.esDueno && formulario) {
+        prepararFormularioProducto(Perfil, formulario);
+        actualizarCupoProductos(Perfil, formulario);
+    }
     pintarProductos(Perfil);
 });
+
+// Cuántos productos le quedan; si no le quedan, el formulario se reemplaza por un aviso
+function actualizarCupoProductos(Perfil, formulario) {
+    const usados = Perfil.datos.productos.length; // el dueño recibe también los ocultos
+    const maximo = Perfil.datos.maximoProductos ?? 4;
+    const aviso = document.getElementById('aviso-cupo-productos') || (() => {
+        const p = document.createElement('p');
+        p.id = 'aviso-cupo-productos';
+        p.className = 'aviso-cupo';
+        formulario.before(p);
+        return p;
+    })();
+
+    const lleno = usados >= maximo;
+    formulario.style.display = lleno ? 'none' : '';
+    aviso.textContent = lleno
+        ? `Ya cargaste tus ${maximo} productos. Para mostrar uno distinto, editá uno de los que tenés (también los ocultos).`
+        : `Podés tener hasta ${maximo} productos, contando los ocultos (te ${maximo - usados === 1 ? 'queda 1' : `quedan ${maximo - usados}`}).`;
+}
 
 function prepararFormularioProducto(Perfil, formulario) {
     if (formularioProductoListo) return;

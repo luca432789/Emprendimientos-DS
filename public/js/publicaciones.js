@@ -44,9 +44,16 @@ function actualizarCupo(Perfil, formulario) {
         : `Podés tener hasta ${maximo} publicaciones (te ${maximo - usadas === 1 ? 'queda 1' : `quedan ${maximo - usadas}`}). Cada una la revisa el Ministerio antes de mostrarse.`;
 }
 
-// Vista previa de las fotos elegidas
+// Vista previa de las fotos elegidas. Si eligió más de las permitidas se avisa en el momento
+// y se vacía la selección (el servidor también rechaza más de 4)
 function prepararVistaPrevia(inputFotos, contenedor) {
     inputFotos.addEventListener('change', () => {
+        const cantidad = inputFotos.files.length;
+        if (cantidad > MAXIMO_FOTOS_PUBLICACION) {
+            inputFotos.value = '';
+            contenedor.innerHTML = `<p class="aviso-cupo aviso-fotos-excedidas">Elegiste ${cantidad} fotos y el máximo es ${MAXIMO_FOTOS_PUBLICACION} por publicación. Volvé a elegir hasta ${MAXIMO_FOTOS_PUBLICACION}.</p>`;
+            return;
+        }
         contenedor.innerHTML = [...inputFotos.files].map((archivo) =>
             `<img src="${URL.createObjectURL(archivo)}" alt="Vista previa">`).join('');
     });

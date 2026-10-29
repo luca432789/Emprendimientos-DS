@@ -1,5 +1,7 @@
 import { modelEmprendimientoDeUsuario } from '../models/publicacionesModel.js';
 import {
+    MAXIMO_PRODUCTOS,
+    modelContarProductos,
     modelProductoPropio,
     modelCrearProducto,
     modelEditarProducto,
@@ -48,6 +50,8 @@ const leerProducto = (body) => {
     return { nombre, descripcion, precio: precio === null ? null : Math.round(precio * 100) / 100 };
 };
 
+const MENSAJE_MAXIMO = `Ya tiene ${MAXIMO_PRODUCTOS} productos, el máximo permitido. Para cargar uno distinto, edite uno de los que tiene (también puede usar uno oculto).`;
+
 const rutaFotoNueva = (idEmprendimiento, idProducto) => `/uploads/productos/${idEmprendimiento}/producto-${idProducto}-${Date.now()}`;
 
 const responderError = (res, error, mensaje) => {
@@ -66,6 +70,11 @@ export const crearProducto = async (req, res) => {
         const emprendimiento = await emprendimientoDelEmprendedor(req, res);
         if (!emprendimiento) return;
 
+        // Se revisa antes de guardar la foto; el alta lo vuelve a controlar por si llegan dos pedidos a la vez
+        if (await modelContarProductos(emprendimiento.idEmprendimiento) >= MAXIMO_PRODUCTOS) {
+            return res.status(409).json({ error: MENSAJE_MAXIMO });
+        }
+
         const datos = leerProducto(req.body);
         if (datos.error) return res.status(400).json({ error: datos.error });
         const [imagen] = validarImagenes(req.body.foto ? [req.body.foto] : [], 1);
@@ -78,6 +87,10 @@ export const crearProducto = async (req, res) => {
         }
 
         const idProducto = await modelCrearProducto(emprendimiento.idEmprendimiento, datos, pathFoto, datosAuditoriaDe(req));
+        if (!idProducto) {
+            await borrarSubida(carpetaGuardada);
+            return res.status(409).json({ error: MENSAJE_MAXIMO });
+        }
 
         res.status(201).json({ mensaje: 'Producto publicado.', idProducto });
     } catch (error) {
