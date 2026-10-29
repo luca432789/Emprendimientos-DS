@@ -127,6 +127,11 @@ app.get('/crear-contrasena', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino CREAR CONTRASENA.html'));
 });
 
+// 7b. Página "Olvidé mi contraseña": pide el correo y se envía un enlace a /crear-contrasena
+app.get('/olvide-contrasena', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Camino OLVIDE CONTRASENA.html'));
+});
+
 // 8. Ruta para Empleado
 app.get('/Empleado', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA EMPLEADO', 'Empleado view.html'));

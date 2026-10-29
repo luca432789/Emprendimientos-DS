@@ -41,7 +41,7 @@
 
             <div class="login-box">
 
-                <h2>Crear contraseña</h2>
+                <h2 id="titulo-contrasena">Crear contraseña</h2>
 
                 <div class="icono-usuario">
                     <img src="Imagenes/User icon.png" alt="simbolo">
@@ -56,7 +56,7 @@
                 <form id="form-crear-contrasena" hidden>
 
                     <p class="texto-cuenta">
-                        Emprendimiento: <strong id="dato-emprendimiento"></strong><br>
+                        <span id="fila-emprendimiento">Emprendimiento: <strong id="dato-emprendimiento"></strong><br></span>
                         Su usuario es: <strong id="dato-correo"></strong>
                     </p>
 
@@ -80,7 +80,7 @@
 
                 <!-- Contraseña creada -->
                 <div id="exito-contrasena" class="aviso-exito" role="status" hidden>
-                    Su contraseña fue creada. Ya puede <a href="/login">iniciar sesión</a> con su correo y la contraseña nueva.
+                    Su contraseña fue <span id="texto-exito-accion">creada</span>. Ya puede <a href="/login">iniciar sesión</a> con su correo y la contraseña nueva.
                 </div>
 
             </div>

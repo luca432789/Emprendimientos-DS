@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt';
 import {
     modelDatosCorreoActivacion,
+    modelDatosRecuperacion,
+    HORAS_VALIDEZ_RECUPERACION,
     modelCrearEnlaceContrasena,
     modelBuscarEnlaceVigente,
     modelUsarEnlaceContrasena
@@ -85,12 +87,100 @@ export const textoResultadoCorreo = (resultado) => resultado.enviado
     ? ` Se envió un correo a ${resultado.correo} para que el emprendedor cree su contraseña.`
     : ` ATENCIÓN: no se pudo enviar el correo para crear la contraseña (${resultado.motivo}) Puede reenviarlo más tarde.`;
 
+// ---------- "Olvidé mi contraseña" ----------
+
+// Límites para que no se use la página para llenar de correos a alguien ni para probar correos:
+// por IP, 5 pedidos cada 15 minutos; por cuenta, un correo cada 2 minutos.
+const PEDIDOS_POR_IP = 5;
+const VENTANA_IP_MS = 15 * 60 * 1000;
+const ESPERA_POR_CUENTA_MS = 2 * 60 * 1000;
+const pedidosPorIp = new Map();      // ip -> [fechas de los pedidos]
+const ultimoEnvioPorCuenta = new Map(); // correo -> fecha del último correo enviado
+
+const RESPUESTA_RECUPERACION = 'Si el correo corresponde a una cuenta activa, en unos minutos le llegará un enlace para restablecer la contraseña. Revise también la carpeta de spam.';
+
+const superaLimiteIp = (ip) => {
+    const ahora = Date.now();
+    const recientes = (pedidosPorIp.get(ip) || []).filter((fecha) => ahora - fecha < VENTANA_IP_MS);
+    if (recientes.length >= PEDIDOS_POR_IP) return true;
+    recientes.push(ahora);
+    pedidosPorIp.set(ip, recientes);
+    // Limpieza ocasional para que los mapas no crezcan sin fin
+    if (pedidosPorIp.size > 5000) pedidosPorIp.clear();
+    if (ultimoEnvioPorCuenta.size > 5000) ultimoEnvioPorCuenta.clear();
+    return false;
+};
+
+// Busca la cuenta y envía el correo. Se ejecuta después de responder: así la respuesta tarda
+// lo mismo exista o no la cuenta, y no se puede averiguar qué correos están registrados.
+const enviarCorreoRecuperacion = async ({ correo, sitio, ipCliente }) => {
+    const datos = await modelDatosRecuperacion(correo);
+    if (!datos) return;
+
+    const clave = datos.Correo.toLowerCase();
+    if (Date.now() - (ultimoEnvioPorCuenta.get(clave) || 0) < ESPERA_POR_CUENTA_MS) return;
+    ultimoEnvioPorCuenta.set(clave, Date.now());
+
+    const codigo = await modelCrearEnlaceContrasena(datos.idUsuario, { idUsuario: null, ipCliente }, { recuperacion: true });
+    const enlace = `${sitio}/crear-contrasena?codigo=${encodeURIComponent(codigo)}&motivo=recuperar`;
+    const nombre = `${datos.Nombre || ''} ${datos.Apellido || ''}`.trim();
+    const vence = HORAS_VALIDEZ_RECUPERACION === 1 ? '1 hora' : `${HORAS_VALIDEZ_RECUPERACION} horas`;
+
+    await enviarCorreo({
+        para: datos.Correo,
+        asunto: 'Restablecer su contraseña - El Camino de los Emprendedores',
+        texto: [
+            `Hola${nombre ? ` ${nombre}` : ''}:`,
+            '',
+            'Recibimos un pedido para restablecer la contraseña de su cuenta en El Camino de los Emprendedores.',
+            'Para elegir una contraseña nueva, ingrese a este enlace:',
+            '',
+            enlace,
+            '',
+            `El enlace vence en ${vence} y sirve una sola vez. Su usuario es este correo electrónico.`,
+            'Si usted no pidió restablecer la contraseña, ignore este mensaje: su contraseña actual sigue funcionando.'
+        ].join('\n'),
+        html: `
+            <div style="font-family:Arial,Helvetica,sans-serif; max-width:560px; margin:0 auto; color:#1f2933;">
+                <h2 style="color:#2f4e78; margin-bottom:4px;">Restablecer contraseña</h2>
+                <p style="color:#555; margin-top:0;">El Camino de los Emprendedores · Ministerio de Desarrollo Social</p>
+                <p>Hola${nombre ? ` ${escaparHtml(nombre)}` : ''}:</p>
+                <p>Recibimos un pedido para restablecer la contraseña de su cuenta. Para elegir una contraseña nueva:</p>
+                <p style="text-align:center; margin:28px 0;">
+                    <a href="${escaparHtml(enlace)}" style="background:#2f4e78; color:#fff; padding:12px 26px; border-radius:30px; text-decoration:none; font-weight:bold;">Elegir contraseña nueva</a>
+                </p>
+                <p style="font-size:13px; color:#555;">Su usuario es este correo: <strong>${escaparHtml(datos.Correo)}</strong>.<br>
+                   El enlace vence en ${vence} y sirve una sola vez. Si el botón no funciona, copie esta dirección en el navegador:<br>
+                   <span style="word-break:break-all;">${escaparHtml(enlace)}</span></p>
+                <p style="font-size:12px; color:#888;">Si usted no pidió restablecer la contraseña, ignore este mensaje: su contraseña actual sigue funcionando.</p>
+            </div>`
+    });
+};
+
+// POST /api/cuenta/olvide-contrasena  body: { correo }  (público, sin sesión)
+export const solicitarRecuperacionContrasena = async (req, res) => {
+    const correo = typeof req.body.correo === 'string' ? req.body.correo.trim() : '';
+    if (!correo || correo.length > 150 || !/^\S+@\S+\.\S+$/.test(correo)) {
+        return res.status(400).json({ error: 'Ingrese un correo electrónico válido.' });
+    }
+    const ipCliente = obtenerIpCliente(req);
+    if (superaLimiteIp(ipCliente)) {
+        return res.status(429).json({ error: 'Hizo demasiados pedidos seguidos. Espere unos minutos e inténtelo de nuevo.' });
+    }
+
+    res.json({ mensaje: RESPUESTA_RECUPERACION });
+
+    enviarCorreoRecuperacion({ correo, sitio: urlDelSitio(req), ipCliente }).catch((error) => {
+        console.error('No se pudo enviar el correo para restablecer la contraseña:', error.code === 'CORREO_NO_CONFIGURADO' || faltaTabla(error) ? error.message : error);
+    });
+};
+
 // GET /api/cuenta/enlace/:codigo -> la página "Crear contraseña" comprueba que el enlace sirva
 export const verificarEnlaceContrasena = async (req, res) => {
     try {
         const enlace = await modelBuscarEnlaceVigente(req.params.codigo);
         if (!enlace) {
-            return res.status(410).json({ error: 'El enlace no es válido, ya fue usado o venció. Pida al Ministerio que le envíen uno nuevo.' });
+            return res.status(410).json({ error: 'El enlace no es válido, ya fue usado o venció. Puede pedir uno nuevo desde "¿Olvidó su contraseña?" en Iniciar sesión.' });
         }
         res.json({ correo: enlace.Correo, emprendimiento: enlace.NombreEmprendimiento });
     } catch (error) {
@@ -115,7 +205,7 @@ export const crearContrasena = async (req, res) => {
     try {
         const idUsuario = await modelUsarEnlaceContrasena(codigo, await bcrypt.hash(password, 10), obtenerIpCliente(req));
         if (!idUsuario) {
-            return res.status(410).json({ error: 'El enlace no es válido, ya fue usado o venció. Pida al Ministerio que le envíen uno nuevo.' });
+            return res.status(410).json({ error: 'El enlace no es válido, ya fue usado o venció. Puede pedir uno nuevo desde "¿Olvidó su contraseña?" en Iniciar sesión.' });
         }
         res.json({ mensaje: 'Su contraseña fue creada. Ya puede iniciar sesión con su correo y la contraseña nueva.' });
     } catch (error) {

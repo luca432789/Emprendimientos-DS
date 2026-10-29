@@ -203,6 +203,23 @@ main{
   display: none;
 }
 
+/* ENLACES DEBAJO DEL BOTÓN ("¿Olvidó su contraseña?", "Volver a iniciar sesión") */
+.login-box .enlace-secundario{
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.login-box .enlace-secundario a,
+.login-box .aviso-sesion a{
+  color: #2f4e78;
+  font-weight: bold;
+}
+
+.login-box .enlace-secundario a:hover{
+  color: #a65454;
+}
+
 /* TILDE MOSTRAR CONTRASEÑA (alineado a la izquierda bajo el campo) */
 .login-box .mostrar-contrasena{
   width: 100%;

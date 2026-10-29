@@ -1,10 +1,12 @@
 import crypto from 'crypto';
 import { pool } from '../config/db.js';
 
-// Enlaces para que el emprendedor cree su contraseña (tabla EnlaceContrasena).
+// Enlaces para crear o restablecer la contraseña (tabla EnlaceContrasena): el del emprendedor
+// aprobado y el de "Olvidé mi contraseña" (cualquier usuario activo).
 // El código del enlace es aleatorio (256 bits) y en la base solo se guarda su SHA-256:
 // quien lea la base no puede armar un enlace válido.
 const HORAS_VALIDEZ_ENLACE = 72;
+export const HORAS_VALIDEZ_RECUPERACION = 1;
 
 const hashCodigo = (codigo) => crypto.createHash('sha256').update(String(codigo)).digest('hex');
 
@@ -21,9 +23,24 @@ export const modelDatosCorreoActivacion = async (idUsuario) => {
     return filas[0] || null;
 };
 
+// Cuenta activa con ese correo y el nombre de la persona, para "Olvidé mi contraseña"
+export const modelDatosRecuperacion = async (correo) => {
+    const [filas] = await pool.query(
+        `SELECT u.idUsuario, u.Correo, COALESCE(em.Nombre, e.Nombre) AS Nombre, COALESCE(em.Apellido, e.Apellido) AS Apellido
+         FROM Usuario u
+         LEFT JOIN Emprendedor em ON em.idEmprendedor = u.idEmprendedor
+         LEFT JOIN Empleado e ON e.idEmpleado = u.idEmpleado
+         WHERE u.Correo = ? AND u.Activa = TRUE;`,
+        [correo]
+    );
+    return filas[0] || null;
+};
+
 // Crea un enlace nuevo y anula los anteriores sin usar del mismo usuario (solo vale el último enviado).
 // Devuelve el código, que va únicamente en el correo.
-export const modelCrearEnlaceContrasena = async (idUsuario, datosAuditoria) => {
+// recuperacion = true: pedido desde "Olvidé mi contraseña" (vence antes y se audita distinto)
+export const modelCrearEnlaceContrasena = async (idUsuario, datosAuditoria, { recuperacion = false } = {}) => {
+    const horas = recuperacion ? HORAS_VALIDEZ_RECUPERACION : HORAS_VALIDEZ_ENLACE;
     const codigo = crypto.randomBytes(32).toString('base64url');
     const conexion = await pool.getConnection();
     try {
@@ -31,14 +48,16 @@ export const modelCrearEnlaceContrasena = async (idUsuario, datosAuditoria) => {
         await conexion.query('UPDATE EnlaceContrasena SET Usado = TRUE WHERE idUsuario = ? AND Usado = FALSE;', [idUsuario]);
         await conexion.query(
             `INSERT INTO EnlaceContrasena (idUsuario, TokenHash, Vence)
-             VALUES (?, ?, NOW() + INTERVAL ${HORAS_VALIDEZ_ENLACE} HOUR);`,
+             VALUES (?, ?, NOW() + INTERVAL ${horas} HOUR);`,
             [idUsuario, hashCodigo(codigo)]
         );
         await conexion.query(
             `INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
              VALUES (?, 'INSERT', 'EnlaceContrasena', ?, ?, ?);`,
             [datosAuditoria.idUsuario ?? null, idUsuario,
-             `Se generó un enlace para crear la contraseña de la cuenta de emprendedor (vence en ${HORAS_VALIDEZ_ENLACE} h).`,
+             recuperacion
+                 ? `Se pidió restablecer la contraseña desde "Olvidé mi contraseña" (enlace enviado al correo de la cuenta, vence en ${horas} h).`
+                 : `Se generó un enlace para crear la contraseña de la cuenta de emprendedor (vence en ${horas} h).`,
              datosAuditoria.ipCliente]
         );
         await conexion.commit();
