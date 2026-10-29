@@ -85,7 +85,7 @@ function pintarProductos(Perfil) {
     grilla.innerHTML = productos.map((p, i) => `
         <div class="producto-card${p.Activo ? '' : ' producto-oculto'}">
             <div class="producto-img-container">
-                <img src="${esc(p.PathFoto || '/Imagenes/PLACEHOLDER.jpg')}" alt="${esc(p.Nombre)}" loading="lazy">
+                <img src="${esc(p.PathFoto || '/Imagenes/PLACEHOLDER.jpg')}" alt="${esc(p.Nombre)}" loading="lazy"${p.PathFoto ? ' data-ampliar' : ''}>
                 ${p.Activo ? '' : '<span class="etiqueta-oculto"><i class="fa-solid fa-eye-slash"></i> Oculto</span>'}
             </div>
             <div class="producto-info">

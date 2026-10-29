@@ -19,7 +19,7 @@ use ProyectoEmprendimientos2026;
 
 -- Emprendedor (idEmprendedor (PK), Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, Antecedentes, DescripcionAntecedente, idEmprendimiento (FK))
 
--- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), idEmprendedor (FK), idEmpleado (FK))
+-- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), Noticiero (Si-No), idEmprendedor (FK), idEmpleado (FK))
 
 -- Publicacion (idPublicacion (PK), idEmprendimiento (FK), TituloActual, DescripcionActual, DirectorioFotosActual, TituloPendiente, DescripcionPendiente, DirectorioFotosPendiente, EstadoModeracion, FechaSolicitud, FechaRevision, MotivoRechazo, idEmpleadoModerador (FK)) -- SERAN 2 POR EMPRENDIMIENTO (MANEJAR POR NODE)
 
@@ -38,6 +38,8 @@ use ProyectoEmprendimientos2026;
 -- Expediente (NroExpediente (PK), idSolicitudInicio, FechaCarga, idEmpleadoCargo)
 
 -- Auditoria (idLog (PK), idUsuario (FK), Accion, Tabla_Afectada, idRegistroAfectado, Detalle, Fecha_Hora, DirecciónIP)
+
+-- Noticia (idNoticia (PK), Titulo, Contenido, ImagenUrl, Visible (Si-No), idAutor (FK), FechaCreacion, FechaEdicion)
 
 */
 
@@ -165,13 +167,14 @@ constraint fk_Emprendedor_Emprendimiento
 	FOREIGN KEY (idEmprendimiento) REFERENCES Emprendimiento(idEmprendimiento)
 );
 
--- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), idEmprendedor (FK), idEmpleado (FK))
+-- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), Noticiero (Si-No), idEmprendedor (FK), idEmpleado (FK))
 create table Usuario (
 idUsuario int auto_increment primary key,
 Correo varchar(150) not null unique,
 Contraseña varchar(255) not null,
 TipoUsuario varchar (20) not null, -- ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor")
 Activa boolean not null default True, -- Para el login, verificar si el usuario esta activo (permite o no)
+Noticiero boolean not null default False, -- Permiso para crear/editar noticias (solo "Empleado de Area" o "Administrador")
 idEmprendedor int null,
 idEmpleado int null,
 CONSTRAINT chk_TipoUsuario
@@ -379,4 +382,19 @@ Usado boolean not null default false,   -- cada enlace sirve una sola vez
 FechaCreacion timestamp not null default current_timestamp,
 constraint fk_EnlaceContrasena_Usuario
 	foreign key (idUsuario) references Usuario(idUsuario)
+);
+
+-- Noticia (idNoticia (PK), Titulo, Contenido, ImagenUrl, Visible (Si-No), idAutor (FK), FechaCreacion, FechaEdicion)
+-- Noticias de la pestaña "Noticias": las publica un usuario con el permiso Noticiero (ver triggers de Noticia)
+create table if not exists Noticia (
+idNoticia int auto_increment primary key,
+Titulo varchar(255) not null,
+Contenido text not null,
+ImagenUrl varchar(255) null,            -- ruta web de la imagen (ej: /uploads/NoticiasImagen/noticia-1729000000000-1.jpg)
+Visible boolean not null default True,  -- false = oculta en la página pública (ej: noticias muy viejas). La API no borra registros
+idAutor int not null,                   -- usuario que la publicó
+FechaCreacion timestamp not null default current_timestamp,
+FechaEdicion timestamp null,            -- la carga el trigger cuando se edita el título, contenido o imagen
+constraint fk_Noticia_Autor
+	foreign key (idAutor) references Usuario(idUsuario)
 );

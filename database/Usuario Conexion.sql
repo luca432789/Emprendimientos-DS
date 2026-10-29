@@ -22,6 +22,7 @@ GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Etiqueta TO 'ministerio_api'
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Subsidio TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Credito TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Producto TO 'ministerio_api'@'localhost';
+GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Noticia TO 'ministerio_api'@'localhost'; -- la API no borra noticias: las oculta (Visible)
 
 -- tablas que cumplen permisos de insert: DatosSolicitudInicio (update coordenadas), Auditoria, Expediente, Garante
 GRANT INSERT ON ProyectoEmprendimientos2026.DatosSolicitudInicio TO 'ministerio_api'@'localhost';

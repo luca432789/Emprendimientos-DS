@@ -1,49 +1,39 @@
 // =========================================================
 // publicaciones-publicas.js - Página "Publicaciones" del menú
-// Muestra todas las publicaciones aprobadas por el Ministerio, con buscador y filtro por rubro.
-// Cada tarjeta lleva al perfil público del emprendimiento.
+// Muestra las publicaciones aprobadas por el Ministerio de a 10 por página (flechas al final),
+// con buscador y filtro por rubro. La búsqueda y el filtro los resuelve el servidor.
+// Cada tarjeta lleva al perfil público del emprendimiento. Usa crearPaginador() de paginador.js
 // =========================================================
 
 const escaparPub = (texto) => String(texto ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
-// Minúsculas y sin tildes, para buscar sin errores de escritura
-const normalizarPub = (texto) => String(texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
 const urlPerfil = (id) => `/Emprendedor-Perfil?id=${encodeURIComponent(id)}`;
 
-let todasLasPublicaciones = [];
+let paginadorPub = null;
+let paginaPub = 1;
+let rubrosCargados = false;
+let pedidoActual = 0;       // si se escribe rápido, solo vale la respuesta del último pedido
+let esperaBusqueda = null;
 
 function fotosPub(fotos) {
     if (!fotos.length) return '';
     const visibles = fotos.slice(0, 4);
     return `<div class="pub-fotos fotos-${visibles.length}">${visibles.map((url) =>
-        `<a href="${escaparPub(url)}" target="_blank" rel="noopener"><img src="${escaparPub(url)}" alt="Foto de la publicación" loading="lazy"></a>`).join('')}</div>`;
+        `<a href="${escaparPub(url)}" target="_blank" rel="noopener" data-ampliar><img src="${escaparPub(url)}" alt="Foto de la publicación" loading="lazy"></a>`).join('')}</div>`;
 }
 
-function pintarPublicaciones() {
+function pintarPublicaciones(publicaciones, hayFiltros) {
     const lista = document.getElementById('lista-publicaciones');
-    const contador = document.getElementById('contador-publicaciones');
-    const texto = normalizarPub(document.getElementById('buscar-publicacion').value.trim());
-    const rubro = document.getElementById('filtro-rubro').value;
-
-    const filtradas = todasLasPublicaciones.filter((p) =>
-        (!rubro || String(p.idRubro) === rubro) &&
-        (!texto || normalizarPub(`${p.emprendimiento} ${p.titulo} ${p.descripcion} ${p.rubro}`).includes(texto)));
-
-    contador.textContent = todasLasPublicaciones.length
-        ? `${filtradas.length} de ${todasLasPublicaciones.length} publicaciones`
-        : '';
-
-    if (!filtradas.length) {
-        lista.innerHTML = `<p class="sin-datos">${todasLasPublicaciones.length
+    if (!publicaciones.length) {
+        lista.innerHTML = `<p class="sin-datos">${hayFiltros
             ? 'Ninguna publicación coincide con la búsqueda.'
             : 'Todavía no hay publicaciones aprobadas.'}</p>`;
         return;
     }
 
-    lista.innerHTML = filtradas.map((p) => `
+    lista.innerHTML = publicaciones.map((p) => `
         <article class="pub-card">
             <header class="pub-cabecera">
                 <a class="pub-emprendimiento" href="${urlPerfil(p.idEmprendimiento)}">
@@ -62,31 +52,65 @@ function pintarPublicaciones() {
         </article>`).join('');
 }
 
-async function cargarPublicacionesPublicas() {
+function cargarRubros(rubros) {
+    if (rubrosCargados) return;
+    const select = document.getElementById('filtro-rubro');
+    rubros.forEach((r) => select.add(new Option(r.rubro, r.idRubro)));
+    rubrosCargados = true;
+}
+
+async function cargarPublicacionesPublicas(pagina = 1, { subir = false } = {}) {
+    const numeroPedido = ++pedidoActual;
+    const buscar = document.getElementById('buscar-publicacion').value.trim();
+    const rubro = document.getElementById('filtro-rubro').value;
+    const parametros = new URLSearchParams({ page: String(pagina) });
+    if (buscar) parametros.set('buscar', buscar);
+    if (rubro) parametros.set('rubro', rubro);
+
+    paginadorPub.cargando();
     try {
-        const respuesta = await fetch('/api/publicaciones');
-        if (!respuesta.ok) throw new Error(`Error ${respuesta.status}`);
-        todasLasPublicaciones = await respuesta.json();
+        const respuesta = await fetch(`/api/publicaciones?${parametros}`);
+        const data = await respuesta.json();
+        if (!respuesta.ok) throw new Error(data.error || `Error ${respuesta.status}`);
+        if (numeroPedido !== pedidoActual) return;
 
-        // Rubros que tienen publicaciones
-        const rubros = new Map();
-        todasLasPublicaciones.forEach((p) => { if (p.idRubro) rubros.set(String(p.idRubro), p.rubro); });
-        const select = document.getElementById('filtro-rubro');
-        [...rubros.entries()].sort((a, b) => a[1].localeCompare(b[1], 'es')).forEach(([id, nombre]) => {
-            select.add(new Option(nombre, id));
-        });
+        cargarRubros(data.rubros);
+        paginaPub = data.pagina;
+        const hayFiltros = Boolean(buscar || rubro);
+        document.getElementById('contador-publicaciones').textContent = data.totalRegistros
+            ? `${data.totalRegistros} ${data.totalRegistros === 1 ? 'publicación' : 'publicaciones'}${hayFiltros ? ' encontradas' : ''}`
+            : '';
+        pintarPublicaciones(data.publicaciones, hayFiltros);
+        paginadorPub.actualizar(data);
 
-        pintarPublicaciones();
+        // Al cambiar de página se vuelve al principio de la lista
+        if (subir) document.getElementById('filtros-publicaciones').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
+        if (numeroPedido !== pedidoActual) return;
         console.error('No se pudieron cargar las publicaciones:', error);
         document.getElementById('lista-publicaciones').innerHTML =
             '<p class="sin-datos">No se pudieron cargar las publicaciones. Intentá de nuevo más tarde.</p>';
+        paginadorPub.actualizar({ pagina: paginaPub, totalPaginas: 0, totalRegistros: 0 });
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('buscar-publicacion').addEventListener('input', pintarPublicaciones);
-    document.getElementById('filtro-rubro').addEventListener('change', pintarPublicaciones);
-    document.getElementById('filtros-publicaciones').addEventListener('submit', (e) => e.preventDefault());
-    cargarPublicacionesPublicas();
+    paginadorPub = crearPaginador(document.getElementById('paginador-publicaciones'), {
+        alCambiar: (pagina) => cargarPublicacionesPublicas(pagina, { subir: true }),
+        singular: 'publicación',
+        plural: 'publicaciones'
+    });
+
+    // Al escribir se espera un momento antes de buscar, para no consultar con cada letra
+    document.getElementById('buscar-publicacion').addEventListener('input', () => {
+        clearTimeout(esperaBusqueda);
+        esperaBusqueda = setTimeout(() => cargarPublicacionesPublicas(1), 350);
+    });
+    document.getElementById('filtro-rubro').addEventListener('change', () => cargarPublicacionesPublicas(1));
+    document.getElementById('filtros-publicaciones').addEventListener('submit', (e) => {
+        e.preventDefault();
+        clearTimeout(esperaBusqueda);
+        cargarPublicacionesPublicas(1);
+    });
+    cargarPublicacionesPublicas(1);
 });

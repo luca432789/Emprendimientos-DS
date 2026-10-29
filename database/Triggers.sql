@@ -3,7 +3,7 @@
 -- ------------------------------------------------------------------------------------------------------------------------
 -- Seccion de TRIGGERS ------------------------------------------------------------------------------------------------------
 -- ------------------------------------------------------------------------------------------------------------------------
--- Orden de triggers: Empleado, SolicitudInicio, Emprendimiento, Emprendedor, Usuario, Publicacion, Etiqueta, Subsidio, Credito, Garante, Expediente.
+-- Orden de triggers: Empleado, SolicitudInicio, Emprendimiento, Emprendedor, Usuario, Publicacion, Etiqueta, Subsidio, Credito, Garante, Expediente, Producto, Noticia.
 -- drop trigger tg_auditoria_empleado_update; -- comando para eliminar triggers
 
 -- PARA REALIZAR PRUEBA DE AUDITORIA EJECUTAR LINEA DE ABAJO
@@ -463,6 +463,15 @@ BEGIN
             CONCAT('ALERTA DE SEGURIDAD: El usuario ', NEW.Correo, ' modificó su contraseña de acceso.'),
             @usuario_ip);
     END IF;
+
+    -- 5. Verificamos si cambió el permiso para publicar noticias
+    IF OLD.Noticiero <> NEW.Noticiero THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Usuario', NEW.idUsuario,
+            CONCAT('Permiso de Noticiero para ', NEW.Correo, ': ', CASE WHEN NEW.Noticiero = 1 THEN 'Otorgado' ELSE 'Quitado' END),
+            @usuario_ip);
+    END IF;
 END;
 //
 DELIMITER ;
@@ -848,6 +857,91 @@ BEGIN
         VALUES (
             @usuario_id, 'UPDATE', 'Producto', NEW.idProducto,
             CONCAT('Producto editado: "', NEW.Nombre, '"'),
+            @usuario_ip);
+    END IF;
+END;
+//
+DELIMITER ;
+
+-- TRIGGERS DE NOTICIA - SEGURIDAD Y AUDITORIA -------------------------------------------------------------------------
+-- Solo puede publicar un usuario activo, Empleado de Area o Administrador, con el permiso Noticiero
+DROP TRIGGER IF EXISTS tg_Noticia_autor_insert;
+DELIMITER //
+CREATE TRIGGER tg_Noticia_autor_insert
+BEFORE INSERT ON Noticia
+FOR EACH ROW
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM Usuario
+        WHERE idUsuario = NEW.idAutor AND Activa = 1 AND Noticiero = 1
+          AND TipoUsuario IN ('Empleado de Area', 'Administrador')
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error de Seguridad: El usuario no tiene permiso de Noticiero.';
+    END IF;
+END;
+//
+DELIMITER ;
+
+-- El título, contenido e imagen solo se pueden cambiar durante la primera hora. Visible se puede cambiar siempre.
+DROP TRIGGER IF EXISTS tg_Noticia_edicion_update;
+DELIMITER //
+CREATE TRIGGER tg_Noticia_edicion_update
+BEFORE UPDATE ON Noticia
+FOR EACH ROW
+BEGIN
+    IF NOT (OLD.idAutor <=> NEW.idAutor AND OLD.FechaCreacion <=> NEW.FechaCreacion) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error de Seguridad: No se puede cambiar el autor ni la fecha de una noticia.';
+    END IF;
+
+    IF NOT (OLD.Titulo <=> NEW.Titulo AND OLD.Contenido <=> NEW.Contenido AND OLD.ImagenUrl <=> NEW.ImagenUrl) THEN
+        IF NOW() > OLD.FechaCreacion + INTERVAL 1 HOUR THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La noticia solo se puede editar durante la primera hora desde su creación.';
+        END IF;
+        SET NEW.FechaEdicion = NOW();
+    END IF;
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_Noticia_insert;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Noticia_insert
+AFTER INSERT ON Noticia
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'INSERT', 'Noticia', NEW.idNoticia,
+        CONCAT('Nueva noticia publicada: "', NEW.Titulo, '"', CASE WHEN NEW.ImagenUrl IS NOT NULL THEN ' (con imagen)' ELSE '' END),
+        @usuario_ip);
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_Noticia_update;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Noticia_update
+AFTER UPDATE ON Noticia
+FOR EACH ROW
+BEGIN
+    IF OLD.Visible <> NEW.Visible THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Noticia', NEW.idNoticia,
+            CONCAT('Noticia "', NEW.Titulo, '" ', CASE WHEN NEW.Visible THEN 'visible nuevamente' ELSE 'ocultada' END),
+            @usuario_ip);
+    END IF;
+
+    IF NOT (OLD.Titulo <=> NEW.Titulo AND OLD.Contenido <=> NEW.Contenido AND OLD.ImagenUrl <=> NEW.ImagenUrl) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Noticia', NEW.idNoticia,
+            CONCAT('Noticia editada: "', NEW.Titulo, '"',
+                CASE WHEN OLD.Titulo <> NEW.Titulo THEN CONCAT(' (título anterior: "', OLD.Titulo, '")') ELSE '' END,
+                CASE WHEN NOT (OLD.ImagenUrl <=> NEW.ImagenUrl) THEN ' - cambió la imagen' ELSE '' END),
             @usuario_ip);
     END IF;
 END;

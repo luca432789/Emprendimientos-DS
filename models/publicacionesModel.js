@@ -124,18 +124,56 @@ export const modelPublicacionesAprobadas = async (idEmprendimiento) => {
     return filas;
 };
 
-// 2b. WEB PÚBLICA: todas las publicaciones aprobadas (página "Publicaciones" del menú)
-export const modelTodasLasPublicacionesAprobadas = async () => {
+// 2b. WEB PÚBLICA: publicaciones aprobadas de todos los emprendimientos (página "Publicaciones" del menú)
+// filtros: { buscar, idRubro }. La búsqueda no distingue mayúsculas ni tildes (collation utf8mb4_0900_ai_ci).
+const filtrosPublicacionesAprobadas = ({ buscar, idRubro } = {}) => {
+    const condiciones = ['p.TituloActual IS NOT NULL'];
+    const parametros = [];
+    if (idRubro) {
+        condiciones.push('e.idRubro = ?');
+        parametros.push(idRubro);
+    }
+    if (buscar) {
+        condiciones.push("CONCAT_WS(' ', e.Nombre, p.TituloActual, p.DescripcionActual, r.Nombre) LIKE ?");
+        parametros.push(`%${buscar.replace(/[\\%_]/g, '\\$&')}%`);
+    }
+    return { sql: `WHERE ${condiciones.join(' AND ')}`, parametros };
+};
+
+const DESDE_PUBLICACIONES_APROBADAS = `
+    FROM Publicacion p
+    INNER JOIN Emprendimiento e ON e.idEmprendimiento = p.idEmprendimiento
+    LEFT JOIN Rubro r ON r.idRubro = e.idRubro`;
+
+export const modelContarPublicacionesAprobadas = async (filtros) => {
+    const { sql, parametros } = filtrosPublicacionesAprobadas(filtros);
+    const [filas] = await pool.query(`SELECT COUNT(*) AS total ${DESDE_PUBLICACIONES_APROBADAS} ${sql};`, parametros);
+    return Number(filas[0].total);
+};
+
+export const modelTodasLasPublicacionesAprobadas = async (filtros, limite, offset) => {
+    const { sql, parametros } = filtrosPublicacionesAprobadas(filtros);
     const [filas] = await pool.query(
         `SELECT p.idPublicacion, p.TituloActual AS titulo, p.DescripcionActual AS descripcion,
                 p.DirectorioFotosActual AS carpetaFotos, p.FechaRevision AS fecha,
                 e.idEmprendimiento, e.Nombre AS emprendimiento, e.Localidad, e.Departamento,
                 r.idRubro, r.Nombre AS rubro, r.IconoMapa
-         FROM Publicacion p
-         INNER JOIN Emprendimiento e ON e.idEmprendimiento = p.idEmprendimiento
-         LEFT JOIN Rubro r ON r.idRubro = e.idRubro
-         WHERE p.TituloActual IS NOT NULL
-         ORDER BY p.FechaRevision DESC, p.idPublicacion DESC;`
+         ${DESDE_PUBLICACIONES_APROBADAS}
+         ${sql}
+         ORDER BY p.FechaRevision DESC, p.idPublicacion DESC
+         LIMIT ? OFFSET ?;`,
+        [...parametros, limite, offset]
+    );
+    return filas;
+};
+
+// Rubros que tienen al menos una publicación aprobada (para el filtro de la página)
+export const modelRubrosConPublicaciones = async () => {
+    const [filas] = await pool.query(
+        `SELECT DISTINCT r.idRubro, r.Nombre AS rubro
+         ${DESDE_PUBLICACIONES_APROBADAS}
+         WHERE p.TituloActual IS NOT NULL AND r.idRubro IS NOT NULL
+         ORDER BY r.Nombre;`
     );
     return filas;
 };

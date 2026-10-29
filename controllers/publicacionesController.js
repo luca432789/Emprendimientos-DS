@@ -6,6 +6,8 @@ import {
     modelPublicacionPropia,
     modelEditarPublicacion,
     modelTodasLasPublicacionesAprobadas,
+    modelContarPublicacionesAprobadas,
+    modelRubrosConPublicaciones,
     modelPublicacionesAprobadas,
     modelPublicacionesPendientes,
     modelModerarPublicacion
@@ -17,6 +19,7 @@ import { obtenerIpCliente } from '../helpers/ipCliente.js';
 const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
 const MAXIMO_FOTOS = 4;
 const TITULO_POR_DEFECTO = 'Novedades del Emprendimiento';
+const PUBLICACIONES_POR_PAGINA = 10; // página pública "Publicaciones"
 
 const datosAuditoriaDe = (req) => ({
     idUsuario: req.usuarioLogueado.idUsuario,
@@ -138,10 +141,31 @@ export const editarPublicacion = async (req, res) => {
     }
 };
 
-// GET /api/publicaciones  (público): todas las aprobadas, para la página "Publicaciones" del menú
+// GET /api/publicaciones?page=1&buscar=texto&rubro=idRubro  (público): de a 10, la más reciente primero
 export const obtenerTodasLasAprobadas = async (req, res) => {
+    const paginaSolicitada = req.query.page === undefined ? 1 : Number(req.query.page);
+    const buscar = typeof req.query.buscar === 'string' ? req.query.buscar.trim() : '';
+    const idRubro = req.query.rubro ? Number(req.query.rubro) : null;
+
+    if (!Number.isInteger(paginaSolicitada) || paginaSolicitada < 1) {
+        return res.status(400).json({ error: 'El número de página debe ser un entero positivo.' });
+    }
+    if (buscar.length > 100) return res.status(400).json({ error: 'La búsqueda no puede superar los 100 caracteres.' });
+    if (idRubro !== null && (!Number.isInteger(idRubro) || idRubro < 1)) {
+        return res.status(400).json({ error: 'El rubro seleccionado no es válido.' });
+    }
+
     try {
-        res.json(await conFotos(await modelTodasLasPublicacionesAprobadas()));
+        const filtros = { buscar: buscar || null, idRubro };
+        const totalRegistros = await modelContarPublicacionesAprobadas(filtros);
+        const totalPaginas = Math.ceil(totalRegistros / PUBLICACIONES_POR_PAGINA);
+        const pagina = Math.min(paginaSolicitada, Math.max(1, totalPaginas));
+        const [publicaciones, rubros] = await Promise.all([
+            modelTodasLasPublicacionesAprobadas(filtros, PUBLICACIONES_POR_PAGINA, (pagina - 1) * PUBLICACIONES_POR_PAGINA)
+                .then(conFotos),
+            modelRubrosConPublicaciones()
+        ]);
+        res.json({ publicaciones, pagina, totalPaginas, totalRegistros, rubros });
     } catch (error) {
         console.error('Error al consultar las publicaciones:', error);
         res.status(500).json({ error: 'Error al consultar las publicaciones.' });

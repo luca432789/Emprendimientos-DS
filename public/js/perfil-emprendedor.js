@@ -206,7 +206,7 @@ Perfil.htmlPublicacionesAprobadas = htmlPublicacionesAprobadas;
 function htmlFotos(fotos) {
     if (!fotos || !fotos.length) return '';
     return `<div class="publicacion-fotos fotos-${Math.min(fotos.length, 4)}">${fotos.map((url) =>
-        `<a href="${Perfil.escapar(url)}" target="_blank" rel="noopener"><img src="${Perfil.escapar(url)}" alt="Foto de la publicación" loading="lazy"></a>`).join('')}</div>`;
+        `<a href="${Perfil.escapar(url)}" target="_blank" rel="noopener" data-ampliar><img src="${Perfil.escapar(url)}" alt="Foto de la publicación" loading="lazy"></a>`).join('')}</div>`;
 }
 Perfil.htmlFotos = htmlFotos;
 
@@ -218,7 +218,7 @@ function pintarFotos() {
 
     grilla.innerHTML = fotos.length
         ? fotos.map((f) => `
-            <a class="galeria-item" href="${Perfil.escapar(f.url)}" target="_blank" rel="noopener" title="${Perfil.escapar(f.titulo)}">
+            <a class="galeria-item" href="${Perfil.escapar(f.url)}" target="_blank" rel="noopener" data-ampliar title="${Perfil.escapar(f.titulo)}">
                 <img src="${Perfil.escapar(f.url)}" alt="${Perfil.escapar(f.titulo)}" loading="lazy">
                 <span class="galeria-etiqueta"><i class="fa-solid fa-${f.origen === 'producto' ? 'box' : 'newspaper'}"></i> ${Perfil.escapar(f.titulo)}</span>
             </a>`).join('')

@@ -1,5 +1,6 @@
 // models/usuarioModel.js
 import { pool, consultaConAuditoria } from '../config/db.js';
+import { ROLES_NOTICIERO } from './noticiasModel.js';
 
 // 🔍 MODELO: Buscar un usuario web por Correo (Para el Login y Duplicados)
 export const modelObtenerUsuarioPorCorreo = async (correo) => {
@@ -95,6 +96,7 @@ export const modelListarUsuariosAdministracion = async (filtros = {}, limite = 1
             u.Correo,
             u.TipoUsuario,
             u.Activa,
+            u.Noticiero,
             u.idEmpleado,
             u.idEmprendedor,
             e.Cargo AS CargoEmpleado,
@@ -125,6 +127,7 @@ export const modelActualizarUsuarioAdministracion = async (idUsuario, cambios, d
                 u.Correo,
                 u.TipoUsuario,
                 u.Activa,
+                u.Noticiero,
                 u.idEmpleado,
                 u.idEmprendedor,
                 e.Cargo AS CargoEmpleado
@@ -171,10 +174,24 @@ export const modelActualizarUsuarioAdministracion = async (idUsuario, cambios, d
                 await conexion.query('UPDATE Usuario SET TipoUsuario = ? WHERE idUsuario = ?', [cambios.tipoUsuario, idUsuario]);
                 cambioRealizado = true;
             }
+            // Empleado de Mesa no puede ser Noticiero: si pasa a ese rol pierde el permiso
+            if (Number(usuario.Noticiero) === 1 && !ROLES_NOTICIERO.includes(cambios.tipoUsuario)) {
+                await conexion.query('UPDATE Usuario SET Noticiero = 0 WHERE idUsuario = ?', [idUsuario]);
+            }
         }
 
         if (Object.hasOwn(cambios, 'activa') && Number(usuario.Activa) !== cambios.activa) {
             await conexion.query('UPDATE Usuario SET Activa = ? WHERE idUsuario = ?', [cambios.activa, idUsuario]);
+            cambioRealizado = true;
+        }
+
+        if (Object.hasOwn(cambios, 'noticiero') && Number(usuario.Noticiero) !== cambios.noticiero) {
+            if (cambios.noticiero === 1 && !ROLES_NOTICIERO.includes(usuario.TipoUsuario)) {
+                const error = new Error('Solo un Empleado de Área o un Administrador puede tener el permiso de noticiero.');
+                error.code = 'NOTICIERO_NOT_ALLOWED';
+                throw error;
+            }
+            await conexion.query('UPDATE Usuario SET Noticiero = ? WHERE idUsuario = ?', [cambios.noticiero, idUsuario]);
             cambioRealizado = true;
         }
 

@@ -244,7 +244,7 @@ export const actualizarUsuarioAdministracion = async (req, res) => {
         return res.status(400).json({ error: 'El identificador del usuario no es válido.' });
     }
 
-    const camposPermitidos = ['correo', 'tipoUsuario', 'cargo', 'activa'];
+    const camposPermitidos = ['correo', 'tipoUsuario', 'cargo', 'activa', 'noticiero'];
     const camposRecibidos = Object.keys(req.body);
     if (camposRecibidos.some(campo => !camposPermitidos.includes(campo))) {
         return res.status(400).json({ error: 'La solicitud contiene campos no permitidos.' });
@@ -252,7 +252,7 @@ export const actualizarUsuarioAdministracion = async (req, res) => {
 
     const camposDeAccion = camposRecibidos.filter(campo => campo !== 'cargo');
     if (camposDeAccion.length !== 1 || (camposRecibidos.includes('cargo') && !camposRecibidos.includes('tipoUsuario'))) {
-        return res.status(400).json({ error: 'Envía una sola acción: correo, tipo de usuario o estado.' });
+        return res.status(400).json({ error: 'Envía una sola acción: correo, tipo de usuario, estado o permiso de noticiero.' });
     }
 
     const cambios = {};
@@ -287,6 +287,13 @@ export const actualizarUsuarioAdministracion = async (req, res) => {
         cambios.activa = req.body.activa;
     }
 
+    if (Object.hasOwn(req.body, 'noticiero')) {
+        if (req.body.noticiero !== 0 && req.body.noticiero !== 1) {
+            return res.status(400).json({ error: 'El permiso de noticiero debe ser 1 (otorgado) o 0 (quitado).' });
+        }
+        cambios.noticiero = req.body.noticiero;
+    }
+
     try {
         const resultado = await modelActualizarUsuarioAdministracion(idUsuario, cambios, {
             idUsuario: req.usuarioLogueado.idUsuario,
@@ -300,7 +307,7 @@ export const actualizarUsuarioAdministracion = async (req, res) => {
         if (error.code === 'USER_NOT_FOUND') {
             return res.status(404).json({ error: error.message });
         }
-        if (error.code === 'TYPE_CHANGE_REQUIRES_EMPLOYEE_RECORD') {
+        if (error.code === 'TYPE_CHANGE_REQUIRES_EMPLOYEE_RECORD' || error.code === 'NOTICIERO_NOT_ALLOWED') {
             return res.status(409).json({ error: error.message });
         }
         if (error.code === 'ER_DUP_ENTRY') {

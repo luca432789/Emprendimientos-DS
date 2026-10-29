@@ -51,7 +51,7 @@ async function fetchPublicacionesEnEspera() {
                         <div style="margin-top:4px; max-height:110px; overflow-y:auto; white-space:pre-wrap; color:#4a5568;">${escaparPublicacion(pub.DescripcionPendiente)}</div>
                         ${(pub.fotos || []).length ? `
                             <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-                                ${pub.fotos.map((url) => `<a href="${escaparPublicacion(url)}" target="_blank" rel="noopener" title="Ver foto completa"><img src="${escaparPublicacion(url)}" alt="Foto de la publicación" style="width:70px; height:70px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1;"></a>`).join('')}
+                                ${pub.fotos.map((url) => `<a href="${escaparPublicacion(url)}" target="_blank" rel="noopener" title="Ver foto completa" data-ampliar><img src="${escaparPublicacion(url)}" alt="Foto de la publicación" style="width:70px; height:70px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1;"></a>`).join('')}
                             </div>` : ''}
                     </td>
                     <td style="text-align:center; white-space:nowrap;">

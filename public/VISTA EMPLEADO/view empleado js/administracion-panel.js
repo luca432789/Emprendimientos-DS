@@ -549,6 +549,7 @@ function inicializarAccionesUsuarios(cuerpo) {
             persona: fila.dataset.userName,
             tipoUsuario: fila.dataset.userType,
             activa: fila.dataset.userActive === '1',
+            noticiero: fila.dataset.userNoticiero === '1',
             cargo: fila.dataset.userCargo
         };
 
@@ -580,7 +581,11 @@ function mostrarMenuAccionesUsuario(boton, usuario) {
     const acciones = [
         ['correo', 'Cambiar correo'],
         ...(usuario.tipoUsuario !== 'Emprendedor' ? [['tipoUsuario', 'Cambiar tipo de usuario']] : []),
-        ['activa', usuario.activa ? 'Desactivar cuenta' : 'Activar cuenta']
+        ['activa', usuario.activa ? 'Desactivar cuenta' : 'Activar cuenta'],
+        // El permiso para publicar noticias solo aplica a Empleado de Área y Administrador
+        ...(['Empleado de Area', 'Administrador'].includes(usuario.tipoUsuario)
+            ? [['noticiero', usuario.noticiero ? 'Quitar permiso de noticiero' : 'Dar permiso de noticiero']]
+            : [])
     ];
 
     acciones.forEach(([accion, texto]) => {
@@ -607,13 +612,14 @@ function mostrarMenuAccionesUsuario(boton, usuario) {
             if (accion === 'correo') solicitarCambioCorreo(usuario);
             if (accion === 'tipoUsuario') solicitarCambioTipoUsuario(usuario);
             if (accion === 'activa') solicitarCambioEstadoCuenta(usuario);
+            if (accion === 'noticiero') solicitarCambioNoticiero(usuario);
         });
         menu.appendChild(opcion);
     });
 
     const bounds = boton.getBoundingClientRect();
     menu.style.left = `${Math.max(8, Math.min(bounds.right - 210, window.innerWidth - 218))}px`;
-    menu.style.top = `${Math.max(8, Math.min(bounds.bottom + 4, window.innerHeight - 150))}px`;
+    menu.style.top = `${Math.max(8, Math.min(bounds.bottom + 4, window.innerHeight - (acciones.length * 40 + 12)))}px`;
     document.body.appendChild(menu);
 }
 
@@ -696,6 +702,19 @@ async function solicitarCambioEstadoCuenta(usuario) {
         usuario,
         `Se va a ${accion} la cuenta. ${detalle} El administrador responsable quedará registrado en Auditoría.`,
         { activa: activar ? 1 : 0 }
+    );
+}
+
+async function solicitarCambioNoticiero(usuario) {
+    const otorgar = !usuario.noticiero;
+    const detalle = otorgar
+        ? 'Podrá publicar noticias con texto e imagen en la pestaña Noticias, editarlas durante la primera hora y ocultarlas.'
+        : 'Ya no podrá publicar, editar ni ocultar noticias. Las noticias que ya publicó seguirán visibles.';
+
+    await confirmarDobleCambioUsuario(
+        usuario,
+        `Se va a ${otorgar ? 'otorgar' : 'quitar'} el permiso de noticiero. ${detalle} El administrador responsable quedará registrado en Auditoría.`,
+        { noticiero: otorgar ? 1 : 0 }
     );
 }
 
@@ -793,12 +812,16 @@ async function cargarPaginaAdministracionUsuarios(pagina) {
                     data-user-name="${escaparTextoTabla(usuario.Persona || usuario.Correo)}"
                     data-user-type="${escaparTextoTabla(usuario.TipoUsuario)}"
                     data-user-active="${Number(usuario.Activa) === 1 ? '1' : '0'}"
+                    data-user-noticiero="${Number(usuario.Noticiero) === 1 ? '1' : '0'}"
                     data-user-cargo="${escaparTextoTabla(usuario.CargoEmpleado || '')}"
                 >
                     <td>${escaparTextoTabla(usuario.idUsuario)}</td>
                     <td>${escaparTextoTabla(usuario.Persona || usuario.Correo)}</td>
                     <td>${escaparTextoTabla(usuario.Correo)}</td>
-                    <td>${escaparTextoTabla(usuario.TipoUsuario)}</td>
+                    <td>
+                        ${escaparTextoTabla(usuario.TipoUsuario)}
+                        ${Number(usuario.Noticiero) === 1 ? '<i class="fa-solid fa-newspaper" title="Tiene permiso de noticiero" aria-label="Noticiero" style="margin-left:6px; color:#a65454;"></i>' : ''}
+                    </td>
                     <td style="text-align:center; white-space:nowrap;">
                         <span class="estado-indicador ${Number(usuario.Activa) === 1 ? 'estado-verde' : 'estado-rojo'}" role="img" aria-label="Cuenta ${Number(usuario.Activa) === 1 ? 'activa' : 'inactiva'}"></span>
                         <span style="vertical-align:middle; margin-left:5px;">${Number(usuario.Activa) === 1 ? 'Activa' : 'Inactiva'}</span>

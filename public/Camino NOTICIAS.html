@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Noticias - Camino de los emprendedores </title>
+    <link rel="icon" type="image/png" href="/Imagenes/Logo-Desarrollo-Social.png">
+
+    <link rel="stylesheet" href="/CSS/CdE FORMULARIOS.css"> <!-- estilos comunes: reset, header y footer -->
+    <link rel="stylesheet" href="/CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="/CSS/noticias.css">
+    <link rel="stylesheet" href="/CSS/paginador.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <script src="/js/navbar.js" defer></script>
+    <script src="/js/ampliar-imagen.js" defer></script> <!-- clic en una imagen = verla ampliada -->
+    <script src="/js/paginador.js" defer></script>
+    <script src="/js/noticias.js" defer></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promoción Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="/index">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
+            <li><a href="/noticias" class="active">Noticias</a></li>
+            <li><a href="/mapa">Mapa</a></li>
+            <li><a href="/formularios">Formularios</a></li>
+            <li><a href="/contactos">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <main class="noticias">
+        <div class="noticias-encabezado">
+            <div>
+                <h2>Noticias</h2>
+                <p class="bajada">Novedades del Ministerio y del Plan Provincial Santiago Productivo.</p>
+            </div>
+            <!-- Solo para usuarios con permiso de Noticiero -->
+            <button type="button" id="btn-nueva-noticia" class="btn-principal" hidden aria-expanded="false" aria-controls="panel-noticiero">
+                <i class="fa-solid fa-plus"></i> Nueva noticia
+            </button>
+        </div>
+
+        <section id="panel-noticiero" class="panel-noticiero" hidden>
+            <h3 id="titulo-formulario-noticia"><i class="fa-solid fa-pen-to-square"></i> Nueva noticia</h3>
+            <p id="aviso-edicion" class="aviso-edicion" hidden></p>
+
+            <form id="form-noticia" novalidate>
+                <label class="campo">
+                    <span>Título</span>
+                    <input type="text" id="noticia-titulo" maxlength="255" required placeholder="Ej: Se abrió la convocatoria a la feria de emprendedores">
+                    <small class="contador-caracteres" data-para="noticia-titulo"></small>
+                </label>
+
+                <div class="campo">
+                    <label for="noticia-contenido"><span>Contenido</span></label>
+                    <div class="barra-formato" role="toolbar" aria-label="Formato del texto">
+                        <button type="button" data-formato="negrita" title="Negrita (Ctrl+B)" aria-label="Negrita"><i class="fa-solid fa-bold"></i></button>
+                        <button type="button" data-formato="cursiva" title="Cursiva (Ctrl+I)" aria-label="Cursiva"><i class="fa-solid fa-italic"></i></button>
+                        <button type="button" data-formato="subrayado" title="Subrayado (Ctrl+U)" aria-label="Subrayado"><i class="fa-solid fa-underline"></i></button>
+                        <small class="ayuda-formato">Seleccioná un texto y tocá un botón. Se guarda como **negrita**, *cursiva* y __subrayado__.</small>
+                    </div>
+                    <textarea id="noticia-contenido" rows="8" maxlength="10000" required placeholder="Escriba la noticia..."></textarea>
+                    <small class="contador-caracteres" data-para="noticia-contenido"></small>
+                </div>
+
+                <div class="campo" id="campo-vista-previa" hidden>
+                    <span>Vista previa</span>
+                    <div id="vista-previa-contenido" class="vista-previa-contenido noticia-texto"></div>
+                </div>
+
+                <div class="campo">
+                    <span>Imagen (opcional · JPG, PNG o WEBP · hasta 2 MB)</span>
+                    <label class="selector-imagen">
+                        <i class="fa-solid fa-image"></i> <span id="texto-selector-imagen">Elegir imagen</span>
+                        <input type="file" id="noticia-imagen" accept="image/jpeg,image/png,image/webp">
+                    </label>
+                    <div id="vista-previa-imagen" class="vista-previa-imagen" hidden>
+                        <img id="img-vista-previa" alt="Vista previa de la imagen de la noticia">
+                        <button type="button" id="btn-quitar-imagen" class="btn-secundario"><i class="fa-solid fa-trash"></i> Quitar imagen</button>
+                    </div>
+                </div>
+
+                <div class="acciones-formulario">
+                    <button type="button" id="btn-cancelar-formulario" class="btn-secundario">Cancelar</button>
+                    <button type="submit" id="btn-publicar-noticia" class="btn-principal"><i class="fa-solid fa-paper-plane"></i> Publicar noticia</button>
+                </div>
+                <p class="nota-edicion"><i class="fa-regular fa-clock"></i> Después de publicarla podrá editarla durante 1 hora. Pasado ese tiempo solo se puede ocultar o volver a mostrar.</p>
+            </form>
+        </section>
+
+        <div class="noticias-layout">
+            <!-- Noticia elegida (al entrar, la más reciente) -->
+            <section id="noticia-principal" class="noticia-principal" aria-live="polite">
+                <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando noticias...</p>
+            </section>
+
+            <!-- Columna con título y fecha de las noticias, de a 5 por página -->
+            <aside class="noticias-columna" aria-labelledby="titulo-columna-noticias">
+                <h3 id="titulo-columna-noticias"><i class="fa-regular fa-newspaper"></i> Todas las noticias</h3>
+                <ul id="lista-noticias" class="lista-noticias"></ul>
+                <div id="paginador-noticias" class="compacto" hidden></div>
+            </aside>
+        </div>
+    </main>
+
+    <!--FOOTER-->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="/Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="/Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aquí]
+        </div>
+    </footer>
+
+</body>
+</html>

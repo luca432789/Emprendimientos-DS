@@ -1,0 +1,90 @@
+/* Paginador de las páginas públicas (Noticias y Publicaciones) - ver public/js/paginador.js */
+
+.paginador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 22px 0 0;
+}
+
+.paginador[hidden] {
+  display: none;
+}
+
+.paginador-flecha {
+  background: #2f4e78;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 38px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.paginador-flecha:hover:not(:disabled) {
+  background: #1a3a5f;
+}
+
+.paginador-flecha:disabled {
+  background: #b8c3d1;
+  cursor: default;
+}
+
+.paginador-indicador {
+  font-size: 14px;
+  color: #374151;
+  text-align: center;
+}
+
+.paginador-total {
+  color: #6b7280;
+}
+
+.paginador-numero {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 2px 9px;
+  font-weight: bold;
+  font-size: 14px;
+  font-family: inherit;
+  color: #2f4e78;
+  cursor: pointer;
+}
+
+.paginador-numero:hover {
+  border-color: #2f4e78;
+}
+
+.paginador-entrada {
+  width: 58px;
+  padding: 2px 6px;
+  font-size: 14px;
+  border: 1px solid #2f4e78;
+  border-radius: 4px;
+}
+
+/* Versión compacta (columna de noticias) */
+.paginador.compacto {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.paginador.compacto .paginador-flecha {
+  width: 32px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.paginador.compacto .paginador-indicador {
+  font-size: 13px;
+}
+
+.paginador.compacto .paginador-total {
+  display: block;
+  font-size: 12px;
+}

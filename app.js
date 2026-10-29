@@ -25,6 +25,7 @@ import productosRouter from './routes/productosRoutes.js';
 import perfilRouter from './routes/perfilRoutes.js';
 import ayudasRouter from './routes/ayudasRoutes.js';
 import cuentaRouter from './routes/cuentaRoutes.js';
+import noticiasRouter from './routes/noticiasRoutes.js';
 
 // Inicializamos la app express
 const app = express();
@@ -62,6 +63,7 @@ app.use('/api', productosRouter); // Productos del emprendedor (/api/productos)
 app.use('/api', perfilRouter);    // Perfil del emprendimiento: público y del dueño (/api/perfil)
 app.use('/api', ayudasRouter);     // Subsidios y créditos sin revisar para el área (/api/ayudas)
 app.use('/api', cuentaRouter);     // Enlace por correo para que el emprendedor aprobado cree su contraseña (/api/cuenta)
+app.use('/api', noticiasRouter);   // Noticias del Ministerio: públicas, las cargan los usuarios Noticiero (/api/noticias)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)
@@ -90,6 +92,11 @@ app.get('/formularios', (req, res) => {
 // 3b. Ruta para Publicaciones (todas las publicaciones aprobadas de los emprendimientos)
 app.get('/publicaciones', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino PUBLICACIONES.html'));
+});
+
+// 4b. Ruta para Noticias (las publican los empleados con permiso de Noticiero)
+app.get('/noticias', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Camino NOTICIAS.html'));
 });
 
 // 4. Ruta para Contactos
