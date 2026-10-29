@@ -89,7 +89,20 @@ app.get('/formularios', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino FORMULARIOS.html'));
 });
 
-// 3b. Ruta para Publicaciones (todas las publicaciones aprobadas de los emprendimientos)
+// 3a. Ruta para Formulario de Inicio
+app.get('/formulario-Inicio', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'FORMULARIO DE INICIO.html'));
+});
+// 3b. Ruta para Formulario de subsidio
+app.get('/formulario-Subsidio', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'FORMULARIO SUBSIDIOS.html'));
+});
+// 3c. Ruta para Formulario de crédito
+app.get('/formulario-Credito', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'FORMULARIO CREDITOS.html'));
+});
+
+// 4. Ruta para Publicaciones (todas las publicaciones aprobadas de los emprendimientos)
 app.get('/publicaciones', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino PUBLICACIONES.html'));
 });
@@ -99,43 +112,43 @@ app.get('/noticias', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino NOTICIAS.html'));
 });
 
-// 4. Ruta para Contactos
+// 5. Ruta para Contactos
 app.get('/contactos', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino CONTACTOS.html'));
 });
 
-// 5. Ruta para Inicio de sesión
+// 6. Ruta para Inicio de sesión
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino LOG IN.html'));
 });
 
-// 5b. Página para que el emprendedor aprobado cree su contraseña (enlace del correo)
+// 7. Página para que el emprendedor aprobado cree su contraseña (enlace del correo)
 app.get('/crear-contrasena', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Camino CREAR CONTRASENA.html'));
 });
 
-// 6. Ruta para Empleado
+// 8. Ruta para Empleado
 app.get('/Empleado', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA EMPLEADO', 'Empleado view.html'));
 });
 
-// 7. Ruta para Emprendedor Perfil
+// 9. Ruta para Emprendedor Perfil
 app.get('/Emprendedor-Perfil', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'CdE-Perfil Emprendedor.html'));
 });
-// 8. Ruta para Emprendedor Publicaciones
+// 10. Ruta para Emprendedor Publicaciones
 app.get('/Emprendedor-Publicaciones', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Publicaciones.html'));
 });
-// 9. Ruta para Emprendedor Productos
+// 11. Ruta para Emprendedor Productos
 app.get('/Emprendedor-Productos', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Productos.html'));
 });
-// 10. Ruta para Emprendedor Contacto
+// 12. Ruta para Emprendedor Contacto
 app.get('/Emprendedor-Contacto', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Contacto.html'));
 });
-// 11. Ruta para Emprendedor Fotos
+// 13. Ruta para Emprendedor Fotos
 app.get('/Emprendedor-Fotos', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Fotos.html'));
 });

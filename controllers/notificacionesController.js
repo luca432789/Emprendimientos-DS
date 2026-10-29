@@ -10,7 +10,7 @@ import { modelAyudasSinRevisar } from '../models/ayudasModel.js';
 
 // Roles que moderan publicaciones (mismos que en publicacionesController)
 const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
-const URL_PANEL = '/VISTA%20EMPLEADO/Empleado%20view.html';
+const URL_PANEL = '/Empleado';
 
 // Huella corta del contenido: si la misma publicación se aprueba, rechaza o reenvía otra vez
 // con otro contenido el mismo día, cuenta como una notificación nueva
@@ -108,7 +108,7 @@ const notificacionesEmprendedor = async (idUsuario) => {
             titulo: aprobada ? `Tu publicación "${titulo}" fue aprobada` : `Tu publicación "${titulo}" fue rechazada`,
             detalle: aprobada ? 'Ya está visible en tu perfil.' : `Motivo: ${p.MotivoRechazo || 'sin especificar'}`,
             fecha: p.FechaRevision,
-            url: `/VISTA%20USUARIO/Publicaciones.html#publicacion-${p.idPublicacion}`
+            url: `/Emprendedor-Publicaciones#publicacion-${p.idPublicacion}`
         };
     });
 
