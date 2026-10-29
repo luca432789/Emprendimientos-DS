@@ -9,7 +9,7 @@
 /* HEADER */
 header {
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
-              url('../Imagenes/Fondo banner.png');
+              url('/Imagenes/fondo-banner.webp');
   background-size: cover;
   background-position: center;
   text-align: center;
@@ -145,6 +145,104 @@ main{
   box-shadow: 0 0 6px rgba(47, 78, 120, 0.2);
 }
 
+/* AVISO DE SESIÓN VENCIDA */
+.login-box .aviso-sesion{
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
+  padding: 14px 20px;
+  border: 1px solid #e6a5a0;
+  border-radius: 8px;
+  background: #f6d6d3;
+  color: #6b1d17;
+  font-size: 14px;
+  text-align: left;
+}
+
+.login-box .aviso-sesion[hidden]{
+  display: none;
+}
+
+/* CREAR CONTRASEÑA (enlace del correo) */
+.login-box .texto-cuenta{
+  width: 100%;
+  max-width: 500px;
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.login-box .texto-cuenta.requisitos{
+  font-size: 13px;
+  color: #666;
+  text-align: left;
+  padding-left: 20px;
+  box-sizing: border-box;
+}
+
+.login-box .aviso-exito{
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  border: 1px solid #9fd3ad;
+  border-radius: 8px;
+  background: #dcf1e2;
+  color: #1d5a2c;
+  font-size: 15px;
+}
+
+.login-box .aviso-sesion,
+.login-box .aviso-exito{
+  box-sizing: border-box;
+}
+
+.login-box .aviso-exito[hidden],
+.login-box form[hidden],
+.login-box .texto-cuenta[hidden]{
+  display: none;
+}
+
+/* ENLACES DEBAJO DEL BOTÓN ("¿Olvidó su contraseña?", "Volver a iniciar sesión") */
+.login-box .enlace-secundario{
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.login-box .enlace-secundario a,
+.login-box .aviso-sesion a{
+  color: #2f4e78;
+  font-weight: bold;
+}
+
+.login-box .enlace-secundario a:hover{
+  color: #a65454;
+}
+
+/* TILDE MOSTRAR CONTRASEÑA (alineado a la izquierda bajo el campo) */
+.login-box .mostrar-contrasena{
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 20px;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-box .mostrar-contrasena input{
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
 /* BOTON */
 .login-box button{
   width: 220px;
@@ -234,7 +332,7 @@ footer {
   color: white;
 
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
-              url('../Imagenes/Fondo banner.png');
+              url('/Imagenes/fondo-banner.webp');
   background-size: cover;
   background-position: center;
 }

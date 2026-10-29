@@ -10,7 +10,7 @@
    ====================================================================== */
 header {
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
-              url('../Imagenes/Fondo banner.png');
+              url('/Imagenes/fondo-banner.webp');
   background-size: cover;
   background-position: center;
   text-align: center;
@@ -42,7 +42,7 @@ main {
 .contenedor-imagen {
   position: relative;
   min-height: 400px;
-  background-image: url('../Imagenes/sgo bandera.jpg');
+  background-image: url('/Imagenes/sgo bandera.jpg');
   background-size: cover;
   background-position: center;
   display: flex;
@@ -288,7 +288,7 @@ footer {
   font-size: 13px;
   color: white;
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
-              url('../Imagenes/Fondo banner.png');
+              url('/Imagenes/fondo-banner.webp');
   background-size: cover;
   background-position: center;
 }

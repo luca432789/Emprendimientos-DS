@@ -5,9 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
     <title> Camino de los emprendedores </title>
-    <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <link rel="stylesheet" href="/CSS/index CSS.css">
+    <link rel="stylesheet" href="/CSS/CdE Navbar.css">
+     <link rel="stylesheet" href="CSS/Emprendedor view css.css">
+    <script src="/js/script.js" defer></script>
+    <script src="/js/registro-usuario.js" defer></script>
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <script src="/js/navbar.js" defer></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -19,11 +28,12 @@
 
     <nav>
         <ul>
-            <li><a href="../index.html" class="active">Inicio</a></li>
-            <li><a href="#">Publicaciones</a></li>
-            <li><a href="#">Mapa</a></li>
-            <li><a href="../Camino FORMULARIOS.html">Formularios</a></li>
-            <li><a href="../Camino CONTACTOS.html CONTACTOS.html">Contactos</a></li>
+            <li><a href="/index" class="active">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
+            <li><a href="/noticias">Noticias</a></li>
+            <li><a href="/mapa">Mapa</a></li>
+            <li><a href="/formularios">Formularios</a></li>
+            <li><a href="/contactos">Contactos</a></li>
             
             <li class="nav-usuario-container">
                 <div class="dropdown-container">
@@ -53,7 +63,7 @@
                     </div>
                 </div>
 
-                <a href="Perfil Emprendimiento.html" class="nav-perfil-link">
+                <a href="CdE-Perfil Emprendedor.html" class="nav-perfil-link">
                     <div class="avatar-nav">
                         <i class="fa-solid fa-user"></i>
                     </div>

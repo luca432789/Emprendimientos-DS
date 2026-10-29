@@ -1,6 +1,6 @@
 // etiquetasModel.js
 
-import { pool } from '../config/db.js';
+import { pool, consultaConAuditoria } from '../config/db.js';
 
 // El modelo solo se encarga de tirar la query a la base de datos
 export const ModelObtenerEtiquetas = async (filtroEstado, idUsuario, ipCliente) => {
@@ -22,17 +22,14 @@ export const ModelObtenerEtiquetas = async (filtroEstado, idUsuario, ipCliente) 
 // El modelo ejecuta de forma segura el UPDATE parametrizado contra la tabla Etiqueta
 export const ModelActualizarEtiqueta = async (idEtiqueta, nuevoNombre, nuevoEstado, idUsuario, ipCliente) => {
     
-    // 🔒 Seteamos las variables de sesión para que el Trigger capture quién modificó el registro
-    await pool.query("SET @usuario_id = ?;", [idUsuario]);
-    await pool.query("SET @usuario_ip = ?;", [ipCliente]);
-    
-    // Ejecutamos la actualización real
+    // 🔒 Misma conexión para las variables de sesión y el UPDATE: así el Trigger
+    // registra quién modificó el registro y desde qué IP
     const querySQL = `
-        UPDATE Etiqueta 
-        SET Nombre = ?, Activa = ? 
+        UPDATE Etiqueta
+        SET Nombre = ?, Activa = ?
         WHERE idEtiqueta = ?;
     `;
-    
-    const [resultado] = await pool.query(querySQL, [nuevoNombre, nuevoEstado, idEtiqueta]);
-    return resultado; // Retorna metadatos como affectedRows al controlador
+
+    // Retorna metadatos como affectedRows al controlador
+    return consultaConAuditoria({ idUsuario, ipCliente }, querySQL, [nuevoNombre, nuevoEstado, idEtiqueta]);
 };

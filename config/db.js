@@ -32,3 +32,19 @@ if (process.env.RENDER) {
 }
 
 export const pool = mysql.createPool(poolConfig).promise();
+
+// Ejecuta una escritura con quién la hizo (@usuario_id, null si es público) y desde qué IP
+// (@usuario_ip), para que los triggers lo guarden en Auditoria. Usa una sola conexión:
+// con pool.query cada consulta puede ir por otra conexión y el trigger tomaría los datos
+// de otro pedido. Al terminar se limpian las variables antes de devolver la conexión.
+export const consultaConAuditoria = async ({ idUsuario = null, ipCliente }, sql, parametros) => {
+    const conexion = await pool.getConnection();
+    try {
+        await conexion.query('SET @usuario_id = ?, @usuario_ip = ?;', [idUsuario, ipCliente]);
+        const [resultado] = await conexion.query(sql, parametros);
+        return resultado;
+    } finally {
+        await conexion.query('SET @usuario_id = NULL, @usuario_ip = NULL;').catch(() => {});
+        conexion.release();
+    }
+};

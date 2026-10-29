@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camino de los emprendedores</title>
+    <link rel="icon" type="image/png" href="/Imagenes/Logo-Desarrollo-Social.png">
+
+    <link rel="stylesheet" href="CSS/Form. de inicio.css">
+    <link rel="stylesheet" href="CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="CSS/formulario-inicio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <script src="js/navbar.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promocion Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
+            <li><a href="/noticias">Noticias</a></li>
+            <li><a href="/mapa">Mapa</a></li>
+            <li><a href="Camino FORMULARIOS.html" class="active">Formularios</a></li>
+            <li><a href="Camino CONTACTOS.html">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="Camino LOG IN.html">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <!-- Sin sesión de Área / Administrador: solo este aviso -->
+    <main class="contenedor-formulario" data-sin-acceso>
+        <h2>Formulario de Subsidios no Reintegrables</h2>
+        <p class="texto">Este formulario solo está disponible para el personal del Área y la Administración del Ministerio. <a href="/formularios">Volver a Formularios</a></p>
+    </main>
+
+    <main class="contenedor-formulario" data-solo-area style="display:none">
+        <h2>Formulario de Subsidios no Reintegrables</h2>
+        <p class="texto">Complete los campos del formulario oficial. Elija el emprendimiento al que corresponde: el pedido de subsidio queda registrado a su nombre y se descarga el PDF.</p>
+
+        <form id="formulario-digital" class="formulario-inicio">
+            <input type="hidden" name="tipoFormulario" value="Formulario de Subsidios no Reintegrables">
+
+            <!-- A nombre de qué emprendimiento se carga el pedido (Área / Administrador) -->
+            <div class="selector-emprendimiento">
+                <label class="etiqueta subrayada" for="selector-emprendimiento">Emprendimiento que solicita:</label>
+                <select id="selector-emprendimiento" name="idEmprendimiento" class="linea" required disabled>
+                    <option value="">Cargando emprendimientos...</option>
+                </select>
+            </div>
+
+            <!-- HOJA 1: CARÁTULA -->
+            <section class="hoja">
+                <div class="cuadro-expediente">
+                    <div><strong>EXPEDIENTE Nº</strong><span>Uso interno</span></div>
+                    <div><strong>PROYECTO Nº</strong><span>Uso interno</span></div>
+                </div>
+
+                <div class="encabezado-oficial">
+                    <p>SUBSECRETARIA DE DESARROLLO SOCIAL</p>
+                    <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL</p>
+                    <p class="gobierno">GOBIERNO DE LA PROVINCIA DE<br>SANTIAGO DEL ESTERO</p>
+                    <p>PLAN PROVINCIAL SANTIAGO PRODUCTIVO</p>
+                    <p class="presentacion">FORMULARIO DE PRESENTACIÓN DE PROYECTOS</p>
+                    <p class="tipo-formulario">SUBSIDIOS NO REINTEGRABLES</p>
+                </div>
+
+                <h3 class="titulo-campos">DATOS DEL PROYECTO</h3>
+
+                <label class="etiqueta subrayada">Nombre del proyecto:</label>
+                <input type="text" name="nombreEmprendimiento" class="linea" maxlength="100" required aria-label="Nombre del proyecto">
+
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Localidad:</label>
+                        <select name="localidad" class="linea" required aria-label="Localidad" disabled>
+                            <option value="">Primero seleccione el departamento</option>
+                        </select>
+                        <input type="text" name="localidadLibre" class="linea" maxlength="40" aria-label="Escriba otra localidad" placeholder="Escriba la localidad" hidden>
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Departamento:</label>
+                        <select name="departamento" class="linea" required aria-label="Departamento">
+                            <option value="">Seleccione un departamento...</option>
+                            <option>Aguirre</option><option>Alberdi</option><option>Atamisqui</option><option>Avellaneda</option><option>Banda</option><option>Belgrano</option><option>Capital</option><option>Choya</option><option>Copo</option><option>Figueroa</option><option>General Taboada</option><option>Guasayán</option><option>Jiménez</option><option>Juan Felipe Ibarra</option><option>Loreto</option><option>Mitre</option><option>Moreno</option><option>Ojo de Agua</option><option>Pellegrini</option><option>Quebrachos</option><option>Río Hondo</option><option>Rivadavia</option><option>Robles</option><option>Salavina</option><option>San Martín</option><option>Sarmiento</option><option>Silípica</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Beneficiarios:</label>
+                        <input type="text" name="beneficiarios" class="linea" maxlength="100" required aria-label="Beneficiarios">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Antigüedad del emprendimiento:</label>
+                        <input type="text" name="antiguedad" class="linea" maxlength="60" aria-label="Antigüedad del emprendimiento">
+                    </div>
+                </div>
+
+                <label class="etiqueta">Actividad principal:</label>
+                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Actividad principal">
+                <div class="fila">
+                    <div class="columna"><label class="etiqueta">Rama de actividad:</label><input type="text" name="ramaActividad" class="linea" maxlength="80" aria-label="Rama de actividad"></div>
+                    <div class="columna"><label class="etiqueta">Nº de proyecto:</label><input type="text" name="numeroProyecto" class="linea" maxlength="30" aria-label="Número de proyecto"></div>
+                </div>
+
+                <h3 class="titulo-campos">DATOS DEL TITULAR</h3>
+
+                <label class="etiqueta">(Nombre y apellido)</label>
+                <input type="text" name="nombreApellido" class="linea" maxlength="80" required aria-label="Nombre y apellido">
+
+                <label class="etiqueta">(DNI / documento)</label>
+                <label class="extranjero-control"><input type="checkbox" name="documentoExtranjero" value="true"><span>Soy extranjero/a (pasaporte o documento del país)</span></label>
+                <input type="text" name="dniCuit" class="linea" required aria-label="DNI o documento extranjero" autocomplete="off">
+                <small>Argentino/a: 7 u 8 números. Extranjero/a: active la opción para ingresar letras.</small>
+
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Celular</label>
+                        <input type="tel" name="telefono" class="linea" aria-label="Celular" inputmode="numeric" maxlength="10" pattern="[1-9][0-9]{9}" required title="Ingrese 10 números, sin 0 inicial, 15 ni espacios">
+                        <small>10 dígitos, incluyendo característica; sin 0 ni 15.</small>
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Correo electrónico</label>
+                        <input type="email" name="correo" class="linea" maxlength="150" required aria-label="Correo electrónico">
+                        <small>Se comprobará que el dominio pueda recibir correo.</small>
+                    </div>
+                </div>
+                <label class="etiqueta">Domicilio del titular</label>
+                <div class="fila">
+                    <div class="columna ancha"><input type="text" name="calleDomicilio" class="linea" maxlength="120" required aria-label="Calle del domicilio" placeholder="Calle"></div>
+                    <div class="columna"><input type="text" name="numeroDomicilio" class="linea" maxlength="8" required aria-label="Número del domicilio" placeholder="Número"><label class="extranjero-control"><input type="checkbox" name="calleSinNumero" value="true"><span>Sin número (S/N)</span></label></div>
+                </div>
+                <input type="hidden" name="domicilio">
+
+                <p class="parrafo">
+                    El que suscribe, en su carácter de titular del proyecto de referencia, afirma que los datos consignados en
+                    este formulario son correctos y completos, y que éste formulario del Plan Provincial Santiago Productivo, se ha
+                    confeccionado sin omitir ni falsear dato alguno que deba contener, siendo fiel expresión de la verdad como asimismo
+                    autentica/s la/s firma/s, comprometiéndose a informar en los plazos que fijan las normas vigentes, cualquier cambio en los mismos.
+                </p>
+
+                <p class="pie-declaracion">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA<br><span>RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</span></p>
+            </section>
+
+            <!-- HOJA 2: CUADROS DE BIENES DEL FORMULARIO OFICIAL -->
+            <section class="hoja">
+                <h3 class="titulo-campos">CON QUÉ CUENTA PARA LA EJECUCIÓN DEL PROYECTO</h3>
+                <p class="parrafo">Mencione los bienes y el valor en el estado actual.</p>
+                <div class="tabla-responsive"><table class="tabla-oficial">
+                    <thead><tr><th>Bienes</th><th>Cantidad</th><th>Antigüedad</th><th>Monto estimado</th></tr></thead>
+                    <tbody id="tabla-bienes-propios" data-tabla-lineas="bienesPropios" data-cantidad="9" data-columnas="bien,cantidad,antiguedad,montoEstimado"></tbody>
+                </table></div>
+                <h3 class="titulo-campos">1. RECURSOS NECESARIOS PARA LLEVAR A CABO EL PROYECTO</h3>
+                <div class="tabla-responsive"><table class="tabla-oficial">
+                    <thead><tr><th>Recursos</th><th>Cantidad</th><th>Precio unitario</th><th>Total</th></tr></thead>
+                    <tbody id="tabla-recursos-necesarios" data-tabla-lineas="recursosNecesarios" data-cantidad="9" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                    <tfoot><tr><th colspan="3">TOTAL</th><td><output id="total-recursos">0,00</output></td></tr></tfoot>
+                </table></div>
+                <p class="parrafo">TOTAL SOLICITADO: <strong id="total-solicitado">$ 0,00</strong></p>
+                <input type="hidden" name="montoSolicitado" value="">
+            </section>
+
+            <!-- HOJA 3: COSTO TOTAL Y ADJUNTOS EN EL ESPACIO LIBRE DE LA PLANTILLA -->
+            <section class="hoja">
+                <h3 class="titulo-campos">COSTO TOTAL DEL PROYECTO</h3>
+                <p class="parrafo">Tenga en cuenta un ciclo de producción completo.</p>
+                <div class="tabla-responsive"><table class="tabla-oficial tabla-costos">
+                    <thead><tr><th></th><th>Aporte propio</th><th>Solicitado</th></tr></thead>
+                    <tbody>
+                        <tr><th>Activo fijo (maquinarias y herramientas)</th><td><input type="number" name="aporteActivoFijo" min="0" step="0.01" aria-label="Aporte propio para activo fijo"></td><td><input type="number" name="solicitadoActivoFijo" min="0" step="0.01" aria-label="Monto solicitado para activo fijo"></td></tr>
+                        <tr><th>Bienes de uso (insumo y materia prima)</th><td><input type="number" name="aporteBienesUso" min="0" step="0.01" aria-label="Aporte propio para bienes de uso"></td><td><input type="number" name="solicitadoBienesUso" min="0" step="0.01" aria-label="Monto solicitado para bienes de uso"></td></tr>
+                        <tr><th>Mano de obra</th><td><input type="number" name="aporteManoObra" min="0" step="0.01" aria-label="Aporte propio en mano de obra"></td><td class="celda-no-aplica"></td></tr>
+                        <tr><th>COSTO TOTAL DEL PROYECTO</th><td><output id="costo-total-propio">0,00</output></td><td><output id="costo-total-solicitado">0,00</output></td></tr>
+                    </tbody>
+                </table></div>
+                <p class="parrafo">Imágenes y documentación respaldatoria del proyecto</p>
+                <div class="zona-archivos"><label class="etiqueta" for="imagenes-emprendimiento">Adjuntar fotografías o PDF (obligatorio)</label><input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple required></div>
+                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos y 16 MB en total. Se incluirán en el espacio libre de esta hoja, sin agregar páginas.</small>
+            </section>
+
+            <!-- HOJA 4: ACTA ACUERDO (TEXTO DEL PDF OFICIAL) -->
+            <section class="hoja">
+                <h3 class="titulo-campos">ACTA ACUERDO PLAN PROVINCIAL SANTIAGO PRODUCTIVO</h3>
+                <p class="parrafo">Entre la SUBSECRETARIA DE DESARROLLO SOCIAL con domicilio en calle Sáenz Peña Nº 340 representada en este acto por el Subsecretario de Desarrollo Social Lic. Ramiro Banco, en adelante LA SUBSECRETARIA DE DESARROLLO SOCIAL y el Sr. <strong data-valor="nombreApellido"></strong>, D.N.I. Nº <strong data-valor="dniCuit"></strong>, domiciliado en calle <strong data-valor="domicilio"></strong>, localidad <strong data-valor="localidad"></strong>, Departamento <strong data-valor="departamento"></strong> de la Provincia de Santiago del Estero, en adelante EL EMPRENDEDOR, convienen lo siguiente:</p>
+                <ol class="texto-oficial"><li>EL EMPRENDEDOR declara conocer y aceptar los términos y condiciones de lo dispuesto en la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que reglamenta el Plan Provincial Santiago Productivo en cuanto a las condiciones, modalidades, requisitos y documentación exigibles.</li><li>EL EMPRENDEDOR se compromete a cumplir con lo establecido en el reglamento, como así también a facilitar con las facultades de supervisión, contralor y evaluación de LA DIRECCION GENERAL DE DESARROLLO SOCIAL respecto del compromiso asumido.</li><li>En caso de incumplimiento por parte de EL EMPRENDEDOR, LA DIRECCION GENERAL DE DESARROLLO SOCIAL se encuentra facultada para iniciar los trámites correspondientes ante los organismos que corresponde a los efectos de procurar, por imperio de la Ley, el cumplimiento de la presente.</li><li>Las partes reconocen que todo lo declarado en la presente reviste el carácter de DECLARACION JURADA.</li></ol>
+                <label class="campo-firma">FIRMA:<input type="text" name="firmaAcuerdo" class="linea" data-autocompletar="nombreApellido" maxlength="80" required aria-label="Firma para el acta acuerdo"></label>
+                <label class="campo-firma">ACLARACION:<input type="text" name="aclaracionAcuerdo" class="linea" data-autocompletar="nombreApellido" maxlength="80" required aria-label="Aclaración para el acta acuerdo"></label>
+                <label class="campo-firma">DNI Nº:<input type="text" name="dniAcuerdo" class="linea" data-autocompletar="dniCuit" maxlength="20" required aria-label="DNI para el acta acuerdo"></label>
+            </section>
+
+            <!-- HOJA 5: NOTIFICACIÓN -->
+            <section class="hoja">
+                <h3 class="titulo-campos">SRES. BENEFICIARIOS DEL PLAN PROVINCIAL SANTIAGO PRODUCTIVO</h3>
+                <p class="parrafo">La Subsecretaria de Desarrollo Social de la Provincia de Santiago del Estero informa a Ud. que según la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que regula al Plan Provincial Santiago Productivo, los beneficiarios de dicho Plan Provincial deberán presentar de carácter OBLIGATORIO las facturas de ley que acrediten el cumplimiento de la compra de los materiales y/o equipamientos e insumos necesarios para llevar a cabo el proyecto, que se encuentran detallados en el Presupuesto Definitivo del Proyecto. El tiempo límite para la presentación de dicha documentación es de 30 (treinta) días corridos a partir del otorgamiento del beneficio.</p>
+                <p class="parrafo">La rendición de las facturas de ley deberán realizarla en las Oficinas de Rendición de Cuentas dependiente de la Subsecretaría de Desarrollo Social, sito en calle Sáenz Peña Nº 340 en el horario de 7:00 a 13:00 hs.</p>
+                <p class="parrafo">La falta de cumplimiento inmediatamente transcurrido el periodo anteriormente mencionado dará lugar al inicio de las acciones pertinentes fines de determinar la responsabilidad y penalidades correspondientes, las que consistan en:</p>
+                <ul class="texto-oficial"><li>Devolución del dinero recibido y/o,</li><li>Devolución del equipamiento comprado,</li><li>Multa por infracción del 10 % al 50 % del importe recibido,</li><li>Trabajo social por el valor de la deuda,</li><li>Acciones legales encuadradas en el Capítulo IV del Código Penal y otras judicialmente aplicadas.</li></ul>
+                <p class="parrafo">Se deberá acreditar dentro de los 90 (noventa) días la puesta en marcha del proyecto conforme a las pautas establecidas por el Equipo Técnico del Área de Economía Social. En todos los casos intervendrá la Justicia Federal o Provincial según corresponda con jurisdicción de la Provincia del Santiago Productivo. <strong>QUEDA UD. DEBIDAMENTE NOTIFICADO.</strong></p>
+                <label class="campo-firma">FIRMA:<input type="text" name="firmaNotificacion" class="linea" data-autocompletar="nombreApellido" maxlength="80" required aria-label="Firma para la notificación"></label>
+                <label class="campo-firma">ACLARACION:<input type="text" name="aclaracionNotificacion" class="linea" data-autocompletar="nombreApellido" maxlength="80" required aria-label="Aclaración para la notificación"></label>
+                <div class="fila firmas-en-linea">
+                    <label class="columna campo-firma">DNI Nº:<input type="text" name="dniNotificacion" class="linea" data-autocompletar="dniCuit" maxlength="20" required aria-label="DNI para la notificación"></label>
+                    <p class="columna campo-fecha-firma">LUGAR Y FECHA: <span class="fecha-automatica"></span></p>
+                </div>
+            </section>
+
+            <!-- HOJA 6: DECLARACIÓN JURADA DE USO Y RENDICIÓN DE FONDOS -->
+            <section class="hoja">
+                <h3 class="titulo-campos">DECLARACIÓN JURADA DE USO Y RENDICIÓN DE FONDOS</h3>
+                <p class="parrafo">LUGAR Y FECHA <span class="fecha-automatica"></span></p>
+                <p class="parrafo">El que suscribe: <strong data-valor="nombreApellido"></strong></p>
+                <p class="parrafo">D.N.I. Nº <strong data-valor="dniCuit"></strong>, con domicilio en <strong data-valor="domicilio"></strong>, Dpto. <strong data-valor="departamento"></strong>, Provincia de Santiago del Estero, DECLARA EN CARÁCTER DE DECLARACIÓN JURADA conocer y dar cumplimiento a las siguientes normas:</p>
+                <p class="parrafo">1) Una vez concluido el trámite de pago y recibidos los valores para la financiación de Proyecto, se deberá presentar dentro de los 30 (treinta) días la recepción de los mismos, FACTURA DE LEY de manera que acredite la compra de los materiales y/o equipamiento e insumo necesario para llevar a cabo el mismo.</p>
+                <p class="parrafo">2) Ante la falta de cumplimiento en la entrega de la documentación requerida, la Subsecretaría de Desarrollo Social a través del organismo que corresponda podrá iniciar las acciones tendientes al reintegro de los fondos, que podrán consistir en la devolución del dinero y/o equipamiento comprado y/o multa. Asimismo el incumplimiento de las causales previstas dará lugar al inicio de acciones legales pertinentes.</p>
+                <p class="parrafo">3) Transcurrido los 90 (noventa) días de recibidos los valores se deberá acreditar la puesta en marcha del proyecto conforme a las metas y objetivos planteados en el proyecto para respaldar de esta forma la continuidad del mismo y la generación del beneficio económico y social esperado.</p>
+                <p class="parrafo">4) Por los incumplimientos de cualquier tipo detectados y probados por el área ejecutora de los programas, y una vez que se hayan agotado todas las instancias administrativas, intervendrá la Justicia Provincial y/o Federal sito en la Jurisdicción de Santiago del Estero.</p>
+                <label class="campo-responsable">Responsable del Proyecto<input type="text" name="responsableProyecto" class="linea" data-autocompletar="nombreApellido" maxlength="80" required aria-label="Responsable del proyecto"></label>
+                <label class="campo-firma">Aclaración:<input type="text" name="aclaracionProyecto" class="linea" data-autocompletar="nombreApellido" maxlength="80" required aria-label="Aclaración del responsable del proyecto"></label>
+                <label class="campo-firma">D.N.I. Nº:<input type="text" name="dniProyecto" class="linea" data-autocompletar="dniCuit" maxlength="20" required aria-label="DNI del responsable del proyecto"></label>
+                <p class="parrafo revision">Revise todos los campos y documentos antes de enviar la solicitud.</p>
+                <div class="acciones"><button type="submit" class="btn enviar">Enviar solicitud y descargar PDF</button></div>
+                <div id="resultado-formulario"></div>
+            </section>
+        </form>
+    </main>
+
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economia</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educacion, Ciencia y Tecnologia</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Publicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Produccion</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aqui]
+        </div>
+    </footer>
+
+    <script src="js/acceso-formularios-ayuda.js"></script>
+    <script src="js/formulario-digital.js"></script>
+</body>
+</html>

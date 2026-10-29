@@ -1,4 +1,5 @@
 import { ModelObtenerEtiquetas, ModelActualizarEtiqueta } from '../models/etiquetasModel.js';
+import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 export const obtenerEtiquetas = async (req, res) => {
     try {
@@ -7,7 +8,7 @@ export const obtenerEtiquetas = async (req, res) => {
         const idUsuarioLogueado = req.usuarioLogueado.idUsuario;
         const rolUsuario = req.usuarioLogueado.tipoUsuario;
 
-        const ipCliente = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+        const ipCliente = obtenerIpCliente(req);
 
         // REGLA DE NEGOCIO EN EL BACKEND:
         // Si es Emprendedor, se le fuerza el filtro a "activas", eliminando acceso a las inactivas.
@@ -39,7 +40,7 @@ export const modificarEtiqueta = async (req, res) => {
 
         // Datos del payload del JWT y de la red para el Trigger de Auditoría
         const idUsuarioLogueado = req.usuarioLogueado.idUsuario;
-        const ipCliente = req.ip || '127.0.0.1';
+        const ipCliente = obtenerIpCliente(req);
 
         // 🚀 El controlador le ordena al modelo ejecutar el cambio
         const resultado = await ModelActualizarEtiqueta(idEtiqueta, nombre.trim(), activa, idUsuarioLogueado, ipCliente);

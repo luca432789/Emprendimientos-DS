@@ -1,3 +1,43 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ======================================================================
+   HEADER
+   ====================================================================== */
+header {
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
+              url('/Imagenes/fondo-banner.webp');
+  background-size: cover;
+  background-position: center;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+header h1 {
+  color: #2f4e78;
+  font-size: 42px;
+  letter-spacing: 3px;
+  text-shadow: 0 0 3px rgb(255, 255, 255);
+}
+
+header p {
+  font-size: 20px;
+  color: #444;
+  text-shadow: 0 0 3px rgb(255, 255, 255);
+}
+
+/* ======================================================================
+   CUERPO PRINCIPAL 
+   ====================================================================== */
+   main {
+  background-color: #f5f5f5; /* Tono grisáceo/crema institucional muy suave */
+  padding-bottom: 0px;
+}
+
 .dashboard-container {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -76,14 +116,14 @@
 
 /* Espacio Central */
 .main-content {
-    padding: 30px;
+    padding: 15px;
 }
 
 .content-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     border-bottom: 2px solid #cbd5e1;
     padding-bottom: 10px;
 }
@@ -163,4 +203,156 @@
     color: #94a3b8;
     cursor: pointer;
     font-size: 16px;
+}
+
+
+/* ======================================================================
+   FOOTER
+   ====================================================================== */
+footer {
+  margin-top: 0px;
+}
+
+.footer-top {
+  background: #8f9dad;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  padding: 25px 50px;
+  flex-wrap: wrap;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
+.footer-logo img {
+  height: 50px;
+}
+
+.footer-links h3 {
+  margin-bottom: 10px;
+}
+
+.footer-links {
+  max-width: 600px;
+}
+
+.columnas {
+  display: flex;
+  gap: 50px;
+}
+
+.columnas ul {
+  list-style: none;
+  font-size: 13px;
+}
+
+.columnas li {
+  margin-bottom: 8px;
+}
+
+.columnas a {
+  color: white;
+  text-decoration: none;
+}
+
+.columnas a:hover {
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding: 10px;
+  font-size: 13px;
+  color: white;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 150, 150, 0)),
+              url('/Imagenes/fondo-banner.webp');
+  background-size: cover;
+  background-position: center;
+}
+/* ==========================================
+   CELULARES: menú lateral desplegable y contenido a todo el ancho
+   ========================================== */
+.btn-menu-movil {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* align-content: start evita que la altura mínima del panel estire el botón del menú */
+    .dashboard-container {
+        grid-template-columns: minmax(0, 1fr);
+        align-content: start;
+    }
+
+    /* Mismo aspecto que las categorías del menú lateral en la computadora */
+    .btn-menu-movil {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 12px 20px;
+        border: none;
+        border-bottom: 1px solid #9cb0c5;
+        background-color: #b0c0d0;
+        color: #2c3e50;
+        font: inherit;
+        font-weight: bold;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .btn-menu-movil .flecha {
+        transition: transform 0.2s;
+    }
+
+    .btn-menu-movil[aria-expanded="true"] .flecha {
+        transform: rotate(180deg);
+    }
+
+    /* Cerrado por defecto: se abre con el botón */
+    .sidebar {
+        display: none;
+        border-right: none;
+        border-bottom: 1px solid #b8c4d4;
+        padding-top: 0;
+    }
+
+    .sidebar.abierto {
+        display: block;
+    }
+
+    .main-content {
+        min-width: 0;
+        padding: 12px;
+    }
+
+    .content-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .content-header h2 {
+        font-size: 20px;
+    }
+
+    .tabla-filtros {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    /* Las tablas con muchas columnas se deslizan dentro de su recuadro */
+    .tabla-datos {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tabla-datos th,
+    .tabla-datos td {
+        padding: 10px 8px;
+        white-space: nowrap;
+    }
 }

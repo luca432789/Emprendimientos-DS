@@ -5,11 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
     <title> Camino de los emprendedores </title>
+    <link rel="icon" type="image/png" href="/Imagenes/Logo-Desarrollo-Social.png">
+
     <link rel="stylesheet" href="CSS/Form. de inicio.css">
     <link rel="stylesheet" href="CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="CSS/formulario-inicio.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
     <script src="js/navbar.js" defer></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <Body>
@@ -21,9 +27,10 @@
 
     <nav>
     <ul>
-        <li><a href="/index.html">Inicio</a></li>
-        <li><a href="#">Publicaciones</a></li>
-        <li><a href="/mapa.html">Mapa</a></li>
+        <li><a href="/index">Inicio</a></li>
+        <li><a href="/publicaciones">Publicaciones</a></li>
+        <li><a href="/noticias">Noticias</a></li>
+        <li><a href="/mapa">Mapa</a></li>
         <li><a href="/formularios" class="active">Formularios</a></li>
         <li><a href="/contactos">Contactos</a></li>
         <li id="contenedor-login-dinamico" class="login">
@@ -33,49 +40,225 @@
 </nav>
 
     <main class="contenedor-formulario">
-
         <h2>Formulario de Inicio</h2>
+        <p class="texto">Complete los campos del formulario oficial. Al finalizar, se generará y descargará el PDF.</p>
 
-        <p class="texto">
-            Por favor asegúrese de llenar todos los datos
-        </p>
+        <form id="formulario-digital" class="formulario-inicio">
+            <input type="hidden" name="tipoFormulario" value="Formulario de Inicio">
 
-        <!-- PREVIEW -->
-        <div class="preview">
+            <!-- HOJA 1 -->
+            <section class="hoja">
+                <p class="fecha-lugar">
+                    SANTIAGO DEL ESTERO,
+                    <strong>día</strong> <input type="text" name="dia" class="campo-fecha" readonly aria-label="Día">
+                    de <strong>mes</strong> <input type="text" name="mes" class="campo-fecha campo-mes" readonly aria-label="Mes">
+                    de <input type="text" name="anio" class="campo-fecha" readonly aria-label="Año">
+                </p>
 
-            <img src="Imagenes/PLACEHOLDER.jpg" alt="Formulario">
+                <p class="destinatario">
+                    Al Sr.<br>
+                    Ministro de Desarrollo Social, Promoción Humana<br>
+                    y Relaciones Institucionales con la Comunidad.<br>
+                    Dr. Ángel Hugo Niccolai<br>
+                    S____________/______________D
+                </p>
 
-        </div>
+                <p class="parrafo sangria">
+                    Nos dirigimos a Ud. en carácter de iniciadores de la solicitud de Microemprendimiento Productivo, que permite la
+                    adquisición de <strong>MAQUINARIAS, HERRAMIENTAS DE TRABAJO Y MATERIA PRIMA</strong>, es por ello que le solicitamos ser beneficiarios del
+                    <strong>Plan Provincial Santiago Productivo</strong>, el mismo es en virtud de poder generar puestos de trabajo y mejorar la calidad de vida.
+                </p>
 
-        <!-- BOTONES -->
-        <div class="acciones">
+                <h3 class="titulo-campos">COMPLETE TODOS LOS CAMPOS SOLICITADOS</h3>
 
-            <!-- DESCARGAR -->
-            <a class="btn descargar"
-               href="#"
-               download>
+                <label class="etiqueta">(Nombre y apellido)</label>
+                <div class="fila">
+                    <input type="text" name="nombre" class="linea" maxlength="40" placeholder="Nombre" required aria-label="Nombre">
+                    <input type="text" name="apellido" class="linea" maxlength="40" placeholder="Apellido" required aria-label="Apellido">
+                </div>
 
-                Descargar
+                <label class="etiqueta">(DNI / documento)</label>
+                <label class="extranjero-control"><input type="checkbox" name="documentoExtranjero" value="true"><span>Soy extranjero/a (pasaporte o documento del país)</span></label>
+                <input type="text" name="dniCuit" class="linea" required aria-label="DNI o documento extranjero" autocomplete="off">
+                <small>Argentino/a: 7 u 8 números. Extranjero/a: active la opción para ingresar letras.</small>
 
-            </a>
+                <label class="etiqueta">Domicilio</label>
+                <input type="text" name="domicilio" class="linea" maxlength="512" required aria-label="Domicilio">
 
-            <!-- SUBIR -->
-            <label class="btn subir">
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Departamento de residencia</label>
+                        <select name="departamentoPersona" class="linea" required aria-label="Departamento de residencia">
+                            <option value="">Seleccione...</option>
+                            <option>Aguirre</option>
+                            <option>Alberdi</option>
+                            <option>Atamisqui</option>
+                            <option>Avellaneda</option>
+                            <option>Banda</option>
+                            <option>Belgrano</option>
+                            <option>Capital</option>
+                            <option>Choya</option>
+                            <option>Copo</option>
+                            <option>Figueroa</option>
+                            <option>General Taboada</option>
+                            <option>Guasayán</option>
+                            <option>Jiménez</option>
+                            <option>Juan Felipe Ibarra</option>
+                            <option>Loreto</option>
+                            <option>Mitre</option>
+                            <option>Moreno</option>
+                            <option>Ojo de Agua</option>
+                            <option>Pellegrini</option>
+                            <option>Quebrachos</option>
+                            <option>Río Hondo</option>
+                            <option>Rivadavia</option>
+                            <option>Robles</option>
+                            <option>Salavina</option>
+                            <option>San Martín</option>
+                            <option>Sarmiento</option>
+                            <option>Silípica</option>
+                        </select>
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Localidad</label>
+                        <select name="localidad" class="linea" required aria-label="Localidad" disabled>
+                            <option value="">Primero seleccione el departamento</option>
+                        </select>
+                        <input type="text" name="localidadLibre" class="linea" maxlength="40" aria-label="Escriba otra localidad" placeholder="Escriba la localidad" hidden>
+                    </div>
+                </div>
 
-                Adjuntar archivos
+                <label class="etiqueta">Celular</label>
+                <input type="tel" name="telefono" class="linea" required aria-label="Celular" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" title="Ingrese 10 números, sin 0 inicial, 15 ni espacios">
+                <small>10 dígitos, incluyendo característica; sin 0 ni 15.</small>
 
-                <input type="file" hidden>
+                <label class="etiqueta">Correo electrónico</label>
+                <input type="email" name="correo" class="linea" maxlength="150" required aria-label="Correo electrónico">
+                <small>El dominio del correo debe tener un servidor de correo activo. El correo también aparecerá en el PDF y en el nombre del archivo.</small>
 
-            </label>
+                <label class="etiqueta">Nombre del emprendimiento</label>
+                <input type="text" name="nombreEmprendimiento" class="linea" maxlength="50" required aria-label="Nombre del emprendimiento">
 
-        </div>
+                <div class="fila">
+                    <div class="columna ancha">
+                        <label class="etiqueta">Domicilio del emprendimiento: Calle</label>
+                        <input type="text" name="calleEmprendimiento" class="linea" maxlength="30" required aria-label="Calle del emprendimiento">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Nº</label>
+                        <input type="text" name="numeroEmprendimiento" class="linea" maxlength="6" required aria-label="Número de calle del emprendimiento">
+                        <label class="extranjero-control"><input type="checkbox" name="calleSinNumero" value="true"><span>Sin número (S/N)</span></label>
+                    </div>
+                </div>
 
-        <!-- ENVIAR -->
-        <button class="btn enviar">
-            Enviar
-        </button>
+                <label class="etiqueta">Barrio</label>
+                <input type="text" name="barrio" class="linea" maxlength="50" required aria-label="Barrio">
 
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Dpto. del emprendimiento</label>
+                        <select name="departamento" class="linea" required aria-label="Departamento del emprendimiento">
+                            <option value="">Seleccione...</option>
+                            <option>Aguirre</option>
+                            <option>Alberdi</option>
+                            <option>Atamisqui</option>
+                            <option>Avellaneda</option>
+                            <option>Banda</option>
+                            <option>Belgrano</option>
+                            <option>Capital</option>
+                            <option>Choya</option>
+                            <option>Copo</option>
+                            <option>Figueroa</option>
+                            <option>General Taboada</option>
+                            <option>Guasayán</option>
+                            <option>Jiménez</option>
+                            <option>Juan Felipe Ibarra</option>
+                            <option>Loreto</option>
+                            <option>Mitre</option>
+                            <option>Moreno</option>
+                            <option>Ojo de Agua</option>
+                            <option>Pellegrini</option>
+                            <option>Quebrachos</option>
+                            <option>Río Hondo</option>
+                            <option>Rivadavia</option>
+                            <option>Robles</option>
+                            <option>Salavina</option>
+                            <option>San Martín</option>
+                            <option>Sarmiento</option>
+                            <option>Silípica</option>
+                        </select>
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Localidad del emprendimiento</label>
+                        <select name="localidadEmprendimiento" class="linea" required aria-label="Localidad del emprendimiento" disabled>
+                            <option value="">Primero seleccione el departamento</option>
+                        </select>
+                        <input type="text" name="localidadEmprendimientoLibre" class="linea" maxlength="40" aria-label="Escriba otra localidad del emprendimiento" placeholder="Escriba la localidad" hidden>
+                    </div>
+                </div>
 
+                <label class="etiqueta">¿El emprendimiento está en marcha actualmente?</label>
+                <div class="opciones">
+                    <label><input type="radio" name="enMarcha" value="Sí" required> SI</label>
+                    <label><input type="radio" name="enMarcha" value="No"> NO</label>
+                    <span class="aclaracion">(Indicar lo que corresponda)</span>
+                </div>
+
+                <p class="parrafo sangria">
+                    Elevamos al Sr. Ministro esta solicitud con el propósito de dar impulso económico a la actividad productiva de
+                    microemprendimiento en el rubro de:
+                </p>
+                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Rubro">
+
+                <label class="etiqueta">Actividad principal que realiza el emprendimiento</label>
+                <textarea name="actividadPrincipal" class="linea renglones" rows="3" maxlength="400" required aria-label="Actividad principal del emprendimiento" placeholder="Describa brevemente qué produce o qué servicio brinda"></textarea>
+
+                <label class="etiqueta">Tipo de ayuda solicitada:</label>
+                <div class="opciones">
+                    <label><input type="radio" name="tipoFinanciamiento" value="Subsidio" required> Subsidio</label>
+                    <label><input type="radio" name="tipoFinanciamiento" value="Credito"> Crédito</label>
+                    <span class="aclaracion">(Indicar lo que corresponda)</span>
+                </div>
+
+                <p class="parrafo sangria">
+                    En el marco del Plan Provincial Santiago Productivo, para tal fin necesitamos comprar lo siguiente:
+                </p>
+                <ol class="lista-bienes">
+                    <li><input type="text" name="bien1" class="linea" maxlength="80" aria-label="Bien 1"></li>
+                    <li><input type="text" name="bien2" class="linea" maxlength="80" aria-label="Bien 2"></li>
+                    <li><input type="text" name="bien3" class="linea" maxlength="80" aria-label="Bien 3"></li>
+                </ol>
+
+                <p class="saludo">Sin otro motivo, y esperando una respuesta a lo solicitado, lo saludamos atentamente.</p>
+
+                <label class="etiqueta">FIRMA</label>
+                <input type="text" name="firma" class="linea firma" maxlength="80" required aria-label="Firma (nombre completo)" placeholder="Escriba su nombre completo">
+
+                <div class="nota-importante">
+                    <p><strong>NOTA IMPORTANTE: ADJUNTAR FOTOCOPIAS DE DNI AUTENTICADAS POR POLICIA, CERTIFICADOS DE RESIDENCIA ADJUNTAR FOTOGRAFIAS DEL EMPRENDIMIENTO. SI TUVIESE CAPACITACION SOBRE EL RUBRO A INICIAR, DEBE PRESENTAR UNA FOTOCOPIA AUTENTICADA POR POLICIA DE LA MISMA.</strong></p>
+                    <p>LA PRESENTACION DE LA NOTA Y LA DOCUMENTACION NO IMPLICA LA ACEPTACION DE LA MISMA, SINO QUE QUEDA SUJETA A VERIFICACION TECNICA Y SOCIAL PARA ANALIZAR LA VIABILIDAD DEL PROYECTO. TODO LO INFORMADO POR ESTE MEDIO REVISTE EL CARÁCTER DE DECLARACION JURADA DE MODO QUE NO FALSEE NI OMITA LA INFORMACION.</p>
+                </div>
+            </section>
+
+            <!-- HOJA 2 -->
+            <section class="hoja">
+                <h3 class="titulo-imagenes">Imágenes del emprendimiento</h3>
+                <p class="parrafo">Adjunte fotografías del emprendimiento en reemplazo del croquis de localización. Puede seleccionar varias imágenes.</p>
+
+                <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar imágenes</label>
+                <div class="zona-archivos">
+                    <input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple required>
+                </div>
+                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos, 8 páginas adjuntas y 16 MB en total.</small>
+
+                <p class="parrafo revision">Antes de culminar el llenado de la presente nota, revise si todos los campos fueron completados de acuerdo a lo solicitado.</p>
+
+                <div class="acciones">
+                    <button type="submit" class="btn enviar">Enviar solicitud y descargar PDF</button>
+                </div>
+                <div id="resultado-formulario"></div>
+            </section>
+        </form>
     </main>
 
     <!--FOOTER-->
@@ -111,5 +294,6 @@
     </footer>
   
 
+    <script src="js/formulario-digital.js"></script>
 </Body>
 </html>

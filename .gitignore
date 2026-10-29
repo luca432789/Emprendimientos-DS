@@ -1,3 +1,18 @@
 node_modules/
 .env
+.env.*
+!.env.example
 .DS_Store
+.venv/
+.vscode/
+tmp/
+*.log
+# Fotos que suben los emprendedores (contenido, no codigo)
+uploads/publicaciones/
+uploads/productos/
+uploads/NoticiasImagen/
+# PDFs de pedidos de subsidio y credito que generan los formularios (contenido, no codigo)
+uploads/subsidios/
+uploads/creditos/
+uploads/solicitudesinicio/
+database/Usuario Conexion.sql

@@ -4,12 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const contenedorLogin = document.getElementById('contenedor-login-dinamico');
 
     let tipoUsuario = null; // variable para guardar el tipo de usuario
+    let idUsuario = null;   // para recordar qué notificaciones ya vio cada usuario
     // decodificacion de token
     if (token) {
         try {
             // jwtDecode viene de la librería que añadimos por script en el HTML
             const payload = jwtDecode(token);
             tipoUsuario = payload.tipoUsuario; // Extraemos el rol real guardado en el backend
+            idUsuario = payload.idUsuario;
+            if (payload.exp) vigilarVencimientoSesion(payload);
         } catch (error) {
             console.error("Error al decodificar un token alterado:", error);
             sessionStorage.clear();
@@ -38,25 +41,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="nav-btn" id="btn-crear"><i class="fa-solid fa-plus"></i></button>
                     <div class="dropdown-menu menu-derecha" id="menu-crear">
                         <ul>
-                            <li><a href="#">• Crear Publicación</a></li>
+                            <li><a href="/Emprendedor-Publicaciones">• Crear Publicación</a></li>
                         </ul>
                     </div>
                 </div>
                 <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-notificaciones">
+                    <button class="nav-btn" id="btn-notificaciones" aria-label="Notificaciones">
                         <i class="fa-solid fa-bell"></i>
-                        <span class="badge-alerta">1</span>
+                        <span class="badge-alerta" id="badge-notificaciones" style="display: none;"></span>
                     </button>
                     <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
                         <div class="dropdown-header">Notificaciones</div>
-                        <ul><li><a href="#">• Nueva solicitud</a></li></ul>
+                        <ul id="lista-notificaciones"><li class="notif-vacia">Cargando...</li></ul>
                     </div>
                 </div>
                 <div class="dropdown-container">
                     <div class="avatar-nav" id="btn-perfil"><i class="fa-solid fa-user"></i></div>
                     <div class="dropdown-menu menu-derecha" id="menu-perfil">
                         <ul>
-                            <li><a href="VISTA%20USUARIO/Perfil%20Emprendimiento.html">• Mi Perfil</a></li>
+                            <li><a href="/Emprendedor-Perfil">• Mi Perfil</a></li>
                             <li><a href="#" id="enlace-logout" style="color: #ff6b6b !important;">• Cerrar Sesión</a></li>
                         </ul>
                     </div>
@@ -74,13 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
         contenedorLogin.innerHTML = `
             <div class="nav-usuario-container">
                 <div class="dropdown-container">
-                    <button class="nav-btn" id="btn-notificaciones">
+                    <button class="nav-btn" id="btn-notificaciones" aria-label="Notificaciones">
                         <i class="fa-solid fa-bell"></i>
-                        <span class="badge-alerta">3</span>
+                        <span class="badge-alerta" id="badge-notificaciones" style="display: none;"></span>
                     </button>
                     <div class="dropdown-menu menu-derecha" id="menu-notificaciones">
                         <div class="dropdown-header">Trámites Pendientes</div>
-                        <ul><li><a href="#">• 3 Formularios por revisar</a></li></ul>
+                        <ul id="lista-notificaciones"><li class="notif-vacia">Cargando...</li></ul>
                     </div>
                 </div>
                 <div class="dropdown-container">
@@ -88,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="fa-solid fa-briefcase"></i> </div>
                     <div class="dropdown-menu menu-derecha" id="menu-perfil">
                         <ul>
-                            <li><a href="/VISTA%20EMPLEADO/Empleado%20view.html">• Panel de Control</a></li>
+                            <li><a href="/Empleado">• Panel de Control</a></li>
                             <li><a href="#" id="enlace-logout" style="color: #ff6b6b !important;">• Cerrar Sesión</a></li>
                         </ul>
                     </div>
@@ -99,7 +102,441 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Volvemos a activar los clicks de los botones que se hayan dibujado
     inicializarDropdowns();
+
+    // Campanita con datos reales para empleados y emprendedores
+    if (rolesEmpleados.includes(tipoUsuario) || tipoUsuario === 'Emprendedor') {
+        iniciarNotificaciones(token, tipoUsuario, idUsuario);
+    }
 });
+
+// ==========================================
+// SESIÓN POR INACTIVIDAD: el token dura JWT_EXPIRES_IN (10 minutos) y se renueva mientras
+// la persona usa la página (clic, teclado, mouse, scroll o toque). Si pasa ese tiempo sin
+// actividad, el token vence: se cierra la sesión y se lleva al login, que muestra
+// "Su sesión ha excedido el tiempo límite..."
+// ==========================================
+const RENOVAR_SESION_CADA = 60 * 1000; // como mucho una renovación por minuto
+const EVENTOS_ACTIVIDAD = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'];
+let sesionVencidaEnCurso = false;
+function cerrarSesionVencida() {
+    if (sesionVencidaEnCurso) return;
+    sesionVencidaEnCurso = true;
+    ['token_ministerio', 'notif_ultimo_id', 'notif_avisadas', 'notif_pendientes_vistas']
+        .forEach((clave) => sessionStorage.removeItem(clave));
+    window.location.href = '/login?sesion=vencida';
+}
+
+function vigilarVencimientoSesion(payload) {
+    let vence = payload.exp * 1000;
+    let emitido = (payload.iat ?? payload.exp) * 1000;
+    let temporizador = null;
+    let renovando = false;
+    const vencida = () => Date.now() >= vence;
+    const programarCierre = () => {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(cerrarSesionVencida, Math.min(vence - Date.now(), 2147483647));
+    };
+
+    if (vencida()) {
+        cerrarSesionVencida();
+        return;
+    }
+    programarCierre();
+    // Con la pestaña en segundo plano el navegador puede demorar el temporizador:
+    // al volver a ella se revisa enseguida
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && vencida()) cerrarSesionVencida();
+    });
+
+    const fetchOriginal = window.fetch;
+
+    // Hubo actividad: si el token tiene más de un minuto, se pide uno nuevo con el tiempo completo
+    const renovar = async () => {
+        if (renovando || vencida() || Date.now() - emitido < RENOVAR_SESION_CADA) return;
+        renovando = true;
+        try {
+            const respuesta = await fetchOriginal('/api/login/renovar', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio')}` }
+            });
+            if (!respuesta.ok) return; // si ya no es válida, el temporizador cierra la sesión
+            const { token } = await respuesta.json();
+            const nuevo = jwtDecode(token);
+            sessionStorage.setItem('token_ministerio', token);
+            vence = nuevo.exp * 1000;
+            emitido = nuevo.iat * 1000;
+            programarCierre();
+        } catch (error) {
+            console.error('No se pudo renovar la sesión:', error);
+        } finally {
+            renovando = false;
+        }
+    };
+    EVENTOS_ACTIVIDAD.forEach((evento) => {
+        document.addEventListener(evento, renovar, { capture: true, passive: true });
+    });
+
+    // Si el servidor responde que la sesión expiró (ej. reloj de la PC adelantado o atrasado),
+    // también se cierra con el mismo aviso. Solo cuenta si se usó el token vigente: un pedido
+    // que salió con el token anterior a una renovación no cierra la sesión.
+    window.fetch = async (...argumentos) => {
+        const respuesta = await fetchOriginal(...argumentos);
+        if (respuesta.status === 401) {
+            const encabezados = new Headers(argumentos[1]?.headers ?? (argumentos[0] instanceof Request ? argumentos[0].headers : {}));
+            const tokenUsado = (encabezados.get('Authorization') || '').split(' ')[1];
+            if (tokenUsado && tokenUsado === sessionStorage.getItem('token_ministerio')) {
+                const datos = await respuesta.clone().json().catch(() => ({}));
+                if (/expirad/i.test(datos.error || '')) cerrarSesionVencida();
+            }
+        }
+        return respuesta;
+    };
+}
+
+// ==========================================
+// NOTIFICACIONES (campanita)
+// ==========================================
+const INTERVALO_NOTIFICACIONES = 30000; // cada 30 segundos
+// Último id ya visto en esta sesión: evita repetir el aviso al cambiar de página
+const CLAVE_ULTIMA_NOTIF = 'notif_ultimo_id';
+
+function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
+    let temporizador = null;
+
+    const consultar = async () => {
+        try {
+            // Token vigente (se renueva mientras hay actividad), no el de cuando se abrió la página
+            const respuesta = await fetch('/api/notificaciones', {
+                headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio') || token}` }
+            });
+            // Sesión vencida o sin permiso: se deja de consultar
+            if (respuesta.status === 401 || respuesta.status === 403) {
+                clearInterval(temporizador);
+                return;
+            }
+            if (!respuesta.ok) return;
+
+            const datos = await respuesta.json();
+            const { total, ultimoId, notificaciones } = datos;
+            if (tipoUsuario === 'Emprendedor') {
+                procesarNotificacionesEmprendedor(notificaciones, idUsuario, datos.vistasEnServidor);
+                return;
+            }
+            if (tipoUsuario === 'Empleado de Area' || tipoUsuario === 'Administrador') {
+                pintarNotificaciones(total, notificaciones);
+                const contadores = datos.contadores || {};
+                Object.entries(contadores).forEach(([seccion, cantidad]) => actualizarContadorMenu(seccion, cantidad));
+                // El grupo "Sin revisar" muestra la suma, así se ve aunque esté cerrado
+                const sinRevisar = ['inicio-sin-revisar', 'subsidio-sin-revisar', 'creditos-sin-revisar']
+                    .reduce((suma, seccion) => suma + (contadores[seccion] || 0), 0);
+                ponerContador(document.getElementById('categoria-sin-revisar'), sinRevisar);
+                ponerContador(document.getElementById('categoria-en-revision'), contadores['inicio-en-revision'] || 0);
+                avisarPublicacionesNuevas(datos.pendientes || []);
+                return;
+            }
+            pintarNotificaciones(total, notificaciones);
+            avisarSiHayNuevas(total, ultimoId, notificaciones);
+        } catch (error) {
+            console.error('No se pudieron cargar las notificaciones:', error);
+        }
+    };
+
+    consultar();
+    temporizador = setInterval(consultar, INTERVALO_NOTIFICACIONES);
+    // Al volver a la pestaña se actualiza enseguida
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) consultar();
+    });
+    // Otras partes de la página (ej. al cargar un expediente) pueden pedir que se actualice
+    window.actualizarNotificaciones = consultar;
+}
+
+function escaparNotif(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+function pintarNotificaciones(total, notificaciones) {
+    const badge = document.getElementById('badge-notificaciones');
+    const lista = document.getElementById('lista-notificaciones');
+
+    if (badge) {
+        badge.textContent = total > 99 ? '99+' : String(total);
+        badge.style.display = total > 0 ? '' : 'none';
+    }
+    if (!lista) return;
+
+    if (!notificaciones.length) {
+        lista.innerHTML = '<li class="notif-vacia">No hay notificaciones nuevas</li>';
+        return;
+    }
+
+    lista.innerHTML = notificaciones.map((n) => `
+        <li>
+            <a href="${escaparNotif(n.url)}" class="notif-item" data-seccion="${escaparNotif(n.seccion || '')}">
+                <span class="notif-titulo">• ${escaparNotif(n.titulo)}</span>
+                <span class="notif-detalle">${escaparNotif(n.detalle)}</span>
+            </a>
+        </li>`).join('');
+
+    lista.querySelectorAll('.notif-item').forEach((enlace) => {
+        enlace.addEventListener('click', (e) => irASeccionNotificacion(e, enlace.dataset.seccion));
+    });
+}
+
+// Secciones del Panel de Control a las que llevan las notificaciones
+const SECCIONES_PANEL = {
+    'solicitudes-sin-expediente': 'Carga de Expedientes GED',
+    'publicaciones-espera': 'Publicaciones en Espera',
+    'inicio-sin-revisar': 'Solicitudes de Inicio',
+    'subsidio-sin-revisar': 'Solicitudes de Subsidio',
+    'creditos-sin-revisar': 'Solicitudes de Créditos',
+    'inicio-en-revision': 'En Revisión - Inicio'
+};
+
+// Si ya estamos en el Panel de Control, se abre la sección sin recargar la página;
+// si no, el enlace lleva al panel (Empleado%20view.html#seccion abre esa sección).
+function irASeccionNotificacion(evento, seccion) {
+    if (SECCIONES_PANEL[seccion] && typeof window.cargarSección === 'function' &&
+        document.getElementById(`item-${seccion}`)) {
+        evento.preventDefault();
+        document.querySelectorAll('.dropdown-menu').forEach((m) => m.classList.remove('mostrar'));
+        window.cargarSección(seccion, SECCIONES_PANEL[seccion]);
+    }
+}
+
+// Contador en rojo dentro de un elemento del menú lateral del panel
+function ponerContador(elemento, total) {
+    if (!elemento) return;
+    let contador = elemento.querySelector('.contador-menu');
+    if (!contador) {
+        contador = document.createElement('span');
+        contador.className = 'contador-menu';
+        elemento.appendChild(contador);
+    }
+    contador.textContent = total > 99 ? '99+' : String(total);
+    contador.style.display = total > 0 ? '' : 'none';
+}
+
+// Contador al lado de la sección en el menú lateral del panel (si se está en el panel)
+function actualizarContadorMenu(seccion, total) {
+    ponerContador(document.querySelector(`#item-${seccion} a`), total);
+}
+
+// Moderadores: aviso cuando llega una publicación nueva (o reenviada) para revisar.
+// La primera consulta de la sesión es el punto de partida (sin aviso), como en Mesa de Entrada.
+const CLAVE_PENDIENTES_VISTAS = 'notif_pendientes_vistas';
+function avisarPublicacionesNuevas(pendientes) {
+    const guardado = sessionStorage.getItem(CLAVE_PENDIENTES_VISTAS);
+    sessionStorage.setItem(CLAVE_PENDIENTES_VISTAS, JSON.stringify([
+        ...new Set([...(guardado ? JSON.parse(guardado) : []), ...pendientes])
+    ].slice(-300)));
+    if (guardado === null) return;
+
+    const conocidas = new Set(JSON.parse(guardado));
+    const nuevas = pendientes.filter((c) => !conocidas.has(c));
+    if (!nuevas.length) return;
+
+    // Qué llegó, según el prefijo de la clave (ini- / sub- / cre- / rev- / pend-)
+    const tipos = {
+        ini: { seccion: 'inicio-sin-revisar', uno: 'una solicitud de inicio', varios: 'solicitudes de inicio' },
+        sub: { seccion: 'subsidio-sin-revisar', uno: 'una solicitud de subsidio', varios: 'solicitudes de subsidio' },
+        cre: { seccion: 'creditos-sin-revisar', uno: 'una solicitud de crédito', varios: 'solicitudes de crédito' },
+        rev: { seccion: 'inicio-en-revision', uno: 'una solicitud de inicio asignada a vos', varios: 'solicitudes de inicio asignadas a vos' },
+        pend: { seccion: 'publicaciones-espera', uno: 'una publicación', varios: 'publicaciones' }
+    };
+    const prefijos = [...new Set(nuevas.map((c) => c.split('-')[0]))].filter((pre) => tipos[pre]);
+    if (!prefijos.length) return;
+
+    if (prefijos.length === 1) {
+        const tipo = tipos[prefijos[0]];
+        mostrarAvisoNotificacion(
+            nuevas.length === 1 ? `Llegó ${tipo.uno} para revisar` : `Llegaron ${nuevas.length} ${tipo.varios} para revisar`,
+            `Hacé clic para ir a ${SECCIONES_PANEL[tipo.seccion]}`,
+            `/VISTA%20EMPLEADO/Empleado%20view.html#${tipo.seccion}`,
+            tipo.seccion
+        );
+    } else {
+        mostrarAvisoNotificacion(
+            `Llegaron ${nuevas.length} novedades para revisar`,
+            'Revisalas en la campanita de notificaciones.',
+            '/VISTA%20EMPLEADO/Empleado%20view.html',
+            null
+        );
+    }
+}
+
+// Claves que el propio usuario generó (ej. al iniciar una revisión): se dan por conocidas
+// para que no aparezca el aviso de "llegó" por algo que hizo en esta misma sesión
+window.marcarPendientesConocidas = (claves) => {
+    const guardado = sessionStorage.getItem(CLAVE_PENDIENTES_VISTAS);
+    if (guardado === null) return; // todavía no hubo primera consulta: no se avisa nada igual
+    sessionStorage.setItem(CLAVE_PENDIENTES_VISTAS, JSON.stringify([
+        ...new Set([...JSON.parse(guardado), ...claves])
+    ].slice(-300)));
+};
+
+// Muestra un aviso cuando llega un formulario nuevo (id mayor al último visto en la sesión)
+function avisarSiHayNuevas(total, ultimoId, notificaciones) {
+    const guardado = sessionStorage.getItem(CLAVE_ULTIMA_NOTIF);
+
+    // Primera consulta de la sesión: se toma como punto de partida, sin aviso
+    if (guardado === null) {
+        sessionStorage.setItem(CLAVE_ULTIMA_NOTIF, String(ultimoId));
+        return;
+    }
+
+    const ultimoVisto = Number(guardado);
+    if (ultimoId <= ultimoVisto) return;
+    sessionStorage.setItem(CLAVE_ULTIMA_NOTIF, String(ultimoId));
+
+    const notif = notificaciones[0];
+    if (!notif) return;
+    mostrarAvisoNotificacion('Llegó un formulario de inicio nuevo', `${notif.titulo}. ${notif.detalle}`, notif.url, notif.seccion);
+}
+
+function mostrarAvisoNotificacion(titulo, detalle, url, seccion, alHacerClic) {
+    const aviso = document.createElement('a');
+    aviso.className = 'toast-notificacion';
+    aviso.href = url || '#';
+    aviso.innerHTML = `
+        <i class="fa-solid fa-bell"></i>
+        <span><strong>${escaparNotif(titulo)}</strong><br>${escaparNotif(detalle)}</span>`;
+    aviso.addEventListener('click', (e) => {
+        if (alHacerClic) alHacerClic();
+        irASeccionNotificacion(e, seccion);
+    });
+    document.body.appendChild(aviso);
+
+    requestAnimationFrame(() => aviso.classList.add('visible'));
+    setTimeout(() => {
+        aviso.classList.remove('visible');
+        setTimeout(() => aviso.remove(), 400);
+    }, 7000);
+}
+
+// ==========================================
+// NOTIFICACIONES DEL EMPRENDEDOR (publicaciones aprobadas o rechazadas)
+// Cuáles ya vio se guarda en el navegador por usuario (localStorage), así se
+// recuerda aunque cierre sesión. Cada notificación trae una "clave" única.
+// ==========================================
+const CLAVE_AVISADAS = 'notif_avisadas'; // avisos emergentes ya mostrados en esta sesión
+
+function leerLista(almacen, clave) {
+    try {
+        const valor = JSON.parse(almacen.getItem(clave) || '[]');
+        return Array.isArray(valor) ? valor : [];
+    } catch {
+        return [];
+    }
+}
+
+function guardarLista(almacen, clave, lista) {
+    try {
+        almacen.setItem(clave, JSON.stringify(lista.slice(-200)));
+    } catch {
+        // Sin almacenamiento disponible (modo privado): funciona igual, sin recordar las vistas
+    }
+}
+
+const claveVistas = (idUsuario) => `notif_vistas_${idUsuario}`;
+
+function marcarVistas(idUsuario, claves) {
+    const vistas = new Set(leerLista(localStorage, claveVistas(idUsuario)));
+    claves.forEach((c) => vistas.add(c));
+    guardarLista(localStorage, claveVistas(idUsuario), [...vistas]);
+
+    // En la base (tabla NotificacionVista): así no reaparecen al entrar desde otra computadora
+    const tokenActual = sessionStorage.getItem('token_ministerio');
+    if (tokenActual && claves.length) {
+        fetch('/api/notificaciones/vistas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tokenActual}` },
+            body: JSON.stringify({ claves }),
+            keepalive: true // se envía aunque el clic cambie de página
+        }).catch(() => {});
+    }
+}
+
+function procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor) {
+    // Vista = la marcó en cualquier computadora (servidor) o en este navegador
+    const locales = new Set(leerLista(localStorage, claveVistas(idUsuario)));
+    notificaciones.forEach((n) => { if (n.vista) locales.add(n.clave); });
+    const vistas = locales;
+    const noVistas = notificaciones.filter((n) => !vistas.has(n.clave));
+
+    // Lo visto en este navegador antes de que existiera la tabla se sube al servidor una vez
+    if (vistasEnServidor) {
+        const soloLocales = notificaciones.filter((n) => !n.vista && vistas.has(n.clave)).map((n) => n.clave);
+        if (soloLocales.length) marcarVistas(idUsuario, soloLocales);
+    }
+
+    // Número rojo: resoluciones que todavía no vio
+    const badge = document.getElementById('badge-notificaciones');
+    if (badge) {
+        badge.textContent = noVistas.length > 99 ? '99+' : String(noVistas.length);
+        badge.style.display = noVistas.length > 0 ? '' : 'none';
+    }
+
+    const lista = document.getElementById('lista-notificaciones');
+    if (lista) {
+        if (!notificaciones.length) {
+            lista.innerHTML = '<li class="notif-vacia">No tenés notificaciones</li>';
+        } else {
+            lista.innerHTML = notificaciones.map((n) => {
+                const aprobada = n.tipo === 'publicacion-aprobada';
+                const fecha = n.fecha ? new Date(n.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : '';
+                return `
+                    <li>
+                        <a href="${escaparNotif(n.url)}" class="notif-item${vistas.has(n.clave) ? '' : ' notif-no-leida'}" data-clave="${escaparNotif(n.clave)}">
+                            <span class="notif-titulo">
+                                <i class="fa-solid fa-${aprobada ? 'circle-check' : 'circle-xmark'}" style="color: ${aprobada ? '#68d391' : '#fc8181'};"></i>
+                                ${escaparNotif(n.titulo)}
+                            </span>
+                            <span class="notif-detalle">${escaparNotif(n.detalle)}${fecha ? ` · ${fecha}` : ''}</span>
+                        </a>
+                    </li>`;
+            }).join('') + (noVistas.length > 1
+                ? '<li><a href="#" class="notif-item notif-marcar-todas">Marcar todas como vistas</a></li>'
+                : '');
+
+            lista.querySelectorAll('.notif-item[data-clave]').forEach((enlace) => {
+                enlace.addEventListener('click', () => {
+                    marcarVistas(idUsuario, [enlace.dataset.clave]);
+                    document.querySelectorAll('.dropdown-menu').forEach((m) => m.classList.remove('mostrar'));
+                    procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor);
+                });
+            });
+            lista.querySelector('.notif-marcar-todas')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                marcarVistas(idUsuario, notificaciones.map((n) => n.clave));
+                procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor);
+            });
+        }
+    }
+
+    // Aviso emergente para las resoluciones nuevas (una vez por sesión cada una)
+    const avisadas = new Set(leerLista(sessionStorage, CLAVE_AVISADAS));
+    const paraAvisar = noVistas.filter((n) => !avisadas.has(n.clave));
+    if (!paraAvisar.length) return;
+    guardarLista(sessionStorage, CLAVE_AVISADAS, [...avisadas, ...paraAvisar.map((n) => n.clave)]);
+
+    // Si está viendo su perfil, que se actualice con la resolución nueva
+    document.dispatchEvent(new CustomEvent('notificaciones-nuevas'));
+
+    const [primera] = paraAvisar;
+    if (paraAvisar.length === 1) {
+        mostrarAvisoNotificacion(primera.titulo, primera.detalle, primera.url, null, () => {
+            marcarVistas(idUsuario, [primera.clave]);
+            procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor);
+        });
+    } else {
+        mostrarAvisoNotificacion(`Tenés ${paraAvisar.length} novedades en tus publicaciones`,
+            'Revisalas en la campanita de notificaciones.', '/VISTA%20USUARIO/Publicaciones.html', null);
+    }
+}
 
 function inicializarDropdowns() {
     // Dropdown Crear
@@ -142,9 +579,32 @@ function inicializarDropdowns() {
             e.preventDefault(); // Evita que la página navegue al "#"
             
             sessionStorage.removeItem('token_ministerio');
-            // 2. Redirigimos a la página de inicio común / refrescamos la actual
-            alert("Sesión cerrada correctamente");
-            window.location.href = "/index.html"; 
+            sessionStorage.removeItem(CLAVE_ULTIMA_NOTIF);
+            sessionStorage.removeItem(CLAVE_AVISADAS);
+            sessionStorage.removeItem(CLAVE_PENDIENTES_VISTAS);
+
+            // 2. Se queda en la página actual (ej. el mapa) y la recarga ya sin sesión.
+            //    Las vistas privadas (panel de empleado / vista de emprendedor) no sirven
+            //    sin sesión, así que desde ahí se vuelve al inicio.
+            const ruta = decodeURIComponent(window.location.pathname).toUpperCase();
+            const esVistaPrivada = ruta.startsWith('/VISTA EMPLEADO/') || ruta.startsWith('/VISTA USUARIO/');
+            const redirigir = () => {
+                if (esVistaPrivada) window.location.href = "/index";
+                else window.location.reload();
+            };
+
+            // SweetAlert si la página lo tiene cargado (ej. el mapa); si no, alert() de siempre
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sesión cerrada correctamente',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(redirigir);
+            } else {
+                alert("Sesión cerrada correctamente");
+                redirigir();
+            }
         });
     }
 

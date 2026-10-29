@@ -1,0 +1,299 @@
+/* =========================================================
+   Perfil del emprendimiento: piezas que agrega el JavaScript
+   (perfil-emprendedor.js, publicaciones.js, productos.js)
+   ========================================================= */
+
+.sin-datos {
+  padding: 15px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.perfil-mensaje {
+  max-width: 640px;
+  margin: 30px auto;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.perfil-mensaje a,
+.perfil-ver-mas a,
+.aviso-cupo a {
+  color: #2f4e78;
+  font-weight: bold;
+}
+
+/* ---------- Datos (Acerca de / Contacto) ---------- */
+.perfil-datos {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+}
+
+.perfil-datos li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f0e6d8;
+  color: #374151;
+}
+
+.perfil-datos li i {
+  width: 18px;
+  color: #a65454;
+  text-align: center;
+}
+
+.perfil-datos a {
+  color: #2f4e78;
+  word-break: break-all;
+}
+
+.perfil-ver-mas {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* ---------- Publicaciones ---------- */
+.aviso-cupo {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 10px;
+}
+
+/* Se eligieron más fotos de las permitidas */
+.aviso-fotos-excedidas {
+  color: #b42318;
+  font-weight: bold;
+}
+
+.titulo-mis-publicaciones {
+  color: #2f4e78;
+  margin: 10px 0;
+}
+
+.publicacion-card .publicacion-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.publicacion-card .post-fecha {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.publicacion-card .acciones-publicacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.estado-pub {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.estado-pub.aprobada { background: #e6f4ea; color: #2f855a; }
+.estado-pub.revision { background: #fef3c7; color: #a16207; }
+.estado-pub.rechazada { background: #fde8e8; color: #c53030; }
+
+.motivo-rechazo {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: #fde8e8;
+  border-left: 4px solid #c53030;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.nota-version {
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Fotos dentro de una publicación */
+.publicacion-fotos {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.publicacion-fotos.fotos-1 { grid-template-columns: 1fr; }
+.publicacion-fotos.fotos-2,
+.publicacion-fotos.fotos-4 { grid-template-columns: 1fr 1fr; }
+.publicacion-fotos.fotos-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.publicacion-fotos img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.publicacion-fotos.fotos-1 img { height: auto; max-height: 420px; }
+
+/* Vista previa al elegir fotos */
+.vista-previa-fotos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.vista-previa-fotos img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+/* Formularios dentro de los diálogos de edición */
+.form-editar-publicacion {
+  text-align: left;
+}
+
+.form-editar-publicacion label {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #374151;
+}
+
+.form-editar-publicacion .swal2-input,
+.form-editar-publicacion .swal2-textarea {
+  width: 100%;
+  margin: 5px 0 0;
+  box-sizing: border-box;
+}
+
+.form-editar-publicacion .check-fotos {
+  font-weight: normal;
+}
+
+/* ---------- Productos ---------- */
+.producto-img-container {
+  position: relative;
+}
+
+.producto-oculto {
+  opacity: 0.6;
+}
+
+.etiqueta-oculto {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.producto-acciones {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.btn-producto {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #2f4e78;
+  background: white;
+  color: #2f4e78;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-producto:hover {
+  background: #2f4e78;
+  color: white;
+}
+
+/* ---------- Fotos (galería) ---------- */
+.galeria-item {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.galeria-etiqueta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nota-galeria {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ---------- Contacto ---------- */
+.contacto-card {
+  flex: 1 1 320px;
+}
+
+.mapa-contacto {
+  height: 300px;
+  border-radius: 8px;
+  margin-top: 10px;
+  z-index: 0;
+}
+
+/* En el perfil público se ocultan las herramientas de edición */
+.perfil-publico .solo-dueno {
+  display: none !important;
+}
+
+/* Publicación a la que se llegó desde una notificación */
+.publicacion-resaltada {
+  animation: resaltar-publicacion 2.5s ease-out;
+}
+
+@keyframes resaltar-publicacion {
+  0%, 40% { box-shadow: 0 0 0 4px #f6ad55; }
+  100% { box-shadow: 0 0 0 0 rgba(246, 173, 85, 0); }
+}
+
+/* Textos largos sin espacios (ej. una descripción mal cargada) se cortan en vez de
+   ensanchar la columna y empujar el contenido fuera de la pantalla en celulares */
+.perfil-content > * {
+  min-width: 0;
+}
+
+.perfil-content p,
+.perfil-content li,
+.perfil-content h2,
+.perfil-content h3 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .perfil-content {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 15px 12px;
+  }
+}

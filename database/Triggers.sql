@@ -3,7 +3,7 @@
 -- ------------------------------------------------------------------------------------------------------------------------
 -- Seccion de TRIGGERS ------------------------------------------------------------------------------------------------------
 -- ------------------------------------------------------------------------------------------------------------------------
--- Orden de triggers: Empleado, SolicitudInicio, Emprendimiento, Emprendedor, Usuario, Publicacion, Etiqueta, Subsidio, Credito, Garante, Expediente.
+-- Orden de triggers: Empleado, SolicitudInicio, Emprendimiento, Emprendedor, Usuario, Publicacion, Etiqueta, Subsidio, Credito, Garante, Expediente, Producto, Noticia.
 -- drop trigger tg_auditoria_empleado_update; -- comando para eliminar triggers
 
 -- PARA REALIZAR PRUEBA DE AUDITORIA EJECUTAR LINEA DE ABAJO
@@ -59,7 +59,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Empleado', NEW.idEmpleado, 
-			CONCAT('Cambio de cargo de: ', OLD.Cargo, ' a ', NEW.Cargo),
+			CONCAT('Cambio de cargo de: ', OLD.Cargo, ' A -> ', NEW.Cargo),
 			@usuario_ip);
     END IF;
 
@@ -68,7 +68,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Empleado', NEW.idEmpleado, 
-			CONCAT('Cambio de Domicilio de: ', OLD.Domicilio, ' a ', NEW.Domicilio),
+			CONCAT('Cambio de Domicilio de: ', OLD.Domicilio, ' A -> ', NEW.Domicilio),
 			@usuario_ip);
     END IF;
 
@@ -131,7 +131,7 @@ BEGIN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio, 
-			CONCAT('El empleado ', NEW.idEmpleadoTecRevisor ,' envió los documentos al ministro'), 
+			CONCAT('Se enviaron los documentos al ministro'), 
 			@usuario_ip);
     END IF;
 
@@ -163,13 +163,65 @@ END;
 //
 DELIMITER ;
 -- Trigger Update_Auditoria_DatosSolicitudInicio
+DROP TRIGGER IF EXISTS tg_auditoria_DatosSolicitudInicio_update;
 DELIMITER //
 CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_update
 BEFORE UPDATE ON DatosSolicitudInicio
 FOR EACH ROW
 BEGIN
-    SIGNAL SQLSTATE '45000' 
-    SET MESSAGE_TEXT = 'Error de Seguridad: La tabla DatosSolicitudInicio es inmutable y no permite modificaciones.';
+    IF NOT (
+        OLD.PersonaNombre <=> NEW.PersonaNombre AND
+        OLD.PersonaApellido <=> NEW.PersonaApellido AND
+        OLD.PersonaDNI <=> NEW.PersonaDNI AND
+        OLD.PersonaDepartamento <=> NEW.PersonaDepartamento AND
+        OLD.PersonaLocalidad <=> NEW.PersonaLocalidad AND
+        OLD.PersonaDomicilio <=> NEW.PersonaDomicilio AND
+        OLD.PersonaTeléfono <=> NEW.PersonaTeléfono AND
+        OLD.PersonaCorreo <=> NEW.PersonaCorreo AND
+        OLD.EmprendimientoNombre <=> NEW.EmprendimientoNombre AND
+        OLD.EmprendimientoCalle <=> NEW.EmprendimientoCalle AND
+        OLD.EmprendimientoNroCalle <=> NEW.EmprendimientoNroCalle AND
+        OLD.EmprendimientoBarrio <=> NEW.EmprendimientoBarrio AND
+        OLD.EmprendimientoDepto <=> NEW.EmprendimientoDepto AND
+        OLD.EmprendimientoLocalidad <=> NEW.EmprendimientoLocalidad AND
+        OLD.EmprendimientoActPrincipal <=> NEW.EmprendimientoActPrincipal AND
+        OLD.EmprendimientoMarcha <=> NEW.EmprendimientoMarcha AND
+        OLD.EmprendimientoRubro <=> NEW.EmprendimientoRubro AND
+        OLD.EleccionAyuda <=> NEW.EleccionAyuda AND
+        OLD.idDatosSolicitudInicio <=> NEW.idDatosSolicitudInicio AND
+        OLD.idSolicitudInicio <=> NEW.idSolicitudInicio
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error de Seguridad: Solo se permite actualizar las coordenadas del emprendimiento.';
+    END IF;
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_DatosSolicitudInicio_coordinates;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_coordinates
+AFTER UPDATE ON DatosSolicitudInicio
+FOR EACH ROW
+BEGIN
+    IF NOT (OLD.EmprendimientoLatitud <=> NEW.EmprendimientoLatitud)
+       OR NOT (OLD.EmprendimientoLongitud <=> NEW.EmprendimientoLongitud) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id,
+            'UPDATE',
+            'DatosSolicitudInicio',
+            NEW.idDatosSolicitudInicio,
+            CONCAT(
+                'Coordenadas del emprendimiento para la solicitud ', NEW.idSolicitudInicio,
+                ' actualizadas. Latitud: ', COALESCE(CAST(OLD.EmprendimientoLatitud AS CHAR), 'sin dato'),
+                ' -> ', COALESCE(CAST(NEW.EmprendimientoLatitud AS CHAR), 'sin dato'),
+                '; longitud: ', COALESCE(CAST(OLD.EmprendimientoLongitud AS CHAR), 'sin dato'),
+                ' -> ', COALESCE(CAST(NEW.EmprendimientoLongitud AS CHAR), 'sin dato')
+            ),
+            @usuario_ip
+        );
+    END IF;
 END;
 //
 DELIMITER ;
@@ -266,12 +318,13 @@ BEGIN
 
     -- 3. Cambio de ubicacion
     IF OLD.Calle <> NEW.Calle OR OLD.NúmeroCalle <> NEW.NúmeroCalle OR OLD.Barrio <> NEW.Barrio OR OLD.Departamento <> NEW.Departamento 
-    OR OLD.Localidad <> NEW.Localidad OR OLD.Latitud <> NEW.Latitud OR OLD.Longitud <> NEW.Longitud THEN
+    -- Latitud/Longitud pueden ser NULL (sin ubicar): se compara con <=> e IFNULL para no perder la auditoría
+    OR OLD.Localidad <> NEW.Localidad OR NOT (OLD.Latitud <=> NEW.Latitud) OR NOT (OLD.Longitud <=> NEW.Longitud) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Emprendimiento', NEW.idEmprendimiento, 
-			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (Latitud: ', OLD.Latitud, '/ Longitud: ', OLD.Longitud, ') -> 
-				Nueva dirección: ', NEW.Calle, ' ', NEW.NúmeroCalle, ' (Latitud: ', NEW.Latitud, '/ Longitud: ', NEW.Longitud, ')'), 
+			@usuario_id, 'UPDATE', 'Emprendimiento', NEW.idEmprendimiento,
+			CONCAT('MUDANZA/GEOLOCALIZACIÓN: Antigua dirección: ', OLD.Calle, ' ', OLD.NúmeroCalle, ' (Latitud: ', IFNULL(OLD.Latitud, 'sin ubicar'), '/ Longitud: ', IFNULL(OLD.Longitud, 'sin ubicar'), ') ->
+				Nueva dirección: ', NEW.Calle, ' ', NEW.NúmeroCalle, ' (Latitud: ', IFNULL(NEW.Latitud, 'sin ubicar'), '/ Longitud: ', IFNULL(NEW.Longitud, 'sin ubicar'), ')'),
 			@usuario_ip);
     END IF;
 
@@ -408,6 +461,15 @@ BEGIN
         VALUES (
             @usuario_id, 'UPDATE', 'Usuario', NEW.idUsuario, 
             CONCAT('ALERTA DE SEGURIDAD: El usuario ', NEW.Correo, ' modificó su contraseña de acceso.'),
+            @usuario_ip);
+    END IF;
+
+    -- 5. Verificamos si cambió el permiso para publicar noticias
+    IF OLD.Noticiero <> NEW.Noticiero THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Usuario', NEW.idUsuario,
+            CONCAT('Permiso de Noticiero para ', NEW.Correo, ': ', CASE WHEN NEW.Noticiero = 1 THEN 'Otorgado' ELSE 'Quitado' END),
             @usuario_ip);
     END IF;
 END;
@@ -762,3 +824,126 @@ END;
 //
 DELIMITER ;
 
+-- TRIGGERS DE PRODUCTO - AUDITORIA ----------------------------------------------------------------------------------------
+DROP TRIGGER IF EXISTS tg_auditoria_Producto_insert;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Producto_insert
+AFTER INSERT ON Producto
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'INSERT', 'Producto', NEW.idProducto,
+        CONCAT('Nuevo producto en Emprendimiento ID: ', NEW.idEmprendimiento, '. Producto: "', NEW.Nombre, '"'),
+        @usuario_ip);
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_Producto_update;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Producto_update
+AFTER UPDATE ON Producto
+FOR EACH ROW
+BEGIN
+    IF OLD.Activo <> NEW.Activo THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Producto', NEW.idProducto,
+            CONCAT('Producto "', NEW.Nombre, '" ', CASE WHEN NEW.Activo THEN 'visible nuevamente' ELSE 'ocultado' END),
+            @usuario_ip);
+    ELSE
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Producto', NEW.idProducto,
+            CONCAT('Producto editado: "', NEW.Nombre, '"'),
+            @usuario_ip);
+    END IF;
+END;
+//
+DELIMITER ;
+
+-- TRIGGERS DE NOTICIA - SEGURIDAD Y AUDITORIA -------------------------------------------------------------------------
+-- Solo puede publicar un usuario activo, Empleado de Area o Administrador, con el permiso Noticiero
+DROP TRIGGER IF EXISTS tg_Noticia_autor_insert;
+DELIMITER //
+CREATE TRIGGER tg_Noticia_autor_insert
+BEFORE INSERT ON Noticia
+FOR EACH ROW
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM Usuario
+        WHERE idUsuario = NEW.idAutor AND Activa = 1 AND Noticiero = 1
+          AND TipoUsuario IN ('Empleado de Area', 'Administrador')
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error de Seguridad: El usuario no tiene permiso de Noticiero.';
+    END IF;
+END;
+//
+DELIMITER ;
+
+-- El título, contenido e imagen solo se pueden cambiar durante la primera hora. Visible se puede cambiar siempre.
+DROP TRIGGER IF EXISTS tg_Noticia_edicion_update;
+DELIMITER //
+CREATE TRIGGER tg_Noticia_edicion_update
+BEFORE UPDATE ON Noticia
+FOR EACH ROW
+BEGIN
+    IF NOT (OLD.idAutor <=> NEW.idAutor AND OLD.FechaCreacion <=> NEW.FechaCreacion) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error de Seguridad: No se puede cambiar el autor ni la fecha de una noticia.';
+    END IF;
+
+    IF NOT (OLD.Titulo <=> NEW.Titulo AND OLD.Contenido <=> NEW.Contenido AND OLD.ImagenUrl <=> NEW.ImagenUrl) THEN
+        IF NOW() > OLD.FechaCreacion + INTERVAL 1 HOUR THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La noticia solo se puede editar durante la primera hora desde su creación.';
+        END IF;
+        SET NEW.FechaEdicion = NOW();
+    END IF;
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_Noticia_insert;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Noticia_insert
+AFTER INSERT ON Noticia
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'INSERT', 'Noticia', NEW.idNoticia,
+        CONCAT('Nueva noticia publicada: "', NEW.Titulo, '"', CASE WHEN NEW.ImagenUrl IS NOT NULL THEN ' (con imagen)' ELSE '' END),
+        @usuario_ip);
+END;
+//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS tg_auditoria_Noticia_update;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Noticia_update
+AFTER UPDATE ON Noticia
+FOR EACH ROW
+BEGIN
+    IF OLD.Visible <> NEW.Visible THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Noticia', NEW.idNoticia,
+            CONCAT('Noticia "', NEW.Titulo, '" ', CASE WHEN NEW.Visible THEN 'visible nuevamente' ELSE 'ocultada' END),
+            @usuario_ip);
+    END IF;
+
+    IF NOT (OLD.Titulo <=> NEW.Titulo AND OLD.Contenido <=> NEW.Contenido AND OLD.ImagenUrl <=> NEW.ImagenUrl) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+            @usuario_id, 'UPDATE', 'Noticia', NEW.idNoticia,
+            CONCAT('Noticia editada: "', NEW.Titulo, '"',
+                CASE WHEN OLD.Titulo <> NEW.Titulo THEN CONCAT(' (título anterior: "', OLD.Titulo, '")') ELSE '' END,
+                CASE WHEN NOT (OLD.ImagenUrl <=> NEW.ImagenUrl) THEN ' - cambió la imagen' ELSE '' END),
+            @usuario_ip);
+    END IF;
+END;
+//
+DELIMITER ;

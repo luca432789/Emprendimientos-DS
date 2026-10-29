@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camino de los emprendedores</title>
+    <link rel="icon" type="image/png" href="/Imagenes/Logo-Desarrollo-Social.png">
+
+    <link rel="stylesheet" href="CSS/Form. de inicio.css">
+    <link rel="stylesheet" href="CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="CSS/formulario-inicio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <script src="js/navbar.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>El Camino de los Emprendedores</h1>
+        <p>Ministerio de Desarrollo Social, Promocion Humana y Relaciones Institucionales con la Comunidad</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
+            <li><a href="/noticias">Noticias</a></li>
+            <li><a href="/mapa">Mapa</a></li>
+            <li><a href="Camino FORMULARIOS.html" class="active">Formularios</a></li>
+            <li><a href="Camino CONTACTOS.html">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="Camino LOG IN.html">Inicio de sesion</a></li>
+        </ul>
+    </nav>
+
+    <!-- Sin sesión de Área / Administrador: solo este aviso -->
+    <main class="contenedor-formulario" data-sin-acceso>
+        <h2>Formulario de Créditos Reintegrables</h2>
+        <p class="texto">Este formulario solo está disponible para el personal del Área y la Administración del Ministerio. <a href="/formularios">Volver a Formularios</a></p>
+    </main>
+
+    <main class="contenedor-formulario" data-solo-area style="display:none">
+        <h2>Formulario de Créditos Reintegrables</h2>
+        <p class="texto">Complete los campos del formulario oficial. Elija el emprendimiento al que corresponde: el pedido de crédito queda registrado a su nombre y se descarga el PDF.</p>
+
+        <form id="formulario-digital" class="formulario-inicio">
+            <input type="hidden" name="tipoFormulario" value="Formulario de Creditos Reintegrables">
+
+            <!-- A nombre de qué emprendimiento se carga el pedido (Área / Administrador) -->
+            <div class="selector-emprendimiento">
+                <label class="etiqueta subrayada" for="selector-emprendimiento">Emprendimiento que solicita:</label>
+                <select id="selector-emprendimiento" name="idEmprendimiento" class="linea" required disabled>
+                    <option value="">Cargando emprendimientos...</option>
+                </select>
+            </div>
+
+            <!-- HOJA 1: CARÁTULA -->
+            <section class="hoja">
+                <div class="cuadro-expediente">
+                    <div><strong>EXPEDIENTE Nº</strong><span>Uso interno</span></div>
+                    <div><strong>PROYECTO Nº</strong><span>Uso interno</span></div>
+                </div>
+
+                <div class="encabezado-oficial">
+                    <p>SUBSECRETARIA DE DESARROLLO SOCIAL</p>
+                    <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL</p>
+                    <p class="gobierno">GOBIERNO DE LA PROVINCIA DE<br>SANTIAGO DEL ESTERO</p>
+                    <p>PLAN PROVINCIAL SANTIAGO PRODUCTIVO</p>
+                    <p class="presentacion">FORMULARIO DE PRESENTACIÓN DE PROYECTOS</p>
+                    <p class="tipo-formulario">CREDITOS REINTEGRABLES</p>
+                </div>
+
+                <h3 class="titulo-campos">DATOS DEL PROYECTO</h3>
+
+                <label class="etiqueta subrayada">Nombre del proyecto:</label>
+                <input type="text" name="nombreEmprendimiento" class="linea" maxlength="100" required aria-label="Nombre del proyecto">
+
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Localidad:</label>
+                        <input type="text" name="localidad" class="linea" maxlength="40" required aria-label="Localidad">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Departamento:</label>
+                        <input type="text" name="departamento" class="linea" maxlength="40" required aria-label="Departamento">
+                    </div>
+                </div>
+
+                <label class="etiqueta">Actividad principal:</label>
+                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Actividad principal">
+
+                <h3 class="titulo-campos">DATOS DEL TITULAR</h3>
+
+                <label class="etiqueta">(Nombre y apellido)</label>
+                <input type="text" name="nombreApellido" class="linea" maxlength="80" required aria-label="Nombre y apellido">
+
+                <label class="etiqueta">(DNI / documento)</label>
+                <label class="extranjero-control"><input type="checkbox" name="documentoExtranjero" value="true"><span>Soy extranjero/a (pasaporte o documento del país)</span></label>
+                <input type="text" name="dniCuit" class="linea" required aria-label="DNI o documento extranjero" autocomplete="off">
+                <small>Argentino/a: 7 u 8 números. Extranjero/a: active la opción para ingresar letras.</small>
+
+                <p class="parrafo">
+                    El que suscribe, en su carácter de titular del proyecto de referencia, afirma que los datos consignados en
+                    este formulario son correctos y completos, y que éste formulario del Plan Provincial Santiago Productivo, se ha
+                    confeccionado sin omitir ni falsear dato alguno que deba contener, siendo fiel expresión de la verdad como asimismo
+                    autentica/s la/s firma/s, comprometiéndose a informar en los plazos que fijan las normas vigentes, cualquier cambio en los mismos.
+                </p>
+
+                <p class="pie-declaracion">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA<br><span>RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</span></p>
+            </section>
+
+            <!-- HOJA 2: BIENES PROPIOS Y ACTIVO FIJO -->
+            <section class="hoja">
+                <h3 class="titulo-campos">1. BIENES PROPIOS APORTADOS PARA LA EJECUCIÓN DEL PROYECTO</h3>
+                <p class="parrafo">Mencione las maquinarias, herramientas, inmuebles e insumos y el valor en su estado actual.</p>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial">
+                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Antigüedad</th><th>Monto estimado</th></tr></thead>
+                        <tbody id="tabla-bienes-propios" data-tabla-lineas="bienesPropios" data-cantidad="10" data-columnas="bien,cantidad,antiguedad,montoEstimado"></tbody>
+                    </table>
+                </div>
+
+                <h3 class="titulo-campos">2. DESTINO DEL CRÉDITO</h3>
+                <p class="parrafo">Mencione los bienes solicitados en el proyecto.</p>
+                <h4>a) ACTIVO FIJO (maquinarias y herramientas)</h4>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial">
+                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                        <tbody id="tabla-activo-fijo" data-tabla-lineas="activoFijo" data-cantidad="7" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- HOJA 3: BIENES DE USO Y COSTO TOTAL -->
+            <section class="hoja">
+                <h4>b) BIENES DE USO (materia prima e insumos)</h4>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial">
+                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                        <tbody id="tabla-bienes-uso" data-tabla-lineas="bienesUso" data-cantidad="9" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                    </table>
+                </div>
+
+                <h4>c) TOTAL SOLICITADO</h4>
+                <p>La suma de los bienes solicitados: <strong id="total-solicitado">$ 0,00</strong></p>
+
+                <h3 class="titulo-campos">COSTO TOTAL DEL PROYECTO</h3>
+                <p class="parrafo">Tenga en cuenta un ciclo de producción completo.</p>
+                <div class="tabla-responsive">
+                    <table class="tabla-oficial tabla-costos">
+                        <thead><tr><th></th><th>Aporte propio ($)</th><th>Solicitado ($)</th></tr></thead>
+                        <tbody>
+                            <tr><th>Activo fijo (maquinarias y herramientas)</th><td><input type="number" name="aporteActivoFijo" min="0" step="0.01" aria-label="Aporte propio para activo fijo"></td><td><output id="solicitado-activo-fijo">0,00</output></td></tr>
+                            <tr><th>Bienes de uso (insumo y materia prima)</th><td><input type="number" name="aporteBienesUso" min="0" step="0.01" aria-label="Aporte propio para bienes de uso"></td><td><output id="solicitado-bienes-uso">0,00</output></td></tr>
+                            <tr><th>Mano de obra</th><td><input type="number" name="aporteManoObra" min="0" step="0.01" aria-label="Aporte propio en mano de obra"></td><td class="celda-no-aplica"></td></tr>
+                            <tr><th>COSTO TOTAL DEL PROYECTO</th><td><output id="costo-total-propio">0,00</output></td><td><output id="costo-total-solicitado">0,00</output></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- HOJA 7: DATOS Y DOCUMENTACIÓN DEL GARANTE -->
+            <section class="hoja">
+                <h3 class="titulo-campos">DOCUMENTACIÓN DEL GARANTE</h3>
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Nombre completo</label>
+                        <input type="text" name="nombreGarante" class="linea" maxlength="100" required aria-label="Nombre completo del garante">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">DNI</label>
+                        <input type="text" name="dniGarante" class="linea" inputmode="numeric" maxlength="8" pattern="[0-9]{7,8}" required aria-label="DNI del garante">
+                    </div>
+                </div>
+                <label class="etiqueta">CUIL</label>
+                <input type="text" name="cuilGarante" class="linea" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" required aria-label="CUIL del garante">
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Teléfono</label>
+                        <input type="tel" name="telefonoGarante" class="linea" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required aria-label="Teléfono del garante">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Correo electrónico</label>
+                        <input type="email" name="correoGarante" class="linea" maxlength="150" required aria-label="Correo electrónico del garante">
+                    </div>
+                </div>
+                <label class="etiqueta">Confirmar correo electrónico</label>
+                <input type="email" name="correoGaranteConfirmacion" class="linea" maxlength="150" required aria-label="Confirmación del correo del garante">
+                <small>Los dos correos deben coincidir y el dominio debe recibir correo.</small>
+
+                <h3 class="titulo-imagenes">Documentación respaldatoria del garante</h3>
+                <p class="parrafo">Adjunte una imagen JPG/PNG o un PDF para cada documento solicitado.</p>
+                <div class="documentos-garante">
+                    <label class="etiqueta">Fotocopia de DNI <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="DNI" required></label>
+                    <label class="etiqueta">Constancia de CUIL <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="CUIL" required></label>
+                    <label class="etiqueta">Recibo de sueldo <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Recibo de sueldo" required></label>
+                    <label class="etiqueta">Certificado de residencia <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Certificado de residencia" required></label>
+                    <label class="etiqueta">Boleta de impuesto <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Boleta de impuesto" required></label>
+                </div>
+
+                <p class="parrafo revision">Revise todos los campos y documentos antes de enviar la solicitud.</p>
+                <div class="acciones"><button type="submit" class="btn enviar">Enviar solicitud y descargar PDF</button></div>
+                <div id="resultado-formulario"></div>
+            </section>
+        </form>
+    </main>
+
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economia</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educacion, Ciencia y Tecnologia</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Publicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Produccion</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Desarrollado por [nombre aqui]
+        </div>
+    </footer>
+
+    <script src="js/acceso-formularios-ayuda.js"></script>
+    <script src="js/formulario-digital.js"></script>
+</body>
+</html>

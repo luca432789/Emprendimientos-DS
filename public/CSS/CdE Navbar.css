@@ -203,3 +203,208 @@ nav ul li a.active {
 .dropdown-menu.mostrar {
   display: block;
 }
+
+/* ==========================================
+   NOTIFICACIONES (campanita)
+   ========================================== */
+#menu-notificaciones {
+  width: 300px;
+}
+
+#lista-notificaciones {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.dropdown-menu ul li a.notif-item {
+  white-space: normal;
+  border-bottom: 1px solid #222;
+}
+
+.notif-titulo {
+  display: block;
+  font-weight: bold;
+}
+
+.notif-detalle {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #bbb;
+}
+
+.notif-vacia {
+  padding: 12px 15px;
+  font-size: 13px;
+  color: #aaa;
+}
+
+/* Aviso que aparece cuando llega una notificación nueva */
+.toast-notificacion {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3000;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 340px;
+  padding: 14px 18px;
+  background: #2f4e78;
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.4;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(-15px);
+  transition: opacity 0.35s, transform 0.35s;
+}
+
+.toast-notificacion.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-notificacion i {
+  font-size: 20px;
+  margin-top: 2px;
+  color: #ffd166;
+}
+
+/* Notificación que el usuario todavía no vio */
+.dropdown-menu ul li a.notif-no-leida {
+  background-color: #1f2a37;
+  border-left: 3px solid #f6ad55;
+}
+
+/* ==========================================
+   CELULARES Y TABLETS CHICAS
+   ========================================== */
+/* Misma barra que en la computadora (una sola fila, sesión a la derecha),
+   con letra y márgenes más chicos para que los 7 botones entren en el ancho. */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* Si en algún celular (fuente más ancha o letra del sistema agrandada) igual no
+     entran, el último botón baja a otra fila en vez de encimarse.
+     (No se usa overflow: recortaría los menús desplegables de la sesión) */
+  nav > ul {
+    padding: 0;
+    margin: 0;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  /* min-width: auto → un botón nunca queda más angosto que su texto */
+  nav > ul > li {
+    flex: 1 0 auto;
+    display: flex;
+  }
+
+  nav > ul > li > a {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 3px;
+    font-size: clamp(9px, 2.45vw, 15px);
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  /* "Inicio de sesion" puede ir en dos renglones para no robar espacio
+     (solo el enlace directo: los menús desplegables también viven dentro de .login) */
+  .login > a {
+    white-space: normal;
+    max-width: 16vw;
+  }
+
+  /* Los menús se alinean al borde derecho de la barra (no al del icono tocado),
+     así siempre entran enteros en la pantalla, como en la computadora */
+  .nav-usuario-container {
+    position: relative;
+    gap: 6px;
+    padding: 0 6px;
+  }
+
+  .nav-usuario-container .dropdown-container {
+    position: static;
+  }
+
+  .nav-usuario-container .dropdown-menu {
+    right: 4px;
+  }
+
+  .dropdown-menu::before {
+    display: none;
+  }
+
+  /* Los enlaces de los menús no heredan el formato compacto de la barra */
+  .dropdown-menu ul li {
+    display: block;
+  }
+
+  .dropdown-menu ul li a {
+    display: block;
+    padding: 12px 15px;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: left;
+  }
+
+  .nav-btn {
+    padding: 2px;
+  }
+
+  .nav-btn i {
+    font-size: 18px;
+  }
+
+  .avatar-nav {
+    width: 32px;
+    height: 32px;
+  }
+
+  .avatar-nav i {
+    font-size: 15px;
+  }
+
+  /* Los menús desplegables no pueden ser más anchos que la pantalla */
+  .dropdown-menu,
+  #menu-notificaciones {
+    min-width: 0;
+    width: min(300px, calc(100vw - 16px));
+  }
+
+  .toast-notificacion {
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+
+  /* Con letra menor a 16px, Safari de iPhone hace zoom al tocar el campo */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
+/* Contador al lado de una sección del menú lateral del Panel de Control */
+.contador-menu {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: #cc0000;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 18px;
+}

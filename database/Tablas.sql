@@ -9,9 +9,9 @@ use ProyectoEmprendimientos2026;
 /* Tablas modelo relacional
 -- Empleado (idEmpleado (PK), Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo (Mesa de Entrada - Técnico - Social - Administrador), Activo (Si-No))
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica, CorreoVal)
 
--- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoNombre, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad, EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, EmprendimientoLatitud, EmprendimientoLongitud, idSolicitudInicio (fk))
 
 -- Rubro (idRubro (PK), Nombre, IconoMapa)
 
@@ -19,13 +19,15 @@ use ProyectoEmprendimientos2026;
 
 -- Emprendedor (idEmprendedor (PK), Nombre, Apellido, DNI, Departamento, Localidad, Domicilio, Teléfono, Correo, Antecedentes, DescripcionAntecedente, idEmprendimiento (FK))
 
--- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), idEmprendedor (FK), idEmpleado (FK))
+-- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), Noticiero (Si-No), idEmprendedor (FK), idEmpleado (FK))
 
 -- Publicacion (idPublicacion (PK), idEmprendimiento (FK), TituloActual, DescripcionActual, DirectorioFotosActual, TituloPendiente, DescripcionPendiente, DirectorioFotosPendiente, EstadoModeracion, FechaSolicitud, FechaRevision, MotivoRechazo, idEmpleadoModerador (FK)) -- SERAN 2 POR EMPRENDIMIENTO (MANEJAR POR NODE)
 
 -- Etiqueta (idEtiqueta, Nombre, Activa)
 
 -- Publicacion_Etiqueta (idPublicacion, idEtiqueta (pk-fk))
+
+-- Producto (idProducto (PK), idEmprendimiento (FK), Nombre, Precio, Descripcion, PathFoto, Activo (Si-No), FechaAlta)
 
 -- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
 
@@ -36,6 +38,8 @@ use ProyectoEmprendimientos2026;
 -- Expediente (NroExpediente (PK), idSolicitudInicio, FechaCarga, idEmpleadoCargo)
 
 -- Auditoria (idLog (PK), idUsuario (FK), Accion, Tabla_Afectada, idRegistroAfectado, Detalle, Fecha_Hora, DirecciónIP)
+
+-- Noticia (idNoticia (PK), Titulo, Contenido, ImagenUrl, Visible (Si-No), idAutor (FK), FechaCreacion, FechaEdicion)
 
 */
 
@@ -58,7 +62,7 @@ CONSTRAINT chk_CargoEmpleado
 	CHECK (Cargo IN ('Mesa de Entrada', 'Técnico', 'Social', 'Administrador')) -- Solo habran esos cargos
 );
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica, CorreoVal)
 create table SolicitudInicio (
 idSolicitudInicio int auto_increment primary key,
 DireccionPDF varchar (1024) not null,
@@ -78,6 +82,7 @@ EnvioMinistro tinyint default 0, -- 0: Sin enviar, 1: Enviado a ministro, 2: No 
 FechaEnvioMinistro date null,
 AprobacionMinistro boolean null,  -- La respuesta de aprobacion/rechazo del ministro
 FechaResolucionMin date null,
+CargaHistorica boolean not null default False, -- True: emprendimiento antiguo cargado directo por un empleado (sin DatosSolicitudInicio ni fechas de revisión)
 CorreoVal varchar(512) null,-- comentario del porqué de rechazo || validación con usuario y link de contraseña
 CONSTRAINT fk_Solicitud_EmpleadoTec
 	FOREIGN KEY (idEmpleadoTecRevisor) REFERENCES Empleado(idEmpleado),
@@ -85,7 +90,7 @@ CONSTRAINT fk_Solicitud_EmpleadoSoc
 	FOREIGN KEY (idEmpleadoSocRevisor) REFERENCES Empleado(idEmpleado)
 );
 
--- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, idSolicitudInicio (fk))
+-- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoNombre, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad, EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, EmprendimientoLatitud, EmprendimientoLongitud, idSolicitudInicio (fk))
 create table DatosSolicitudInicio (
 idDatosSolicitudInicio int auto_increment primary key,
 PersonaNombre varchar (40) not null, 
@@ -96,16 +101,23 @@ PersonaLocalidad varchar (40) not null,
 PersonaDomicilio varchar(512) not null,
 PersonaTeléfono varchar(25) not null, 
 PersonaCorreo varchar(150) not null,
+EmprendimientoNombre varchar (50) not null,
 EmprendimientoCalle varchar(30) not null,
 EmprendimientoNroCalle varchar(6) not null,
 EmprendimientoBarrio varchar (50) not null,
 EmprendimientoDepto varchar (20) not null,
+EmprendimientoLocalidad varchar (40) not null,
+EmprendimientoActPrincipal varchar (400) not null,
 EmprendimientoMarcha boolean not null default True,
 EmprendimientoRubro varchar(150) not null,
 EleccionAyuda varchar(10) not null, -- Subsidio o Credito
+EmprendimientoLatitud decimal(12, 10) null,
+EmprendimientoLongitud decimal(13, 10) null,
 idSolicitudInicio int not null unique,
 CONSTRAINT fk_DatosSolicitud_SolicitudInicio
-	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio)
+	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio),
+CONSTRAINT chk_EleccionAyuda
+	CHECK (EleccionAyuda IN ('Subsidio', 'Credito')) -- Solo se acepta esa ayuda
 );
 
 -- Rubro (idRubro (PK), Nombre, IconoMapa)
@@ -155,13 +167,14 @@ constraint fk_Emprendedor_Emprendimiento
 	FOREIGN KEY (idEmprendimiento) REFERENCES Emprendimiento(idEmprendimiento)
 );
 
--- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), idEmprendedor (FK), idEmpleado (FK))
+-- Usuario (idUsuario (PK), Correo, Contraseña, TipoUsuario ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor"), Activa (Si-No), Noticiero (Si-No), idEmprendedor (FK), idEmpleado (FK))
 create table Usuario (
 idUsuario int auto_increment primary key,
 Correo varchar(150) not null unique,
 Contraseña varchar(255) not null,
 TipoUsuario varchar (20) not null, -- ("Empleado de Mesa" - "Empleado de Area" - "Administrador" - "Emprendedor")
 Activa boolean not null default True, -- Para el login, verificar si el usuario esta activo (permite o no)
+Noticiero boolean not null default False, -- Permiso para crear/editar noticias (solo "Empleado de Area" o "Administrador")
 idEmprendedor int null,
 idEmpleado int null,
 CONSTRAINT chk_TipoUsuario
@@ -334,3 +347,54 @@ Fecha_Hora timestamp default current_timestamp,
 DireccionIP varchar(50) not null -- Para saber desde qué PC se hizo la acción
 );
 
+-- Producto (idProducto (PK), idEmprendimiento (FK), Nombre, Precio, Descripcion, PathFoto, Activo (Si-No), FechaAlta)
+create table if not exists Producto (
+idProducto int auto_increment primary key,
+idEmprendimiento int not null,
+Nombre varchar(100) not null,
+Precio decimal(12, 2) null,             -- null = "Consultar precio"
+Descripcion varchar(500) null,
+PathFoto varchar(1024) null,            -- ruta web de la foto (ej: /uploads/productos/1/producto-3-xxxx.jpg)
+Activo boolean not null default true,   -- false = oculto en el perfil público (la API no borra registros)
+FechaAlta date not null default (current_date),
+constraint fk_Producto_Emprendimiento
+	foreign key (idEmprendimiento) references Emprendimiento(idEmprendimiento)
+);
+
+-- NotificacionVista (idUsuario (PK, FK), Clave (PK), FechaVista)
+create table if not exists NotificacionVista (
+idUsuario int not null,
+Clave varchar(150) not null,            -- identifica la notificación (ej: pub-2-0-2026-10-17-votn1f)
+FechaVista timestamp not null default current_timestamp,
+primary key (idUsuario, Clave),
+constraint fk_NotificacionVista_Usuario
+	foreign key (idUsuario) references Usuario(idUsuario)
+);
+
+-- EnlaceContrasena (idEnlace (PK), idUsuario (FK), TokenHash, Vence, Usado, FechaCreacion)
+-- Enlace que se envía por correo al emprendedor aprobado para que cree su contraseña
+create table if not exists EnlaceContrasena (
+idEnlace int auto_increment primary key,
+idUsuario int not null,
+TokenHash char(64) not null unique,     -- SHA-256 del código del enlace: el código real solo viaja en el correo
+Vence datetime not null,                -- después de esta fecha el enlace ya no sirve
+Usado boolean not null default false,   -- cada enlace sirve una sola vez
+FechaCreacion timestamp not null default current_timestamp,
+constraint fk_EnlaceContrasena_Usuario
+	foreign key (idUsuario) references Usuario(idUsuario)
+);
+
+-- Noticia (idNoticia (PK), Titulo, Contenido, ImagenUrl, Visible (Si-No), idAutor (FK), FechaCreacion, FechaEdicion)
+-- Noticias de la pestaña "Noticias": las publica un usuario con el permiso Noticiero (ver triggers de Noticia)
+create table if not exists Noticia (
+idNoticia int auto_increment primary key,
+Titulo varchar(255) not null,
+Contenido text not null,
+ImagenUrl varchar(255) null,            -- ruta web de la imagen (ej: /uploads/NoticiasImagen/noticia-1729000000000-1.jpg)
+Visible boolean not null default True,  -- false = oculta en la página pública (ej: noticias muy viejas). La API no borra registros
+idAutor int not null,                   -- usuario que la publicó
+FechaCreacion timestamp not null default current_timestamp,
+FechaEdicion timestamp null,            -- la carga el trigger cuando se edita el título, contenido o imagen
+constraint fk_Noticia_Autor
+	foreign key (idAutor) references Usuario(idUsuario)
+);

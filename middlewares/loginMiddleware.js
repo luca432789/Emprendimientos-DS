@@ -1,6 +1,18 @@
 // middlewares/authMiddleware.js
 import jwt from 'jsonwebtoken';
 
+// Para rutas que también se usan sin sesión (ej. registro de usuario): devuelve los datos del
+// usuario si mandó un token válido, o null si no hay sesión (no corta el pedido)
+export const usuarioDelTokenOpcional = (req) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) return null;
+    try {
+        return jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return null;
+    }
+};
+
 export const verificarToken = (req, res, next) => {
     // 1. Extraer el encabezado de autorización de la petición HTTP
     const authHeader = req.headers['authorization'];
@@ -9,9 +21,6 @@ export const verificarToken = (req, res, next) => {
     // Hacemos un split por espacio y nos quedamos con la segunda parte (el token)
     const token = authHeader && authHeader.split(' ')[1];
 
-    //console.log("✈️ HEADER RECIBIDO:", authHeader);
-    //console.log("🔍 TOKEN RECORTADO:", token);
-    
     // Si el usuario no mandó ningún token, lo rechazamos inmediatamente
     if (!token) {
         return res.status(401).json({ error: "Acceso denegado. No se proporcionó un token de seguridad." });
@@ -19,7 +28,7 @@ export const verificarToken = (req, res, next) => {
 
     try {
         // 2. Verificar el token usando la clave secreta del .env
-        // Si pasaron los 5 minutos fijados en el login, jwt.verify() arrojará un error automáticamente
+        // Si pasó el tiempo de la sesión sin renovarse (JWT_EXPIRES_IN), jwt.verify() arrojará un error automáticamente
         const tokenSecret = process.env.JWT_SECRET;
         const datosUsuarioDecodificados = jwt.verify(token, tokenSecret);
 
@@ -35,7 +44,7 @@ export const verificarToken = (req, res, next) => {
         // Capturamos específicamente si el error es por vencimiento del tiempo ('TokenExpiredError')
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({ 
-                error: "Su sesión ha expirado por inactividad de 5 minutos. Por favor, ingrese nuevamente." 
+                error: "Su sesión ha expirado por inactividad. Por favor, ingrese nuevamente."
             });
         }
 

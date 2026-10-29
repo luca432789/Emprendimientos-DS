@@ -1,0 +1,126 @@
+/* ==========================================
+   ESTILOS ESPECÍFICOS: PUBLICACIONES
+   ========================================== */
+
+/* Redefinición a 1 sola columna para el feed */
+.perfil-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 25px 20px;
+}
+
+/* Tarjeta para crear publicación */
+.crear-publicacion-card {
+  background-color: #fbf7f0;
+  border: 1px solid #e2d9cc;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+}
+
+.crear-publicacion-card h3 {
+  color: #444;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.crear-publicacion-card textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 12px;
+  resize: vertical;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+
+.crear-publicacion-card textarea:focus {
+  border-color: #2f4e78;
+}
+
+.acciones-publicacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.btn-adjuntar {
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-adjuntar:hover {
+  color: #2f4e78;
+  background-color: rgba(47, 78, 120, 0.08);
+}
+
+.btn-publicar {
+  background-color: #2f4e78;
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-publicar:hover {
+  background-color: #1f3554;
+}
+
+/* Feed y Tarjeta de Publicación */
+.feed-publicaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.post-card {
+  background-color: #fbf7f0;
+  border: 1px solid #e2d9cc;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.avatar-post {
+  font-size: 38px;
+  color: #8fa1b5;
+}
+
+.post-autor {
+  color: #2f4e78;
+  font-size: 16px;
+  margin: 0;
+}
+
+.post-fecha {
+  font-size: 12px;
+  color: #777;
+}
+
+.post-contenido {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+}

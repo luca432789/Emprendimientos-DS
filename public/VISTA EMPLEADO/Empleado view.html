@@ -4,22 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camino de los emprendedores</title>
+    <link rel="icon" type="image/png" href="/Imagenes/Logo-Desarrollo-Social.png">
     
-    <link rel="stylesheet" href="../CSS/index CSS.css">
-    <link rel="stylesheet" href="../CSS/CdE Navbar.css">
-    <link rel="stylesheet" href="view empleado css/panel-empleado.css"> 
+    <link rel="stylesheet" href="/CSS/CdE Navbar.css">
+    <link rel="stylesheet" href="/VISTA EMPLEADO/view empleado css/panel-empleado.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <script src="../js/navbar.js" defer></script>
-    <script src="view empleado js/panel-controlador.js" defer></script>
-    <script src="view empleado js/registro-empleado.js" defer></script>
-    <script src="view empleado js/etiquetas-panel.js" defer></script>
-    <script src="view empleado js/administracion-panel.js" defer></script>
-    <script src="view empleado js/usuarios-panel.js" defer></script>
-    <script src="view empleado js/solicitudinicio-panel.js" defer></script>
+    <script src="/js/navbar.js" defer></script>
+    <script src="/js/ampliar-imagen.js" defer></script> <!-- clic en una imagen = verla ampliada -->
+    <script src="/VISTA EMPLEADO/view empleado js/panel-controlador.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/registro-empleado.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/etiquetas-panel.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/administracion-panel.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/usuarios-panel.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/solicitudinicio-panel.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/registro-emprendimiento.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/publicaciones-panel.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/ayudas-panel.js" defer></script>
 </head>
 <body>
 
@@ -30,17 +34,24 @@
 
     <nav>
         <ul>
-            <li><a href="../index.html">Inicio</a></li>
-            <li><a href="#">Publicaciones</a></li>
-            <li><a href="#">Mapa</a></li>
-            <li><a href="../Camino FORMULARIOS.html">Formularios</a></li>
-            <li><a href="../Camino CONTACTOS.html">Contactos</a></li>
-            <li id="contenedor-login-dinamico" class="login"><a href="../Camino LOG IN.html">Inicio de sesion</a></li>
+            <li><a href="/index">Inicio</a></li>
+            <li><a href="/publicaciones">Publicaciones</a></li>
+            <li><a href="/noticias">Noticias</a></li>
+            <li><a href="/mapa">Mapa</a></li>
+            <li><a href="/formularios">Formularios</a></li>
+            <li><a href="/contactos">Contactos</a></li>
+            <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
         </ul>
     </nav>
 
     <main class="dashboard-container">
         
+        <!-- Solo se ve en celulares: abre y cierra el menú lateral -->
+        <button type="button" class="btn-menu-movil" id="btn-menu-movil" aria-expanded="false" aria-controls="sidebar-empleado">
+            <span><i class="fa-solid fa-bars" style="margin-right: 8px;"></i> Menú del panel</span>
+            <i class="fa-solid fa-chevron-down flecha"></i>
+        </button>
+
         <aside class="sidebar" id="sidebar-empleado">
             <ul class="sidebar-menu" id="contenedor-menu-lateral">
                 </ul>
