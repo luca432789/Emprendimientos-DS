@@ -17,7 +17,7 @@ GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Rubro TO 'ministerio_api'@'l
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Emprendimiento TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Emprendedor TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Usuario TO 'ministerio_api'@'localhost';
-GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Publicacion TO 'ministerio_api'@'localhost';
+GRANT INSERT, UPDATE, DELETE ON ProyectoEmprendimientos2026.Publicacion TO 'ministerio_api'@'localhost'; -- DELETE: el emprendedor puede eliminar sus publicaciones
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Etiqueta TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Subsidio TO 'ministerio_api'@'localhost';
 GRANT INSERT, UPDATE ON ProyectoEmprendimientos2026.Credito TO 'ministerio_api'@'localhost';

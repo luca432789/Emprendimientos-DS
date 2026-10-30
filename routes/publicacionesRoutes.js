@@ -3,6 +3,7 @@ import { verificarToken } from '../middlewares/loginMiddleware.js';
 import {
     crearPublicacion,
     editarPublicacion,
+    eliminarPublicacion,
     obtenerTodasLasAprobadas,
     obtenerPublicacionesAprobadas,
     obtenerPublicacionesPendientes,
@@ -28,5 +29,8 @@ router.put('/publicaciones/moderacion/:idPublicacion', verificarToken, moderarPu
 
 // EMPRENDEDOR: editar una de sus publicaciones -> vuelve a Revisión Pendiente
 router.put('/publicaciones/:idPublicacion', verificarToken, editarPublicacion);
+
+// EMPRENDEDOR: eliminar una de sus publicaciones (libera el lugar para crear otra)
+router.delete('/publicaciones/:idPublicacion', verificarToken, eliminarPublicacion);
 
 export default router;

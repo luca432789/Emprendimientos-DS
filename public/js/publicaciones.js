@@ -40,7 +40,7 @@ function actualizarCupo(Perfil, formulario) {
     const lleno = usadas >= maximo;
     formulario.style.display = lleno ? 'none' : '';
     aviso.innerHTML = lleno
-        ? `Ya usaste tus ${maximo} publicaciones. Para publicar algo nuevo, <a href="/Emprendedor-Publicaciones">editá una de ellas</a>.`
+        ? `Ya usaste tus ${maximo} publicaciones. Para publicar algo nuevo, <a href="/Emprendedor-Publicaciones">editá o eliminá una de ellas</a>.`
         : `Podés tener hasta ${maximo} publicaciones (te ${maximo - usadas === 1 ? 'queda 1' : `quedan ${maximo - usadas}`}). Cada una la revisa el Ministerio antes de mostrarse.`;
 }
 
@@ -146,15 +146,23 @@ function pintarPestanaPublicaciones(Perfil) {
                     ${p.estado !== 0 && p.aprobada ? '<p class="nota-version">Mientras tanto, se sigue mostrando la versión aprobada anterior.</p>' : ''}
                     <div class="acciones-publicacion">
                         <span class="post-fecha">Enviada el ${Perfil.fecha(p.fechaSolicitud)}</span>
-                        <button type="button" class="btn-publicar btn-editar-publicacion" data-indice="${i}">
-                            <i class="fa-solid fa-pen"></i> Editar
-                        </button>
+                        <div class="botones-publicacion">
+                            <button type="button" class="btn-publicar btn-editar-publicacion" data-indice="${i}">
+                                <i class="fa-solid fa-pen"></i> Editar
+                            </button>
+                            <button type="button" class="btn-publicar btn-eliminar-publicacion" data-indice="${i}">
+                                <i class="fa-solid fa-trash"></i> Eliminar
+                            </button>
+                        </div>
                     </div>
                 </article>`;
         }).join('');
 
     feed.querySelectorAll('.btn-editar-publicacion').forEach((boton) => {
         boton.addEventListener('click', () => editarPublicacion(Perfil, misPublicaciones[Number(boton.dataset.indice)]));
+    });
+    feed.querySelectorAll('.btn-eliminar-publicacion').forEach((boton) => {
+        boton.addEventListener('click', () => eliminarPublicacion(Perfil, misPublicaciones[Number(boton.dataset.indice)]));
     });
     resaltarPublicacionDelEnlace();
 }
@@ -224,4 +232,31 @@ async function editarPublicacion(Perfil, publicacion) {
     if (!ok) return Perfil.aviso('error', 'No se pudo guardar', datos.error);
     await Perfil.aviso('info', 'Enviado a revisión', datos.mensaje);
     await Perfil.recargar();
+}
+
+// Elimina la publicación entera (lo aprobado y lo que esté en revisión) después de confirmar
+async function eliminarPublicacion(Perfil, publicacion) {
+    const version = publicacion.estado !== 0 && publicacion.pendiente ? publicacion.pendiente : publicacion.aprobada;
+
+    const { isConfirmed } = await Swal.fire({
+        icon: 'warning',
+        title: '¿Eliminar publicación?',
+        html: `Se va a borrar <strong>"${Perfil.escapar(version?.titulo)}"</strong> con sus fotos` +
+            `${publicacion.aprobada ? ' y dejará de verse en la página pública' : ''}. Esta acción no se puede deshacer.`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#a65454',
+        focusCancel: true
+    });
+    if (!isConfirmed) return;
+
+    try {
+        const { ok, datos } = await Perfil.api('DELETE', `/api/publicaciones/${publicacion.idPublicacion}`);
+        if (!ok) return Perfil.aviso('error', 'No se pudo eliminar', datos.error);
+        await Perfil.aviso('success', 'Publicación eliminada', datos.mensaje);
+        await Perfil.recargar();
+    } catch (error) {
+        Perfil.aviso('error', 'Error de red', error.message || 'No se pudo conectar con el servidor.');
+    }
 }

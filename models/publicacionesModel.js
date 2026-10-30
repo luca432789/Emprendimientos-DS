@@ -98,6 +98,18 @@ export const modelEditarPublicacion = async (idPublicacion, idEmprendimiento, ti
     });
 };
 
+// 1c. EMPRENDEDOR: elimina una de sus publicaciones (la aprobada y la versión en revisión).
+// Libera el lugar para crear otra. El trigger de DELETE deja en Auditoria qué se borró.
+export const modelEliminarPublicacion = async (idPublicacion, idEmprendimiento, datosAuditoria) => {
+    return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [resultado] = await conexion.query(
+            'DELETE FROM Publicacion WHERE idPublicacion = ? AND idEmprendimiento = ?;',
+            [idPublicacion, idEmprendimiento]
+        );
+        return resultado.affectedRows;
+    });
+};
+
 // Todas las publicaciones de un emprendimiento (para su dueño: aprobado + pendiente + estado)
 export const modelPublicacionesDeEmprendimiento = async (idEmprendimiento) => {
     const [filas] = await pool.query(

@@ -529,6 +529,24 @@ END;
 //
 DELIMITER ;
 
+-- Trigger DELETE_Auditoria_Publicacion: el emprendedor elimina una de sus publicaciones
+DROP TRIGGER IF EXISTS tg_auditoria_publicacion_delete;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_publicacion_delete
+AFTER DELETE ON Publicacion
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'DELETE', 'Publicacion', OLD.idPublicacion,
+        CONCAT('El emprendedor eliminó una publicación del Emprendimiento ID: ', OLD.idEmprendimiento,
+            '. Título: "', COALESCE(OLD.TituloActual, OLD.TituloPendiente, 'Sin título'), '"',
+            CASE WHEN OLD.TituloActual IS NOT NULL THEN ' (estaba visible en la web pública)' ELSE ' (no estaba aprobada)' END),
+        @usuario_ip);
+END;
+//
+DELIMITER ;
+
 -- TRIGGERS DE ETIQUETA - AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
 -- Trigger Insert_Auditoria_Etiqueta
 DELIMITER //

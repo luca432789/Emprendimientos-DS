@@ -5,6 +5,7 @@ import {
     modelCrearPublicacion,
     modelPublicacionPropia,
     modelEditarPublicacion,
+    modelEliminarPublicacion,
     modelTodasLasPublicacionesAprobadas,
     modelContarPublicacionesAprobadas,
     modelRubrosConPublicaciones,
@@ -84,7 +85,7 @@ export const crearPublicacion = async (req, res) => {
 
         if (!idPublicacion) {
             return res.status(409).json({
-                error: `Ya tiene ${MAXIMO_PUBLICACIONES} publicaciones. Edite una de ellas para cambiar su contenido.`
+                error: `Ya tiene ${MAXIMO_PUBLICACIONES} publicaciones. Edite o elimine una de ellas para publicar algo nuevo.`
             });
         }
         res.status(201).json({ mensaje: 'Publicación enviada a revisión correctamente.', idPublicacion });
@@ -137,6 +138,30 @@ export const editarPublicacion = async (req, res) => {
         await borrarSubida(carpetaGuardada);
         if (error instanceof ErrorImagen) return res.status(400).json({ error: error.message });
         console.error('Error al editar la publicación:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+// DELETE /api/publicaciones/:idPublicacion  (Emprendedor dueño)
+// Se borra la fila (versión aprobada y en revisión) y después la carpeta con todas sus fotos.
+export const eliminarPublicacion = async (req, res) => {
+    try {
+        const emprendimiento = await emprendimientoDelEmprendedor(req, res);
+        if (!emprendimiento) return;
+
+        const idPublicacion = Number(req.params.idPublicacion);
+        if (!Number.isInteger(idPublicacion) || idPublicacion <= 0) {
+            return res.status(400).json({ error: 'Publicación inválida.' });
+        }
+
+        const eliminadas = await modelEliminarPublicacion(idPublicacion, emprendimiento.idEmprendimiento, datosAuditoriaDe(req));
+        if (eliminadas === 0) return res.status(404).json({ error: 'La publicación no existe o no le pertenece.' });
+
+        // Las fotos se borran solo cuando la base ya confirmó: si falla el DELETE no se pierde nada
+        await borrarSubida(`/uploads/publicaciones/${idPublicacion}`);
+        res.json({ mensaje: 'Publicación eliminada correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar la publicación:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
