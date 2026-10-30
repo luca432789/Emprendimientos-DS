@@ -371,6 +371,17 @@ body {
   border-color: #2f4e78;
 }
 
+/* Eliminar va al final y en rojo: es la única acción que no se puede deshacer */
+.btn-noticia.eliminar {
+  margin-left: auto;
+  border-color: #e3b9b9;
+  color: #a65454;
+}
+
+.btn-noticia.eliminar:hover {
+  background: #fbeeee;
+}
+
 /* ---------- Columna de la derecha ---------- */
 
 .noticias-columna {

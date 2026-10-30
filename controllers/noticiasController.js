@@ -5,7 +5,8 @@ import {
     modelObtenerNoticia,
     modelCrearNoticia,
     modelEditarNoticia,
-    modelCambiarVisibilidadNoticia
+    modelCambiarVisibilidadNoticia,
+    modelEliminarNoticia
 } from '../models/noticiasModel.js';
 import { usuarioDelTokenOpcional } from '../middlewares/loginMiddleware.js';
 import { ErrorImagen, validarImagenes, guardarImagenes, borrarSubida } from '../helpers/imagenes.js';
@@ -189,5 +190,26 @@ export const cambiarVisibilidadNoticia = async (req, res) => {
         res.json({ mensaje: req.body.visible ? 'La noticia volvió a estar visible.' : 'Noticia oculta para el público.' });
     } catch (error) {
         responderError(res, error, 'No se pudo cambiar la visibilidad de la noticia.');
+    }
+};
+
+// DELETE /api/noticias/:idNoticia  (cualquier noticiero, igual que ocultar): la borra junto con su imagen
+export const eliminarNoticia = async (req, res) => {
+    try {
+        if (!(await verificarNoticiero(req, res))) return;
+
+        const idNoticia = idValido(req.params.idNoticia);
+        if (!idNoticia) return res.status(400).json({ error: 'Noticia inválida.' });
+        const noticia = await modelObtenerNoticia(idNoticia);
+        if (!noticia) return res.status(404).json({ error: 'La noticia no existe.' });
+
+        const eliminadas = await modelEliminarNoticia(idNoticia, datosAuditoriaDe(req));
+        if (!eliminadas) return res.status(404).json({ error: 'La noticia no existe.' });
+
+        // La imagen se borra solo cuando la base ya confirmó: si falla el DELETE no se pierde nada
+        await borrarSubida(noticia.ImagenUrl);
+        res.json({ mensaje: 'Noticia eliminada.' });
+    } catch (error) {
+        responderError(res, error, 'No se pudo eliminar la noticia.');
     }
 };

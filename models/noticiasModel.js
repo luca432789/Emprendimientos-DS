@@ -76,13 +76,21 @@ export const modelEditarNoticia = async (idNoticia, idAutor, datos, imagenUrl, d
     });
 };
 
-// Ocultar o mostrar (la API no tiene permiso de DELETE)
+// Ocultar o mostrar (se puede volver atrás; para borrarla del todo está modelEliminarNoticia)
 export const modelCambiarVisibilidadNoticia = async (idNoticia, visible, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
         const [resultado] = await conexion.query(
             'UPDATE Noticia SET Visible = ? WHERE idNoticia = ?;',
             [visible, idNoticia]
         );
+        return resultado.affectedRows;
+    });
+};
+
+// Eliminar definitivamente. El trigger tg_auditoria_Noticia_delete deja en Auditoria el título borrado.
+export const modelEliminarNoticia = async (idNoticia, datosAuditoria) => {
+    return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [resultado] = await conexion.query('DELETE FROM Noticia WHERE idNoticia = ?;', [idNoticia]);
         return resultado.affectedRows;
     });
 };

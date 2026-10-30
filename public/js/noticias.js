@@ -3,7 +3,7 @@
 // A la izquierda se ve una noticia completa (al entrar, la más reciente) y a la derecha una columna
 // con el título y la fecha de todas, de a 5 por página. El contenido se pide de a una noticia.
 // Los usuarios con permiso de Noticiero (Empleado de Área o Administrador) además pueden publicar,
-// editar las suyas durante la primera hora y ocultar/mostrar cualquiera (las ocultas solo las ven ellos).
+// editar las suyas durante la primera hora y ocultar/mostrar o eliminar cualquiera (las ocultas solo las ven ellos).
 // El contenido admite **negrita**, *cursiva* y __subrayado__ (se guarda así, como texto).
 // Usa crearPaginador() de paginador.js
 // =========================================================
@@ -201,6 +201,9 @@ function pintarNoticiaPrincipal() {
                 </button>` : ''}
             <button type="button" class="btn-noticia" data-accion="visible">
                 ${n.visible ? '<i class="fa-solid fa-eye-slash"></i> Ocultar' : '<i class="fa-solid fa-eye"></i> Mostrar'}
+            </button>
+            <button type="button" class="btn-noticia eliminar" data-accion="eliminar">
+                <i class="fa-solid fa-trash"></i> Eliminar
             </button>
         </div>` : '';
 
@@ -434,6 +437,32 @@ async function cambiarVisibilidad(noticia) {
     }
 }
 
+// Borra la noticia para siempre (a diferencia de ocultar) y muestra la siguiente
+async function eliminarNoticia(noticia) {
+    const confirmacion = await Swal.fire({
+        icon: 'warning',
+        title: '¿Eliminar la noticia?',
+        text: `"${noticia.titulo}" se va a borrar junto con su imagen y no se puede recuperar. Si solo querés que no se vea, usá "Ocultar".`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#a65454',
+        focusCancel: true
+    });
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+        const data = await pedirJson(`/api/noticias/${noticia.idNoticia}`, { method: 'DELETE' });
+        if (editandoId === noticia.idNoticia) cerrarFormulario();
+        history.replaceState(null, '', location.pathname); // que no quede el #noticia-N de la borrada
+        await cargarColumna(paginaColumna);
+        await mostrarNoticiaInicial();
+        Swal.fire({ icon: 'success', title: data.mensaje, timer: 1800, showConfirmButton: false });
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: error.message, confirmButtonColor: '#1a3a5f' });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     paginador = crearPaginador(document.getElementById('paginador-noticias'), {
         alCambiar: (pagina) => cargarColumna(pagina).catch(() => {}),
@@ -481,6 +510,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!boton || !noticiaActual) return;
         if (boton.dataset.accion === 'editar') empezarEdicion(noticiaActual);
         if (boton.dataset.accion === 'visible') cambiarVisibilidad(noticiaActual);
+        if (boton.dataset.accion === 'eliminar') eliminarNoticia(noticiaActual);
     });
     window.addEventListener('hashchange', () => {
         const id = Number((location.hash.match(/^#noticia-(\d+)$/) || [])[1]);

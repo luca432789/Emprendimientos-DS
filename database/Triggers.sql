@@ -965,3 +965,21 @@ BEGIN
 END;
 //
 DELIMITER ;
+
+-- Noticia eliminada definitivamente (ocultar sigue siendo la opción reversible)
+DROP TRIGGER IF EXISTS tg_auditoria_Noticia_delete;
+DELIMITER //
+CREATE TRIGGER tg_auditoria_Noticia_delete
+AFTER DELETE ON Noticia
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'DELETE', 'Noticia', OLD.idNoticia,
+        CONCAT('Noticia eliminada: "', OLD.Titulo, '"',
+            CASE WHEN OLD.Visible THEN ' (estaba visible)' ELSE ' (estaba oculta)' END,
+            CASE WHEN OLD.ImagenUrl IS NOT NULL THEN ' - se borró también su imagen' ELSE '' END),
+        @usuario_ip);
+END;
+//
+DELIMITER ;
