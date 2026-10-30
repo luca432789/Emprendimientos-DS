@@ -8,7 +8,9 @@ import {
     modelEliminarPublicacion,
     modelTodasLasPublicacionesAprobadas,
     modelContarPublicacionesAprobadas,
-    modelRubrosConPublicaciones,
+    modelRubrosConEmprendimientos,
+    modelContarEmprendimientos,
+    modelEmprendimientosPublicos,
     modelPublicacionesAprobadas,
     modelPublicacionesPendientes,
     modelModerarPublicacion
@@ -21,6 +23,7 @@ const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
 const MAXIMO_FOTOS = 4;
 const TITULO_POR_DEFECTO = 'Novedades del Emprendimiento';
 const PUBLICACIONES_POR_PAGINA = 10; // página pública "Publicaciones"
+const EMPRENDIMIENTOS_POR_PAGINA = 8; // columna "Emprendimientos" de esa misma página
 
 const datosAuditoriaDe = (req) => ({
     idUsuario: req.usuarioLogueado.idUsuario,
@@ -166,34 +169,64 @@ export const eliminarPublicacion = async (req, res) => {
     }
 };
 
-// GET /api/publicaciones?page=1&buscar=texto&rubro=idRubro  (público): de a 10, la más reciente primero
-export const obtenerTodasLasAprobadas = async (req, res) => {
-    const paginaSolicitada = req.query.page === undefined ? 1 : Number(req.query.page);
-    const buscar = typeof req.query.buscar === 'string' ? req.query.buscar.trim() : '';
-    const idRubro = req.query.rubro ? Number(req.query.rubro) : null;
+// Página y filtros (?page, ?buscar, ?rubro) de la página pública "Publicaciones": { paginaSolicitada, filtros } o { error }
+const leerFiltrosPublicos = (query) => {
+    const paginaSolicitada = query.page === undefined ? 1 : Number(query.page);
+    const buscar = typeof query.buscar === 'string' ? query.buscar.trim() : '';
+    const idRubro = query.rubro ? Number(query.rubro) : null;
 
     if (!Number.isInteger(paginaSolicitada) || paginaSolicitada < 1) {
-        return res.status(400).json({ error: 'El número de página debe ser un entero positivo.' });
+        return { error: 'El número de página debe ser un entero positivo.' };
     }
-    if (buscar.length > 100) return res.status(400).json({ error: 'La búsqueda no puede superar los 100 caracteres.' });
+    if (buscar.length > 100) return { error: 'La búsqueda no puede superar los 100 caracteres.' };
     if (idRubro !== null && (!Number.isInteger(idRubro) || idRubro < 1)) {
-        return res.status(400).json({ error: 'El rubro seleccionado no es válido.' });
+        return { error: 'El rubro seleccionado no es válido.' };
     }
+    return { paginaSolicitada, filtros: { buscar: buscar || null, idRubro } };
+};
+
+// Total de páginas y página a mostrar (si pidió una que ya no existe, la última)
+const paginar = (totalRegistros, porPagina, paginaSolicitada) => {
+    const totalPaginas = Math.ceil(totalRegistros / porPagina);
+    return { totalPaginas, pagina: Math.min(paginaSolicitada, Math.max(1, totalPaginas)) };
+};
+
+// GET /api/publicaciones?page=1&buscar=texto&rubro=idRubro  (público): de a 10, la más reciente primero
+export const obtenerTodasLasAprobadas = async (req, res) => {
+    const { error, paginaSolicitada, filtros } = leerFiltrosPublicos(req.query);
+    if (error) return res.status(400).json({ error });
 
     try {
-        const filtros = { buscar: buscar || null, idRubro };
         const totalRegistros = await modelContarPublicacionesAprobadas(filtros);
-        const totalPaginas = Math.ceil(totalRegistros / PUBLICACIONES_POR_PAGINA);
-        const pagina = Math.min(paginaSolicitada, Math.max(1, totalPaginas));
+        const { totalPaginas, pagina } = paginar(totalRegistros, PUBLICACIONES_POR_PAGINA, paginaSolicitada);
         const [publicaciones, rubros] = await Promise.all([
             modelTodasLasPublicacionesAprobadas(filtros, PUBLICACIONES_POR_PAGINA, (pagina - 1) * PUBLICACIONES_POR_PAGINA)
                 .then(conFotos),
-            modelRubrosConPublicaciones()
+            modelRubrosConEmprendimientos()
         ]);
         res.json({ publicaciones, pagina, totalPaginas, totalRegistros, rubros });
     } catch (error) {
         console.error('Error al consultar las publicaciones:', error);
         res.status(500).json({ error: 'Error al consultar las publicaciones.' });
+    }
+};
+
+// GET /api/emprendimientos?page=1&buscar=texto&rubro=idRubro  (público): de a 8, por nombre.
+// Columna "Emprendimientos" de la página Publicaciones: incluye los que todavía no tienen publicaciones.
+export const obtenerEmprendimientosPublicos = async (req, res) => {
+    const { error, paginaSolicitada, filtros } = leerFiltrosPublicos(req.query);
+    if (error) return res.status(400).json({ error });
+
+    try {
+        const totalRegistros = await modelContarEmprendimientos(filtros);
+        const { totalPaginas, pagina } = paginar(totalRegistros, EMPRENDIMIENTOS_POR_PAGINA, paginaSolicitada);
+        const emprendimientos = await modelEmprendimientosPublicos(
+            filtros, EMPRENDIMIENTOS_POR_PAGINA, (pagina - 1) * EMPRENDIMIENTOS_POR_PAGINA
+        );
+        res.json({ emprendimientos, pagina, totalPaginas, totalRegistros });
+    } catch (error) {
+        console.error('Error al consultar los emprendimientos:', error);
+        res.status(500).json({ error: 'Error al consultar los emprendimientos.' });
     }
 };
 

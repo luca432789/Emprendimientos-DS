@@ -5,6 +5,7 @@ import {
     editarPublicacion,
     eliminarPublicacion,
     obtenerTodasLasAprobadas,
+    obtenerEmprendimientosPublicos,
     obtenerPublicacionesAprobadas,
     obtenerPublicacionesPendientes,
     moderarPublicacion
@@ -14,6 +15,9 @@ const router = express.Router();
 
 // WEB PÚBLICA: todas las publicaciones aprobadas (página "Publicaciones" del menú)
 router.get('/publicaciones', obtenerTodasLasAprobadas);
+
+// WEB PÚBLICA: emprendimientos con el mismo filtro (columna de la página "Publicaciones"), tengan o no publicaciones
+router.get('/emprendimientos', obtenerEmprendimientosPublicos);
 
 // EMPRENDEDOR: nueva publicación (máx. 2 por emprendimiento) -> Revisión Pendiente
 router.post('/publicaciones', verificarToken, crearPublicacion);

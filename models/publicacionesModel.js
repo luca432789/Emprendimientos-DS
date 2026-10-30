@@ -138,6 +138,8 @@ export const modelPublicacionesAprobadas = async (idEmprendimiento) => {
 
 // 2b. WEB PÚBLICA: publicaciones aprobadas de todos los emprendimientos (página "Publicaciones" del menú)
 // filtros: { buscar, idRubro }. La búsqueda no distingue mayúsculas ni tildes (collation utf8mb4_0900_ai_ci).
+const patronBusqueda = (buscar) => `%${buscar.replace(/[\\%_]/g, '\\$&')}%`;
+
 const filtrosPublicacionesAprobadas = ({ buscar, idRubro } = {}) => {
     const condiciones = ['p.TituloActual IS NOT NULL'];
     const parametros = [];
@@ -147,7 +149,7 @@ const filtrosPublicacionesAprobadas = ({ buscar, idRubro } = {}) => {
     }
     if (buscar) {
         condiciones.push("CONCAT_WS(' ', e.Nombre, p.TituloActual, p.DescripcionActual, r.Nombre) LIKE ?");
-        parametros.push(`%${buscar.replace(/[\\%_]/g, '\\$&')}%`);
+        parametros.push(patronBusqueda(buscar));
     }
     return { sql: `WHERE ${condiciones.join(' AND ')}`, parametros };
 };
@@ -179,15 +181,61 @@ export const modelTodasLasPublicacionesAprobadas = async (filtros, limite, offse
     return filas;
 };
 
-// Rubros que tienen al menos una publicación aprobada (para el filtro de la página)
-export const modelRubrosConPublicaciones = async () => {
+// Rubros que tienen al menos un emprendimiento (para el filtro de la página).
+// Incluye rubros sin publicaciones: la columna de emprendimientos también se filtra por rubro.
+export const modelRubrosConEmprendimientos = async () => {
     const [filas] = await pool.query(
         `SELECT DISTINCT r.idRubro, r.Nombre AS rubro
-         ${DESDE_PUBLICACIONES_APROBADAS}
-         WHERE p.TituloActual IS NOT NULL AND r.idRubro IS NOT NULL
+         FROM Emprendimiento e
+         INNER JOIN Rubro r ON r.idRubro = e.idRubro
          ORDER BY r.Nombre;`
     );
     return filas;
+};
+
+// 2c. WEB PÚBLICA: emprendimientos, tengan o no publicaciones (columna de la página "Publicaciones").
+// Mismo filtro que las publicaciones: el rubro y la búsqueda en sus datos o en sus publicaciones aprobadas.
+const filtrosEmprendimientos = ({ buscar, idRubro } = {}) => {
+    const condiciones = [];
+    const parametros = [];
+    if (idRubro) {
+        condiciones.push('e.idRubro = ?');
+        parametros.push(idRubro);
+    }
+    if (buscar) {
+        condiciones.push(`(CONCAT_WS(' ', e.Nombre, e.ActividadPrincipal, r.Nombre, e.Localidad, e.Departamento) LIKE ?
+            OR EXISTS (SELECT 1 FROM Publicacion p
+                       WHERE p.idEmprendimiento = e.idEmprendimiento AND p.TituloActual IS NOT NULL
+                         AND CONCAT_WS(' ', p.TituloActual, p.DescripcionActual) LIKE ?))`);
+        parametros.push(patronBusqueda(buscar), patronBusqueda(buscar));
+    }
+    return { sql: condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '', parametros };
+};
+
+const DESDE_EMPRENDIMIENTOS = `
+    FROM Emprendimiento e
+    LEFT JOIN Rubro r ON r.idRubro = e.idRubro`;
+
+export const modelContarEmprendimientos = async (filtros) => {
+    const { sql, parametros } = filtrosEmprendimientos(filtros);
+    const [filas] = await pool.query(`SELECT COUNT(*) AS total ${DESDE_EMPRENDIMIENTOS} ${sql};`, parametros);
+    return Number(filas[0].total);
+};
+
+export const modelEmprendimientosPublicos = async (filtros, limite, offset) => {
+    const { sql, parametros } = filtrosEmprendimientos(filtros);
+    const [filas] = await pool.query(
+        `SELECT e.idEmprendimiento, e.Nombre AS emprendimiento, e.Localidad, e.Departamento,
+                r.Nombre AS rubro, r.IconoMapa,
+                (SELECT COUNT(*) FROM Publicacion p
+                 WHERE p.idEmprendimiento = e.idEmprendimiento AND p.TituloActual IS NOT NULL) AS publicaciones
+         ${DESDE_EMPRENDIMIENTOS}
+         ${sql}
+         ORDER BY e.Nombre, e.idEmprendimiento
+         LIMIT ? OFFSET ?;`,
+        [...parametros, limite, offset]
+    );
+    return filas.map((f) => ({ ...f, publicaciones: Number(f.publicaciones) }));
 };
 
 // 3. EMPLEADO: publicaciones pendientes de moderación (estado 1)

@@ -58,14 +58,28 @@
             </label>
         </form>
 
-        <p id="contador-publicaciones" class="contador" role="status" aria-live="polite"></p>
+        <div class="publicaciones-layout">
+            <div class="publicaciones-columna-principal">
+                <p id="contador-publicaciones" class="contador" role="status" aria-live="polite"></p>
 
-        <section id="lista-publicaciones" class="lista-publicaciones">
-            <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando publicaciones...</p>
-        </section>
+                <section id="lista-publicaciones" class="lista-publicaciones">
+                    <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando publicaciones...</p>
+                </section>
 
-        <!-- Flechas y número de página: de a 10 publicaciones, solo al final de la lista -->
-        <div id="paginador-publicaciones" hidden></div>
+                <!-- Flechas y número de página: de a 10 publicaciones, solo al final de la lista -->
+                <div id="paginador-publicaciones" hidden></div>
+            </div>
+
+            <!-- Todos los emprendimientos (tengan o no publicaciones), con el mismo filtro, de a 8 por página -->
+            <aside class="emprendimientos-columna" aria-labelledby="titulo-columna-emprendimientos">
+                <h3 id="titulo-columna-emprendimientos"><i class="fa-solid fa-store"></i> Emprendimientos</h3>
+                <p id="contador-emprendimientos" class="contador-columna" role="status" aria-live="polite"></p>
+                <ul id="lista-emprendimientos" class="lista-emprendimientos">
+                    <li class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</li>
+                </ul>
+                <div id="paginador-emprendimientos" class="compacto" hidden></div>
+            </aside>
+        </div>
     </main>
 
     <!--FOOTER-->

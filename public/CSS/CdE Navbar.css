@@ -419,6 +419,10 @@ body {
 
 body > main {
   flex: 1 0 auto;
+  /* Con "margin: 0 auto" (contenido centrado) un elemento flex se achica a su contenido:
+     el ancho completo hace que siga respetando su max-width como antes */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 body > footer {
