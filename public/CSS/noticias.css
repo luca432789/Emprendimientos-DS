@@ -1,6 +1,11 @@
 /* Página "Noticias" del menú (noticias del Ministerio; las cargan los usuarios con permiso de Noticiero)
    A la izquierda la noticia elegida y a la derecha la columna con todas, de a 5 por página. */
 
+/* Fondo de toda la página (el contenido va centrado): sin franjas blancas a los costados */
+body {
+  background: #eeeae3;
+}
+
 .noticias {
   max-width: 1150px;
   margin: 0 auto;

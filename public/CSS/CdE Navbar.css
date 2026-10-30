@@ -408,3 +408,19 @@ nav ul li a.active {
   text-align: center;
   line-height: 18px;
 }
+
+/* Footer siempre al final de la pantalla: si el contenido es corto, el <main> se estira
+   y no queda una franja vacía debajo del footer (en todas las páginas) */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body > main {
+  flex: 1 0 auto;
+}
+
+body > footer {
+  margin-top: auto;
+}
