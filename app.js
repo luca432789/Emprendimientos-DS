@@ -26,6 +26,7 @@ import perfilRouter from './routes/perfilRoutes.js';
 import ayudasRouter from './routes/ayudasRoutes.js';
 import cuentaRouter from './routes/cuentaRoutes.js';
 import noticiasRouter from './routes/noticiasRoutes.js';
+import estadisticasRouter from './routes/estadisticasRoutes.js';
 
 // Inicializamos la app express
 const app = express();
@@ -64,6 +65,7 @@ app.use('/api', perfilRouter);    // Perfil del emprendimiento: público y del d
 app.use('/api', ayudasRouter);     // Subsidios y créditos sin revisar para el área (/api/ayudas)
 app.use('/api', cuentaRouter);     // Enlace por correo para que el emprendedor aprobado cree su contraseña (/api/cuenta)
 app.use('/api', noticiasRouter);   // Noticias del Ministerio: públicas, las cargan los usuarios Noticiero (/api/noticias)
+app.use('/api', estadisticasRouter); // Estadísticas anuales para el Administrador (/api/estadisticas)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)

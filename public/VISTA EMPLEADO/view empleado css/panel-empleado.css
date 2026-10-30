@@ -356,3 +356,228 @@ footer {
         white-space: nowrap;
     }
 }
+
+/* ======================================================================
+   ESTADÍSTICAS (solo Administrador)
+   ====================================================================== */
+.estadisticas {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Botones para elegir la estadística, agrupados */
+.est-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+}
+
+.est-grupo-titulo {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.est-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.est-boton {
+    background: white;
+    color: #2c3e50;
+    border: 1px solid #cbd5e1;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.est-boton:hover {
+    border-color: #2f4e78;
+}
+
+.est-boton.activo {
+    background: #2f4e78;
+    border-color: #2f4e78;
+    color: white;
+}
+
+/* Año y tipo de ayuda */
+.est-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    padding: 12px 14px;
+    background: #f8fafb;
+    border: 1px solid #d9e2e7;
+    border-radius: 6px;
+}
+
+.est-filtros label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    color: #334155;
+}
+
+.est-filtros select {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: white;
+    font-size: 14px;
+}
+
+.est-ayuda {
+    display: inline-flex;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.est-ayuda[hidden] {
+    display: none;
+}
+
+.est-segmento {
+    background: white;
+    border: none;
+    border-right: 1px solid #cbd5e1;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #334155;
+}
+
+.est-segmento:last-child {
+    border-right: none;
+}
+
+.est-segmento.activo {
+    background: #34495e;
+    color: white;
+}
+
+/* Totales del año */
+.est-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.est-tarjeta {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.est-tarjeta-total {
+    border-left: 4px solid #2f4e78;
+}
+
+.est-tarjeta-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.est-tarjeta-valor {
+    display: block;
+    font-size: 32px;
+    line-height: 1.2;
+    color: #1e293b;
+    margin-top: 4px;
+}
+
+.est-muestra {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* Gráfico y tabla */
+.est-panel {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.est-panel-titulo {
+    font-size: 15px;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.est-grafico {
+    position: relative;
+    height: 300px;
+}
+
+.est-tabla-contenedor {
+    overflow-x: auto;
+}
+
+.est-tabla {
+    box-shadow: none;
+}
+
+.est-tabla .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.est-tabla tfoot td {
+    font-weight: bold;
+    background: #f1f5f9;
+    border-top: 2px solid #cbd8e6;
+}
+
+.est-cargando,
+.est-vacio {
+    color: #64748b;
+    text-align: center;
+    padding: 20px;
+}
+
+.est-error {
+    color: #b91c1c;
+    text-align: center;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .est-tarjetas {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+
+    .est-tarjeta {
+        padding: 10px 12px;
+    }
+
+    .est-tarjeta-valor {
+        font-size: 26px;
+    }
+
+    .est-grafico {
+        height: 240px;
+    }
+}

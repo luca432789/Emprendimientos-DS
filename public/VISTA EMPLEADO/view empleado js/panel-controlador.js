@@ -146,6 +146,11 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Registrar Usuario
                 </a>
             </li>
+            <li class="item-simple" id="item-estadisticas">
+                <a href="#" onclick="cargarSección('estadisticas', 'Estadísticas')">
+                    <i class="fa-solid fa-chart-column" style="margin-right: 8px;"></i> Estadísticas
+                </a>
+            </li>
             <li class="item-simple" id="item-revisar-historial">
                 <a href="#" onclick="cargarSección('revisar-historial', 'Historial de Auditoría')">
                     <i class="fa-solid fa-history" style="margin-right: 8px;"></i> Revisar Historial
@@ -169,7 +174,8 @@ function inicializarPanelPorRol(rol) {
         'inicio-sin-revisar': 'Solicitudes de Inicio',
         'subsidio-sin-revisar': 'Solicitudes de Subsidio',
         'creditos-sin-revisar': 'Solicitudes de Créditos',
-        'inicio-en-revision': 'En Revisión - Inicio'
+        'inicio-en-revision': 'En Revisión - Inicio',
+        'estadisticas': 'Estadísticas'
     };
     const seccionPedida = window.location.hash.slice(1);
     if (seccionesPorEnlace[seccionPedida] && document.getElementById(`item-${seccionPedida}`)) {
@@ -748,6 +754,13 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         `;
 
         inicializarControlesAuditoria();
+    }
+    // ======================================================================
+    // ESTADÍSTICAS (SOLO ADMINISTRADORES): gráfico por mes y tabla por departamento
+    // ======================================================================
+    else if (codigoSeccion === 'estadisticas') {
+        filtrosTabla.style.display = 'none';
+        inicializarEstadisticas(zonaRender);
     }
     // ======================================================================
     // CASO GENERAL: CUALQUIER OTRA SECCIÓN (Mockup genérico para futuros sprints)
