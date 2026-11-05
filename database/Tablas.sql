@@ -240,6 +240,7 @@ idSubsidio int auto_increment primary key,
 PathFormularioSub varchar(1024) not null,
 monto decimal (12, 2) not null, 	-- maximo 9.000.000.000,00
 FechaRecibido date not null default (current_date),
+EstadoRevision tinyint not null default 0, -- 0: Sin revisar, 1: En proceso, 2: Finalizado (solo con Aprobado en True o False; antes el emprendedor puede reenviar el formulario)
 Aprobado boolean null, 		-- null = sin ver/pendiente, True= Aprobado, False= Rechazado
 FechaResolucion date null,
 MensajeResolucion varchar(512) null, 		-- Para explicar por qué se rechazó o notas de la aprobación
@@ -255,6 +256,10 @@ CONSTRAINT fk_Subsidio_SolicitudInicio
 CONSTRAINT fk_Subsidio_EmpleadoRevisor
 	FOREIGN KEY (idEmpleadoRevisor) REFERENCES Empleado (idEmpleado),
 -- Check para evitar cargar Fecha de aprovación si Aprobado es null
+-- Finalizado solo con resolución, y toda resolución deja el subsidio finalizado
+CONSTRAINT chk_estado_revision_sub CHECK (
+	(Aprobado IS NULL AND EstadoRevision IN (0, 1)) OR (Aprobado IS NOT NULL AND EstadoRevision = 2)
+    ),
 CONSTRAINT chk_aprobacion_fecha_sub 
 	CHECK (
 	((Aprobado = TRUE OR Aprobado = FALSE) AND FechaResolucion IS NOT NULL) OR 

@@ -1,0 +1,2 @@
+<%# Firma del titular: la imagen dibujada o, si no tiene firma, su nombre completo escrito %>
+<% if (datos.firma.tipo === 'dibujo') { %><img class="firma-imagen" src="<%= datos.firma.imagen %>" alt="Firma"><% } else { %><span class="firma-texto"><%= datos.firma.texto %></span><% } %>

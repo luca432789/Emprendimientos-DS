@@ -27,6 +27,7 @@ import ayudasRouter from './routes/ayudasRoutes.js';
 import cuentaRouter from './routes/cuentaRoutes.js';
 import noticiasRouter from './routes/noticiasRoutes.js';
 import estadisticasRouter from './routes/estadisticasRoutes.js';
+import { prepararNavegador } from './helpers/pdfDesdeHtml.js';
 
 // Inicializamos la app express
 const app = express();
@@ -166,4 +167,6 @@ app.get('/Emprendedor-Fotos', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor API corriendo en http://localhost:${PORT}`);
+    // Abre Chrome de una vez para que el primer formulario de subsidio no tarde de más
+    prepararNavegador();
 });

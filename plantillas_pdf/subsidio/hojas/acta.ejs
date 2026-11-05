@@ -1,0 +1,33 @@
+<div class="titulo-acta-caja">
+    <p class="titulo-acta sombra" aria-hidden="true">ACTA ACUERDO PLAN PROVINCIAL SANTIAGO <span class="ultima">PRODUCTIVO</span></p>
+    <p class="titulo-acta">ACTA ACUERDO PLAN PROVINCIAL SANTIAGO <span class="ultima">PRODUCTIVO</span></p>
+</div>
+
+<div class="texto-legal">
+    <p>
+        Entre la <strong>SUBSECRETARIA DE DESARROLLO SOCIAL</strong> con domicilio en calle Sáenz Peña N<sup>0</sup>
+        340 representada en este acto por el Subsecretario de Desarrollo Social Lic. Ramiro Banco, en adelante
+        <strong>LA SUBSECRETARIA DE DESARROLLO SOCIAL</strong> y el Sr. <span class="relleno"><%= datos.nombreApellido %></span>
+        D.N.I.Nº: <span class="relleno"><%= datos.dniCuit %></span> domiciliado en calle <span class="relleno"><%= datos.domicilio %></span>
+        Localidad <span class="relleno"><%= datos.localidadTitular %></span> Departamento <span class="relleno"><%= datos.departamentoTitular %></span>
+        de la Provincia de Santiago del Estero, en adelante <strong>EL EMPRENDEDOR</strong>, convienen lo siguiente:
+    </p>
+    <ol class="lista-acta">
+        <li><strong>EL EMPRENDEDOR</strong> declara conocer y aceptar los términos y condiciones de lo dispuesto en la
+            Resolución Ministerial N<sup>0</sup> 2023-713-E-GDESDE-MDS que reglamenta el Plan Provincial Santiago Productivo
+            en cuanto a las condiciones, modalidades, requisitos y documentación exigibles.</li>
+        <li><strong>EL EMPRENDEDOR</strong> se compromete a cumplir con lo establecido en el reglamento, como así también
+            a facilitar con las facultades de supervisión contralor y evaluación de <strong>LA DIRECCION GENERAL DE
+            DESARROLLO SOCIAL</strong> respecto del compromiso asumido.-</li>
+        <li>En caso de incumplimiento por parte de <strong>EL EMPRENDEDOR, LA DIRECCION GENERAL DE DESARROLLO SOCIAL</strong>
+            se encuentra facultada para iniciar los tramites correspondientes ante los organismos que corresponde a los
+            efectos de procurar, por imperio de la Ley, el cumplimiento de la presente.</li>
+        <li>Las partes reconocen que todo lo declarado en la presente reviste el carácter de <strong>DECLARACION JURADA</strong>.</li>
+    </ol>
+</div>
+
+<div class="firma-campos">
+    <p>FIRMA: <span class="relleno corto"><%- include('../firma.ejs') %></span></p>
+    <p>ACLARACION: <span class="relleno corto"><%= datos.aclaracionProyecto %></span></p>
+    <p>DNI N<sup>0</sup> <span class="relleno corto"><%= datos.dniProyecto %></span></p>
+</div>

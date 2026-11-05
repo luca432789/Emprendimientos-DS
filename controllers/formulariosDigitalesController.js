@@ -8,11 +8,15 @@ import {
   modelObtenerSolicitudDeEmprendimiento,
   modelTienePedidoPendiente,
   modelRegistrarPedidoAyuda,
-  modelExisteEmprendedorConCorreo
+  modelExisteEmprendedorConCorreo,
+  modelBuscarSolicitudParaSubsidio,
+  modelRegistrarSubsidioDeSolicitud
 } from '../models/formulariosDigitalesModel.js';
 import { escribirConNumero } from '../helpers/archivosPdf.js';
+import { generarPdfDesdePlantilla, imagenComoDataUri } from '../helpers/pdfDesdeHtml.js';
 import { departamentosSantiago } from '../helpers/departamentos.js';
 import { obtenerIpCliente } from '../helpers/ipCliente.js';
+import { usuarioDelTokenOpcional } from '../middlewares/loginMiddleware.js';
 
 // Los PDF se guardan junto a los demás documentos subidos (servidos en /uploads)
 // con un nombre base y un número correlativo (ej: SolicitudInicialFormIni12.pdf)
@@ -23,11 +27,13 @@ const carpetasDestino = {
 };
 const carpetaPlantillas = path.join(process.cwd(), 'plantillas_pdf');
 
+// Plantillas PDF oficiales sobre las que se escribe con coordenadas.
+// El de subsidios ya no usa PDF: se arma con HTML/CSS (plantillas_pdf/subsidio) y Puppeteer.
 const plantillas = {
   'Formulario de Inicio': 'formulario_de_inicio.pdf',
-  'Formulario de Subsidios no Reintegrables': 'FORMULARIO-SUBSIDIOS.pdf',
   'Formulario de Creditos Reintegrables': 'FORMULARIO-CREDITOS.pdf'
 };
+const carpetaPlantillaSubsidio = path.join(carpetaPlantillas, 'subsidio');
 
 const coordenadasBase = {
   'Formulario de Inicio': {
@@ -48,15 +54,7 @@ const coordenadasBase = {
     bien3: [50, 249],
     firma: [76, 121]
   },
-  // Carátulas oficiales (595 x 842 pt): solo los renglones que existen en la hoja.
-  // El resto de los datos va en la hoja "Resumen de datos" que se agrega al final.
-  'Formulario de Subsidios no Reintegrables': {
-    nombreEmprendimiento: [184, 467],
-    localidad: [140, 425],
-    rubro: [176, 393],
-    nombreApellido: [160, 275],
-    dniCuit: [393, 275]
-  },
+  // Carátula oficial (595 x 842 pt): solo los renglones que existen en la hoja.
   'Formulario de Creditos Reintegrables': {
     nombreEmprendimiento: [60, 375],
     localidad: [140, 354],
@@ -289,115 +287,69 @@ const dibujarDatosCredito = (pdfDoc, fuente, datos) => {
   });
 };
 
-const dibujarDatosSubsidio = (pdfDoc, fuente, datos) => {
-  const paginas = pdfDoc.getPages();
-  if (paginas.length !== 6) throw new Error('La plantilla de subsidios debe conservar sus seis páginas oficiales.');
-  const [portada, bienes, costos, acta, notificacion, declaracion] = paginas;
-  const moneda = (valor) => valor === undefined || valor === '' ? '' : formatearImporte(valor);
-
-  // Portada: los datos se escriben sobre los renglones del formulario oficial.
-  escribirCampo(portada, fuente, 'nombreEmprendimiento', datos.nombreEmprendimiento, 184, 467);
-  escribirCampo(portada, fuente, 'localidad', datos.localidad, 140, 425);
-  escribirCampo(portada, fuente, 'departamento', datos.departamento, 392, 425);
-  escribirCampo(portada, fuente, 'beneficiarios', datos.beneficiarios, 140, 405);
-  escribirCampo(portada, fuente, 'rubro', datos.rubro, 176, 393);
-  escribirCampo(portada, fuente, 'numeroProyecto', datos.numeroProyecto, 240, 344);
-  escribirCampo(portada, fuente, 'ramaActividad', datos.ramaActividad, 110, 315);
-  escribirCampo(portada, fuente, 'nombreApellido', datos.nombreApellido, 184, 278);
-  escribirCampo(portada, fuente, 'dniCuit', datos.dniCuit, 415, 278);
-
-  const dibujarTabla = (pagina, filas, xs, primerY, paso, tipo) => {
-    filas.forEach((fila, indice) => {
-      const y = primerY - (indice * paso);
-      const valores = tipo === 'bienesPropios'
-        ? [fila.bien, fila.cantidad, fila.antiguedad, moneda(fila.montoEstimado)]
-        : [fila.bien, fila.cantidad, moneda(fila.precioUnitario), moneda(fila.subtotal)];
-      valores.forEach((valor, columna) => escribirCelda(
-        pagina, fuente, valor, xs[columna], y, xs[columna + 1] - xs[columna] - 8, columna === 0 ? 7.2 : 7
-      ));
-    });
-  };
-
-  dibujarTabla(bienes, datos.bienesPropios || [], [55, 262, 351, 432, 526], 758, 24.72, 'bienesPropios');
-  dibujarTabla(bienes, datos.recursosNecesarios || [], [55, 169, 289, 411, 526], 368, 24.72, 'recursosNecesarios');
-  escribirCelda(bienes, fuente, moneda(datos.montoSolicitado), 361, 107, 155, 9);
-
-  const resumen = [
-    [datos.aporteActivoFijo, datos.solicitadoActivoFijo],
-    [datos.aporteBienesUso, datos.solicitadoBienesUso],
-    [datos.aporteManoObra, null],
-    [datos.totalProyectoPropio, datos.totalProyectoSolicitado]
-  ];
-  resumen.forEach(([propio, solicitado], indice) => {
-    const y = 789 - (indice * 20);
-    escribirCelda(costos, fuente, moneda(propio), 247, y, 112, 8);
-    if (solicitado !== null) escribirCelda(costos, fuente, moneda(solicitado), 375, y, 143, 8);
-  });
-
-  // Datos identificatorios del acta y de las declaraciones impresas en las hojas 4 y 6.
-  escribirCelda(acta, fuente, datos.nombreApellido, 105, 622, 115, 8);
-  escribirCelda(acta, fuente, datos.dniCuit, 175, 597, 80, 8);
-  escribirCelda(acta, fuente, datos.domicilio, 345, 597, 200, 8);
-  escribirCelda(acta, fuente, datos.localidad, 355, 570, 160, 8);
-  escribirCelda(acta, fuente, datos.departamento, 145, 547, 145, 8);
-  escribirCelda(acta, fuente, datos.firmaAcuerdo, 90, 185, 175, 8);
-  escribirCelda(acta, fuente, datos.aclaracionAcuerdo, 140, 147, 200, 8);
-  escribirCelda(acta, fuente, datos.dniAcuerdo, 105, 105, 120, 8);
-  escribirCelda(notificacion, fuente, datos.firmaNotificacion, 75, 148, 150, 8);
-  escribirCelda(notificacion, fuente, datos.aclaracionNotificacion, 140, 120, 210, 8);
-  escribirCelda(notificacion, fuente, datos.dniNotificacion, 75, 65, 100, 8);
-
-  const fecha = datos.fechaLugar || (() => {
-    const hoy = new Date();
-    return `SANTIAGO DEL ESTERO, ${String(hoy.getDate()).padStart(2, '0')} de ${['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][hoy.getMonth()]} de ${hoy.getFullYear()}`;
-  })();
-  escribirCelda(notificacion, fuente, fecha, 270, 65, 260, 8);
-  escribirCelda(declaracion, fuente, fecha, 93, 772, 430, 8);
-  escribirCelda(declaracion, fuente, datos.nombreApellido, 145, 746, 350, 9);
-  escribirCelda(declaracion, fuente, datos.dniCuit, 115, 715, 150, 8);
-  escribirCelda(declaracion, fuente, datos.domicilio, 340, 715, 190, 8);
-  escribirCelda(declaracion, fuente, datos.departamento, 300, 679, 190, 8);
-  escribirCelda(declaracion, fuente, datos.responsableProyecto, 200, 142, 260, 9);
-  escribirCelda(declaracion, fuente, datos.aclaracionProyecto, 200, 108, 260, 8);
-  escribirCelda(declaracion, fuente, datos.dniProyecto, 160, 72, 180, 8);
+const fechaLugarHoy = () => {
+  const hoy = new Date();
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  return `SANTIAGO DEL ESTERO, ${String(hoy.getDate()).padStart(2, '0')} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
 };
 
-const validarDatosSubsidio = (datos, imagenes, documentoExtranjero) => {
+// Completa los cuadros con renglones vacíos para que conserven el alto del formulario oficial
+const completarRenglones = (filas = [], minimo) => [...filas, ...Array(Math.max(0, minimo - filas.length)).fill({})];
+
+// Arma las seis hojas del formulario de subsidio desde la plantilla HTML (sin Nº de proyecto ni rama de actividad:
+// el número lo asigna el Ministerio con la aprobación final)
+const generarPdfSubsidio = async (datos) => generarPdfDesdePlantilla(path.join(carpetaPlantillaSubsidio, 'subsidio.ejs'), {
+  datos,
+  logo: await imagenComoDataUri(path.join(carpetaPlantillaSubsidio, 'logo-ministerio.png')),
+  escudo: await imagenComoDataUri(path.join(carpetaPlantillaSubsidio, 'escudo-santiago.png')),
+  rubroEmprendimiento: datos.rubroEmprendimiento || '',
+  fecha: datos.fechaLugar || fechaLugarHoy(),
+  filasBienes: completarRenglones(datos.bienesPropios, 8),
+  filasRecursos: completarRenglones(datos.recursosNecesarios, 8),
+  totalRecursos: (datos.recursosNecesarios || []).reduce((total, fila) => total + fila.subtotal, 0),
+  moneda: (valor) => valor === undefined || valor === '' ? '' : formatearImporte(valor)
+});
+
+// Firma dibujada (PNG que arma public/js/firma-digital.js) o, si no tiene firma, su nombre completo escrito
+const firmaPng = /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/;
+const cabeceraPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const validarFirma = (firma) => {
+  if (firma?.tipo === 'texto') {
+    const texto = limpiarTexto(firma.texto || '');
+    if (texto.length < 3 || texto.length > 80) {
+      throw new ErrorValidacion('Escriba su nombre completo en lugar de la firma (de 3 a 80 caracteres).');
+    }
+    return { tipo: 'texto', texto };
+  }
+  if (firma?.tipo === 'dibujo' && typeof firma.imagen === 'string' && firma.imagen.length <= 400000 && firmaPng.test(firma.imagen)) {
+    const bytes = Buffer.from(firma.imagen.slice(firma.imagen.indexOf(',') + 1), 'base64');
+    if (bytes.subarray(0, 8).equals(cabeceraPng)) return { tipo: 'dibujo', imagen: firma.imagen };
+  }
+  throw new ErrorValidacion('Dibuje su firma o marque "No tengo firma" y escriba su nombre completo.');
+};
+
+// Valida solo lo que completa el emprendedor: los datos del proyecto y del titular salen de su solicitud de inicio
+const validarDatosSubsidio = (datos, imagenes, dniTitular) => {
   if (!Array.isArray(imagenes) || !imagenes.length) {
     throw new ErrorValidacion('Adjunte al menos una fotografía o un PDF de la documentación del proyecto.');
   }
   for (const [campo, etiqueta, maximo] of [
-    ['nombreEmprendimiento', 'Nombre del proyecto', 100],
-    ['localidad', 'Localidad', 40],
-    ['departamento', 'Departamento', 40],
     ['beneficiarios', 'Beneficiarios', 100],
-    ['rubro', 'Actividad principal', 150],
-    ['nombreApellido', 'Nombre y apellido del titular', 80],
-    ['correo', 'Correo electrónico', 150],
-    ['telefono', 'Celular', 10],
-    ['domicilio', 'Domicilio del titular', 140],
-    ['firmaAcuerdo', 'Firma del acta acuerdo', 80],
-    ['aclaracionAcuerdo', 'Aclaración del acta acuerdo', 80],
-    ['dniAcuerdo', 'DNI del acta acuerdo', 20],
-    ['firmaNotificacion', 'Firma de la notificación', 80],
-    ['aclaracionNotificacion', 'Aclaración de la notificación', 80],
-    ['dniNotificacion', 'DNI de la notificación', 20],
-    ['responsableProyecto', 'Responsable del proyecto', 80],
-    ['aclaracionProyecto', 'Aclaración del responsable del proyecto', 80],
-    ['dniProyecto', 'DNI del responsable del proyecto', 20]
+    ['domicilio', 'Domicilio del titular', 150],
+    ['aclaracionProyecto', 'Aclaración', 80],
+    ['dniProyecto', 'D.N.I. Nº de la firma', 20],
+    ['lugarFirma', 'Lugar y fecha', 80]
   ]) {
     datos[campo] = limpiarTexto(datos[campo] || '');
     if (!datos[campo]) throw new ErrorValidacion(`Complete el campo "${etiqueta}".`);
-    if (datos[campo].length > maximo) throw new ErrorValidacion(`El campo "${etiqueta}" excede el largo permitido.`);
+    if (datos[campo].length > maximo) throw new ErrorValidacion(`El campo "${etiqueta}" admite hasta ${maximo} caracteres.`);
   }
-  if (!departamentosSantiago.includes(datos.departamento)) throw new ErrorValidacion('Seleccione un departamento válido de Santiago del Estero.');
-  if (!/^[1-9]\d{9}$/.test(datos.telefono)) throw new ErrorValidacion('El celular debe tener 10 números, sin 0 inicial, 15 ni espacios.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.correo)) throw new ErrorValidacion('Ingrese un correo electrónico válido.');
-  const documentoFirmaValido = documentoExtranjero
-    ? (documento) => /^[A-Za-z0-9-]{4,15}$/.test(documento)
-    : (documento) => /^\d{7,8}$/.test(documento);
-  for (const campo of ['dniAcuerdo', 'dniNotificacion', 'dniProyecto']) {
-    if (!documentoFirmaValido(datos[campo])) throw new ErrorValidacion(`Revise el campo "${campo}"; debe coincidir con el formato del documento indicado.`);
+  datos.firma = validarFirma(datos.firma);
+  // La aclaración y el DNI de la hoja final acompañan a la firma en todas las hojas que la llevan.
+  // El DNI se escribe a mano, pero tiene que ser el del titular de la solicitud de inicio.
+  datos.dniProyecto = datos.dniProyecto.replace(/[.\s]/g, '').toUpperCase();
+  if (datos.dniProyecto !== String(dniTitular).trim().toUpperCase()) {
+    throw new ErrorValidacion('El D.N.I. Nº junto a la firma debe ser el mismo del titular de la solicitud de inicio.');
   }
 
   datos.bienesPropios = prepararFilasCredito(datos.bienesPropios || [], 'bienesPropios');
@@ -420,11 +372,18 @@ const validarDatosSubsidio = (datos, imagenes, documentoExtranjero) => {
   datos.totalProyectoPropio = datos.aporteActivoFijo + datos.aporteBienesUso + datos.aporteManoObra;
   datos.totalProyectoSolicitado = datos.solicitadoActivoFijo + datos.solicitadoBienesUso;
   const totalRecursos = datos.recursosNecesarios.reduce((total, fila) => total + fila.subtotal, 0);
-  datos.montoSolicitado = validarMonto(datos.montoSolicitado || totalRecursos);
   if (!totalRecursos) throw new ErrorValidacion('Complete al menos un recurso solicitado con cantidad y precio unitario.');
+  // El total solicitado siempre es la suma del cuadro de recursos (no se toma el que manda el navegador)
+  datos.montoSolicitado = validarMonto(totalRecursos);
 };
 
-class ErrorValidacion extends Error {}
+// estado: código HTTP con el que se responde (400 por defecto; 409 si la solicitud ya no admite el envío, etc.)
+class ErrorValidacion extends Error {
+  constructor(mensaje, estado = 400) {
+    super(mensaje);
+    this.estado = estado;
+  }
+}
 
 // Campos obligatorios del Formulario de Inicio con el largo máximo de su columna en DatosSolicitudInicio
 const camposInicio = {
@@ -615,8 +574,10 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
     throw new ErrorValidacion('El total de los archivos adjuntos no puede superar 16 MB.');
   }
 
-  const rutaPlantilla = path.join(carpetaPlantillas, plantillas[tipoFormulario]);
-  const bytesPlantilla = await fs.readFile(rutaPlantilla);
+  // El subsidio ya sale completo de la plantilla HTML; los demás parten del PDF oficial
+  const bytesPlantilla = tipoFormulario === 'Formulario de Subsidios no Reintegrables'
+    ? await generarPdfSubsidio(datos)
+    : await fs.readFile(path.join(carpetaPlantillas, plantillas[tipoFormulario]));
   const pdfDoc = await PDFDocument.load(bytesPlantilla);
   const fuente = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const pagina = pdfDoc.getPages()[0];
@@ -647,9 +608,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
     await dibujarDatosExtraInicio(pdfDoc, pagina, fuente, datos);
   }
 
-  if (tipoFormulario === 'Formulario de Subsidios no Reintegrables') {
-    dibujarDatosSubsidio(pdfDoc, fuente, datos);
-  } else if (tipoFormulario === 'Formulario de Inicio') {
+  if (tipoFormulario === 'Formulario de Inicio') {
     const paginaCroquis = pdfDoc.getPages()[1];
     if (paginaCroquis) {
       paginaCroquis.drawRectangle({
@@ -690,7 +649,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       }
       const indices = pdfAdjunto.getPageIndices();
       if (!indices.length || adjuntosParaHoja.length + indices.length > 8) {
-        throw new ErrorValidacion('En el espacio del formulario se pueden incluir hasta 8 páginas de archivos adjuntos en total.');
+        throw new ErrorValidacion('Se pueden incluir hasta 8 páginas de archivos adjuntos en total.');
       }
       const paginas = await pdfDoc.embedPages(indices.map((indice) => pdfAdjunto.getPage(indice)));
       adjuntosParaHoja.push(...paginas.map((paginaPdf) => ({
@@ -712,7 +671,7 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
       throw new ErrorValidacion(`${imagen.nombre || 'La imagen'} no se pudo leer. Use un JPG o PNG válido.`);
     }
     if (adjuntosParaHoja.length >= 8) {
-      throw new ErrorValidacion('En el espacio del formulario se pueden incluir hasta 8 páginas de archivos adjuntos en total.');
+      throw new ErrorValidacion('Se pueden incluir hasta 8 páginas de archivos adjuntos en total.');
     }
     adjuntosParaHoja.push({
       contenido: imagenPdf,
@@ -752,43 +711,16 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
         paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
       }
     });
-  } else if (tipoFormulario === 'Formulario de Subsidios no Reintegrables' && adjuntosParaHoja.length) {
-    // La hoja 3 del formulario oficial tiene un área libre debajo del cuadro de costos.
-    // Colocamos los adjuntos en ese espacio sin crear páginas adicionales.
-    const paginaAdjuntos = pdfDoc.getPages()[2];
-    if (!paginaAdjuntos) throw new Error('La plantilla de subsidios no contiene la tercera hoja para los adjuntos.');
-    const area = { x: 45, y: 45, width: 505, height: 455 };
-    const columnas = Math.ceil(Math.sqrt(adjuntosParaHoja.length * area.width / area.height));
-    const filas = Math.ceil(adjuntosParaHoja.length / columnas);
-    const espacio = 8;
-    const anchoCelda = (area.width - espacio * (columnas - 1)) / columnas;
-    const altoCelda = (area.height - espacio * (filas - 1)) / filas;
-    adjuntosParaHoja.forEach(({ contenido, esPaginaPdf, ancho, alto }, indice) => {
-      const columna = indice % columnas;
-      const fila = Math.floor(indice / columnas);
-      const escala = Math.min(anchoCelda / ancho, altoCelda / alto);
-      const anchoFinal = ancho * escala;
-      const altoFinal = alto * escala;
-      const x = area.x + columna * (anchoCelda + espacio) + (anchoCelda - anchoFinal) / 2;
-      const y = area.y + area.height - (fila + 1) * altoCelda - fila * espacio + (altoCelda - altoFinal) / 2;
-      if (esPaginaPdf) {
-        paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
-      } else {
-        paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
-      }
-    });
   } else if (tipoFormulario !== 'Formulario de Inicio' && adjuntosParaHoja.length) {
-    // La documentación del garante se conserva en hojas adicionales del expediente de crédito.
-    adjuntosParaHoja.forEach(({ contenido, esPaginaPdf, ancho, alto, categoria, nombre }) => {
+    // Subsidio y crédito: cada adjunto va en una hoja nueva al final, después de las hojas del formulario
+    // (en subsidios suelen ser presupuestos; en créditos, la documentación del garante).
+    adjuntosParaHoja.forEach(({ contenido, esPaginaPdf, ancho, alto, categoria }) => {
       const paginaAdjuntos = pdfDoc.addPage([595.28, 841.89]);
       const tituloAdjunto = tipoFormulario === 'Formulario de Creditos Reintegrables'
         ? `Documentación del garante${categoria ? ` - ${categoria}` : ''}`
-        : 'Imágenes y documentación adjunta';
+        : 'Documentación adjunta (presupuestos)';
       paginaAdjuntos.drawText(tituloAdjunto, {
         x: 40, y: 800, size: 13, font: fuente, color: rgb(0.18, 0.31, 0.47), maxWidth: 515
-      });
-      if (nombre) paginaAdjuntos.drawText(limpiarTexto(nombre).slice(0, 85), {
-        x: 40, y: 783, size: 8, font: fuente, color: rgb(0, 0, 0), maxWidth: 515
       });
       const escala = Math.min(515 / ancho, 680 / alto);
       const anchoFinal = ancho * escala;
@@ -835,7 +767,7 @@ const guardarYResponder = async (res, tipoFormulario, bytesPdf, registrar) => {
 
 const responderError = (res, error, mensajeGeneral) => {
   if (error instanceof ErrorValidacion) {
-    return res.status(400).json({ error: error.message });
+    return res.status(error.estado).json({ error: error.message });
   }
   console.error(mensajeGeneral, error);
   return res.status(500).json({ error: mensajeGeneral });
@@ -884,8 +816,8 @@ export const listarEmprendimientosParaAyuda = async (req, res) => {
 export const crearFormularioAyuda = async (req, res) => {
   try {
     const { tipoFormulario, imagenes = [], documentoExtranjero = false, idEmprendimiento, ...datos } = req.body;
+    // El subsidio tiene su propia ruta pública (/subsidio): lo completa el emprendedor con su Nº de expediente
     const tiposAyuda = {
-      'Formulario de Subsidios no Reintegrables': 'Subsidio',
       'Formulario de Creditos Reintegrables': 'Credito'
     };
     const tipo = tiposAyuda[tipoFormulario];
@@ -910,13 +842,8 @@ export const crearFormularioAyuda = async (req, res) => {
     }
 
     validarDocumentoYTelefono(datos, documentoExtranjero, false);
-    if (tipoFormulario === 'Formulario de Creditos Reintegrables') {
-      validarDatosCredito(datos, imagenes);
-      await validarDominioCorreo(datos.correoGarante);
-    } else {
-      validarDatosSubsidio(datos, imagenes, documentoExtranjero);
-      await validarDominioCorreo(datos.correo);
-    }
+    validarDatosCredito(datos, imagenes);
+    await validarDominioCorreo(datos.correoGarante);
     const monto = validarMonto(datos.montoSolicitado);
 
     const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);
@@ -926,5 +853,141 @@ export const crearFormularioAyuda = async (req, res) => {
       (direccionWeb) => modelRegistrarPedidoAyuda(tipo, direccionWeb, monto, idSolicitudInicio, datosAuditoria));
   } catch (error) {
     responderError(res, error, 'No se pudo registrar el formulario.');
+  }
+};
+
+// ---------------------------------------------------------------------------------------------------------
+// SUBSIDIO: lo completa el emprendedor (sin sesión) desde el link del correo, o el Área / Administrador por él.
+// Se identifica con el Nº de expediente, el correo y el DNI de su solicitud de inicio.
+
+// Freno a quien prueba combinaciones: hasta 10 verificaciones fallidas por IP cada 15 minutos
+const intentosFallidos = new Map();
+const VENTANA_INTENTOS = 15 * 60 * 1000;
+const MAXIMO_INTENTOS = 10;
+
+const controlarIntentos = (ip) => {
+  const registro = intentosFallidos.get(ip);
+  if (registro && Date.now() - registro.desde < VENTANA_INTENTOS && registro.cantidad >= MAXIMO_INTENTOS) {
+    throw new ErrorValidacion('Hubo demasiados intentos con datos que no coinciden. Espere 15 minutos y vuelva a intentarlo.', 429);
+  }
+};
+const registrarIntentoFallido = (ip) => {
+  const ahora = Date.now();
+  const registro = intentosFallidos.get(ip);
+  if (!registro || ahora - registro.desde >= VENTANA_INTENTOS) intentosFallidos.set(ip, { cantidad: 1, desde: ahora });
+  else registro.cantidad++;
+  if (intentosFallidos.size > 5000) {
+    intentosFallidos.forEach((valor, clave) => { if (ahora - valor.desde >= VENTANA_INTENTOS) intentosFallidos.delete(clave); });
+  }
+};
+
+// Busca la solicitud y comprueba que admita el formulario de subsidio. Solo cuando coinciden los tres datos
+// se dice el motivo puntual; si no, el mensaje es siempre el mismo para no revelar qué dato existe.
+const resolverSolicitudSubsidio = async (verificacion, ip) => {
+  const expediente = limpiarTexto(verificacion?.expediente || '').slice(0, 50);
+  const correo = limpiarTexto(verificacion?.correo || '').toLowerCase().slice(0, 150);
+  const dni = limpiarTexto(verificacion?.dni || '').replace(/[.\s]/g, '').slice(0, 15);
+  if (!expediente || !correo || !dni) {
+    throw new ErrorValidacion('Ingrese el Nº de expediente, el correo electrónico y el DNI de su solicitud de inicio.');
+  }
+  controlarIntentos(ip);
+
+  const solicitud = await modelBuscarSolicitudParaSubsidio(expediente, correo, dni);
+  if (!solicitud) {
+    registrarIntentoFallido(ip);
+    throw new ErrorValidacion('No encontramos una solicitud de inicio con ese Nº de expediente, correo y DNI. Revise que sean los mismos del correo que recibió y de su solicitud.', 404);
+  }
+  if (solicitud.EleccionAyuda !== 'Subsidio') {
+    throw new ErrorValidacion('En su solicitud de inicio eligió Crédito: corresponde completar el Formulario de Créditos Reintegrables.', 409);
+  }
+  if (Number(solicitud.AprobacionArea) !== 1) {
+    throw new ErrorValidacion('Su solicitud de inicio todavía no fue aprobada por el Área de Economía Social.', 409);
+  }
+  if (Number(solicitud.EnvioMinistro) !== 0) {
+    throw new ErrorValidacion('Su solicitud ya fue enviada al Ministro para su resolución: el formulario de subsidio ya no se puede enviar ni modificar.', 409);
+  }
+  if (solicitud.idSubsidio && (solicitud.SubsidioAprobado !== null || Number(solicitud.SubsidioEstado) === 2)) {
+    throw new ErrorValidacion('El subsidio de este expediente ya fue resuelto y no admite cambios.', 409);
+  }
+  return solicitud;
+};
+
+// Datos que salen de DatosSolicitudInicio (en el formulario se muestran sin poder cambiarlos)
+const datosDeSolicitud = (solicitud) => ({
+  expediente: solicitud.NroExpediente,
+  nombreEmprendimiento: solicitud.EmprendimientoNombre,
+  departamento: solicitud.EmprendimientoDepto,
+  localidad: solicitud.EmprendimientoLocalidad,
+  rubro: solicitud.EmprendimientoActPrincipal,
+  rubroEmprendimiento: solicitud.EmprendimientoRubro,
+  nombreApellido: `${solicitud.PersonaNombre} ${solicitud.PersonaApellido}`.trim(),
+  dniCuit: solicitud.PersonaDNI,
+  telefono: solicitud.PersonaTelefono,
+  correo: solicitud.PersonaCorreo,
+  localidadTitular: solicitud.PersonaLocalidad,
+  departamentoTitular: solicitud.PersonaDepartamento
+});
+
+// POST /api/formularios-digitales/subsidio/verificar -> datos para completar el formulario
+export const verificarSolicitudSubsidio = async (req, res) => {
+  try {
+    const solicitud = await resolverSolicitudSubsidio(req.body, obtenerIpCliente(req));
+    res.json({
+      ...datosDeSolicitud(solicitud),
+      // Se proponen, pero el emprendedor los puede corregir
+      domicilio: solicitud.PersonaDomicilio,
+      lugarFirma: `${solicitud.PersonaLocalidad}, ${solicitud.PersonaDepartamento}`,
+      reemplazaEnvioAnterior: Boolean(solicitud.idSubsidio)
+    });
+  } catch (error) {
+    responderError(res, error, 'No se pudo verificar la solicitud.');
+  }
+};
+
+// Campos que completa el emprendedor; el resto del pedido se ignora y se toma de la solicitud de inicio
+const CAMPOS_EDITABLES_SUBSIDIO = [
+  'beneficiarios', 'domicilio', 'lugarFirma', 'aclaracionProyecto', 'dniProyecto', 'firma', 'bienesPropios', 'recursosNecesarios',
+  'aporteActivoFijo', 'solicitadoActivoFijo', 'aporteBienesUso', 'solicitadoBienesUso', 'aporteManoObra'
+];
+
+// Borra el PDF del envío anterior (solo dentro de /uploads/subsidios)
+const borrarPdfSubsidioAnterior = async (direccionWeb) => {
+  const nombre = String(direccionWeb || '').match(/^\/uploads\/subsidios\/([\w.-]+\.pdf)$/i)?.[1];
+  if (!nombre) return;
+  await fs.unlink(path.join(process.cwd(), 'uploads', 'subsidios', nombre)).catch(() => {});
+};
+
+// POST /api/formularios-digitales/subsidio (público; si viene la sesión de un empleado, queda en la auditoría)
+export const crearFormularioSubsidio = async (req, res) => {
+  const tipoFormulario = 'Formulario de Subsidios no Reintegrables';
+  try {
+    const ipCliente = obtenerIpCliente(req);
+    const solicitud = await resolverSolicitudSubsidio(req.body.verificacion, ipCliente);
+    const { imagenes = [] } = req.body;
+
+    const editables = Object.fromEntries(CAMPOS_EDITABLES_SUBSIDIO.map((campo) => [campo, req.body[campo]]));
+    validarDatosSubsidio(editables, imagenes, solicitud.PersonaDNI);
+    const datos = { ...datosDeSolicitud(solicitud), ...editables };
+    // "LUGAR Y FECHA": el lugar lo propone el formulario (localidad y departamento del titular) y se puede cambiar;
+    // la fecha es siempre la del envío
+    datos.fechaLugar = `${datos.lugarFirma}, ${fechaLugarHoy()}`;
+
+    const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);
+    const datosAuditoria = { idUsuario: usuarioDelTokenOpcional(req)?.idUsuario ?? null, ipCliente };
+
+    await guardarYResponder(res, tipoFormulario, bytesPdf, async (direccionWeb) => {
+      try {
+        const { idSubsidio, pathAnterior } = await modelRegistrarSubsidioDeSolicitud(
+          solicitud.idSolicitudInicio, direccionWeb, datos.montoSolicitado, datosAuditoria
+        );
+        if (pathAnterior && pathAnterior !== direccionWeb) await borrarPdfSubsidioAnterior(pathAnterior);
+        return idSubsidio;
+      } catch (error) {
+        if (error.codigo) throw new ErrorValidacion(error.message, 409);
+        throw error;
+      }
+    });
+  } catch (error) {
+    responderError(res, error, 'No se pudo registrar el formulario de subsidio.');
   }
 };

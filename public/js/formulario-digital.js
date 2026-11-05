@@ -344,11 +344,17 @@ if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Inicio es público; Subsidios y Créditos los carga Área / Administrador a nombre de un emprendimiento
+    // Inicio y Subsidio son públicos (el subsidio se identifica con Nº de expediente, correo y DNI);
+    // Créditos los carga Área / Administrador a nombre de un emprendimiento
     const esInicio = form.querySelector('input[name="tipoFormulario"]')?.value === 'Formulario de Inicio';
     const esSubsidio = esFormularioSubsidio;
     const token = sessionStorage.getItem('token_ministerio');
-    if (!esInicio && !token) {
+    const verificacion = esSubsidio ? window.verificacionSubsidio?.obtener() : null;
+    if (esSubsidio && !verificacion) {
+      resultado.textContent = 'Primero verifique el Nº de expediente, el correo y el DNI de su solicitud de inicio.';
+      return;
+    }
+    if (esFormularioCredito && !token) {
       resultado.innerHTML = 'Debe <a href="/login">iniciar sesión</a> como Empleado de Área o Administrador para enviar este formulario.';
       return;
     }
@@ -366,7 +372,23 @@ if (form) {
       return;
     }
 
-    resultado.textContent = 'Generando el PDF...';
+    // El DNI que acompaña a la firma se escribe a mano, pero tiene que ser el del titular de la solicitud
+    const dniFirma = form.querySelector('[name="dniProyecto"]');
+    const dniTitular = form.querySelector('[name="dniCuit"]')?.value.trim().toUpperCase();
+    if (esSubsidio && dniFirma && dniFirma.value.replace(/[.\s]/g, '').toUpperCase() !== dniTitular) {
+      resultado.textContent = 'El D.N.I. Nº junto a la firma debe ser el mismo del titular de la solicitud de inicio.';
+      dniFirma.focus();
+      return;
+    }
+
+    const firma = esSubsidio ? window.firmaDigital?.obtener() : null;
+    if (esSubsidio && !firma) {
+      resultado.textContent = 'Firme en el recuadro del final o marque "No tengo firma" y escriba su nombre completo.';
+      window.firmaDigital?.enfocar();
+      return;
+    }
+
+    resultado.textContent = 'Generando y enviando documento...';
     const boton = form.querySelector('button[type="submit"]');
     if (boton) boton.disabled = true;
 
@@ -443,7 +465,7 @@ if (form) {
         }
       }
       if (esSubsidio) {
-        datos.localidad = localidadPersona.valor(datos.localidad);
+        datos.verificacion = verificacion;
         datos.bienesPropios = filasDeTabla('bienesPropios').filter((fila) => Object.values(fila).some(Boolean));
         datos.recursosNecesarios = filasDeTabla('recursosNecesarios').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
         datos.aporteActivoFijo = form.querySelector('[name="aporteActivoFijo"]')?.value || '';
@@ -453,7 +475,6 @@ if (form) {
         datos.aporteManoObra = form.querySelector('[name="aporteManoObra"]')?.value || '';
         datos.totalProyectoPropio = numero(datos.aporteActivoFijo) + numero(datos.aporteBienesUso) + numero(datos.aporteManoObra);
         datos.totalProyectoSolicitado = numero(datos.solicitadoActivoFijo) + numero(datos.solicitadoBienesUso);
-        datos.domicilio = `${datos.calleDomicilio || ''} ${calleSinNumero?.checked ? 'S/N' : (datos.numeroDomicilio || '')}`.trim();
       }
       datos.fechaLugar = datos.dia
         ? `${datos.dia} de ${datos.mes} de ${datos.anio}`
@@ -467,18 +488,16 @@ if (form) {
       }
       datos.calleSinNumero = Boolean(calleSinNumero?.checked);
       if (datos.calleSinNumero) datos.numeroEmprendimiento = 'S/N';
-      if (esSubsidio) {
-        const fechaEnvio = new Date();
-        datos.fechaLugar = `SANTIAGO DEL ESTERO, ${String(fechaEnvio.getDate()).padStart(2, '0')} de ${meses[fechaEnvio.getMonth()]} de ${fechaEnvio.getFullYear()}`;
-        datos.domicilio = `${datos.calleDomicilio || ''} ${calleSinNumero?.checked ? 'S/N' : (datos.numeroDomicilio || '')}`.trim();
-      }
+      if (esSubsidio) datos.firma = firma;
       datos.imagenes = await Promise.all(archivos.map(({ archivo, categoria }) => leerArchivo(archivo, categoria)));
       const headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/pdf'
       };
-      if (!esInicio) headers.Authorization = `Bearer ${token}`;
-      const respuesta = await fetch(`${apiBaseUrl}/api/formularios-digitales/${esInicio ? 'inicio' : 'ayuda'}`, {
+      // En Subsidios la sesión es opcional: si la carga un empleado por el emprendedor, queda en la auditoría
+      if (!esInicio && token) headers.Authorization = `Bearer ${token}`;
+      const ruta = esInicio ? 'inicio' : esSubsidio ? 'subsidio' : 'ayuda';
+      const respuesta = await fetch(`${apiBaseUrl}/api/formularios-digitales/${ruta}`, {
         method: 'POST',
         headers,
         body: JSON.stringify(datos)
@@ -487,7 +506,7 @@ if (form) {
       if (!respuesta.ok) {
         const data = await respuesta.json().catch(() => ({}));
         resultado.textContent = data.error || 'No se pudo guardar el formulario';
-        if (respuesta.status === 401 || respuesta.status === 403) {
+        if (esFormularioCredito && (respuesta.status === 401 || respuesta.status === 403)) {
           resultado.insertAdjacentHTML('beforeend', ' <a href="/login">Iniciar sesión</a>');
         }
         return;
@@ -501,6 +520,8 @@ if (form) {
 
       resultado.textContent = 'Formulario registrado correctamente. ';
       form.reset();
+      window.verificacionSubsidio?.restaurar();
+      window.firmaDigital?.reiniciar();
       completarFecha();
       actualizarFormatoDocumento();
       actualizarNumeroCalle();
@@ -511,10 +532,12 @@ if (form) {
       const enlace = document.createElement('a');
       enlace.className = 'btn descargar';
       enlace.href = urlPdf;
-      const correoDescarga = esFormularioCredito ? datos.correoGarante : datos.correo;
-      const correoArchivo = String(correoDescarga || '').trim().toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
-      enlace.download = `Solicitud_Microemprendimiento_${correoArchivo}.pdf`;
-      enlace.textContent = 'Descargar PDF nuevamente';
+      // Nombre que entienda el emprendedor: tipo de solicitud y fecha del envío (ej: Solicitud_Subsidio_Microemprendimiento_05_11_2026.pdf)
+      const hoy = new Date();
+      const fechaArchivo = [hoy.getDate(), hoy.getMonth() + 1].map((n) => String(n).padStart(2, '0')).concat(hoy.getFullYear()).join('_');
+      const tipoArchivo = esSubsidio ? 'Subsidio_' : esFormularioCredito ? 'Credito_' : '';
+      enlace.download = `Solicitud_${tipoArchivo}Microemprendimiento_${fechaArchivo}.pdf`;
+      enlace.textContent = 'Descargar documento nuevamente';
       resultado.append(enlace);
       enlace.click();
       window.setTimeout(() => URL.revokeObjectURL(urlPdf), 60000);

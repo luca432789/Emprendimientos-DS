@@ -83,6 +83,67 @@ export const modelObtenerSolicitudDeEmprendimiento = async (idEmprendimiento) =>
     return filas[0]?.idSolicitudInicio;
 };
 
+// Subsidio: el emprendedor se identifica con el Nº de expediente, el correo y el DNI de su solicitud de inicio.
+// Devuelve la solicitud con sus datos y el último subsidio enviado (si hay), o undefined si no coinciden los tres.
+export const modelBuscarSolicitudParaSubsidio = async (nroExpediente, correo, dni) => {
+    const [filas] = await pool.query(
+        `SELECT s.idSolicitudInicio, s.AprobacionArea, s.EnvioMinistro, x.NroExpediente,
+                d.PersonaNombre, d.PersonaApellido, d.PersonaDNI, d.PersonaDepartamento, d.PersonaLocalidad,
+                d.PersonaDomicilio, d.PersonaTeléfono AS PersonaTelefono, d.PersonaCorreo, d.EmprendimientoNombre,
+                d.EmprendimientoDepto, d.EmprendimientoLocalidad, d.EmprendimientoActPrincipal, d.EmprendimientoRubro,
+                d.EleccionAyuda, sub.idSubsidio, sub.Aprobado AS SubsidioAprobado, sub.EstadoRevision AS SubsidioEstado
+         FROM Expediente x
+         INNER JOIN SolicitudInicio s ON s.idSolicitudInicio = x.idSolicitudInicio
+         INNER JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = s.idSolicitudInicio
+         LEFT JOIN Subsidio sub ON sub.idSubsidio =
+              (SELECT MAX(u.idSubsidio) FROM Subsidio u WHERE u.idSolicitudInicio = s.idSolicitudInicio)
+         WHERE x.NroExpediente = ? AND LOWER(TRIM(d.PersonaCorreo)) = LOWER(?) AND UPPER(TRIM(d.PersonaDNI)) = UPPER(?)
+         LIMIT 1;`,
+        [nroExpediente, correo, dni]
+    );
+    return filas[0];
+};
+
+const errorSubsidio = (mensaje, codigo) => Object.assign(new Error(mensaje), { codigo });
+
+// Registra el subsidio de la solicitud. Si ya hay uno sin finalizar (EstadoRevision 0 o 1) lo reemplaza
+// (el Área puede pedirle al emprendedor que lo complete de nuevo) y devuelve el PDF anterior para borrarlo.
+// Las condiciones se vuelven a comprobar con las filas bloqueadas, por si cambiaron desde la verificación.
+export const modelRegistrarSubsidioDeSolicitud = async (idSolicitudInicio, pathFormulario, monto, datosAuditoria) => {
+    return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [[solicitud]] = await conexion.query(
+            'SELECT AprobacionArea, EnvioMinistro FROM SolicitudInicio WHERE idSolicitudInicio = ? FOR UPDATE;',
+            [idSolicitudInicio]
+        );
+        if (!solicitud || Number(solicitud.AprobacionArea) !== 1 || Number(solicitud.EnvioMinistro) !== 0) {
+            throw errorSubsidio('La solicitud ya no admite el envío del formulario de subsidio.', 'SOLICITUD_NO_DISPONIBLE');
+        }
+
+        const [[previo]] = await conexion.query(
+            `SELECT idSubsidio, PathFormularioSub, Aprobado, EstadoRevision FROM Subsidio
+             WHERE idSolicitudInicio = ? ORDER BY idSubsidio DESC LIMIT 1 FOR UPDATE;`,
+            [idSolicitudInicio]
+        );
+        if (previo && (previo.Aprobado !== null || Number(previo.EstadoRevision) === 2)) {
+            throw errorSubsidio('El subsidio de este expediente ya fue resuelto y no admite cambios.', 'SUBSIDIO_FINALIZADO');
+        }
+
+        if (previo) {
+            await conexion.query(
+                'UPDATE Subsidio SET PathFormularioSub = ?, monto = ?, FechaRecibido = CURRENT_DATE() WHERE idSubsidio = ?;',
+                [pathFormulario, monto, previo.idSubsidio]
+            );
+            return { idSubsidio: previo.idSubsidio, pathAnterior: previo.PathFormularioSub };
+        }
+
+        const [resultado] = await conexion.query(
+            'INSERT INTO Subsidio (PathFormularioSub, monto, FechaRecibido, idSolicitudInicio) VALUES (?, ?, CURRENT_DATE(), ?);',
+            [pathFormulario, monto, idSolicitudInicio]
+        );
+        return { idSubsidio: resultado.insertId, pathAnterior: null };
+    });
+};
+
 const tablasAyuda = {
     Subsidio: { tabla: 'Subsidio', id: 'idSubsidio', path: 'PathFormularioSub' },
     Credito: { tabla: 'Credito', id: 'idCredito', path: 'PathFormularioCredito' }

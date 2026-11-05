@@ -1,0 +1,26 @@
+<p class="titulo-seccion titulo-costos">COSTO TOTAL DEL PROYECTO <span>(tenga en cuenta un ciclo de producción completo)</span></p>
+<table class="tabla tabla-costos">
+    <colgroup><col style="width: 39.7%"><col style="width: 26.9%"><col style="width: 33.4%"></colgroup>
+    <tr><th></th><th>Aporte propio</th><th>Solicitado</th></tr>
+    <tr>
+        <td>Activo Fijo <small>(maquinarias y herramientas)</small></td>
+        <td class="numero"><%= moneda(datos.aporteActivoFijo) %></td>
+        <td class="numero"><%= moneda(datos.solicitadoActivoFijo) %></td>
+    </tr>
+    <tr>
+        <td>Bienes de uso <small>(insumo y materia prima)</small></td>
+        <td class="numero"><%= moneda(datos.aporteBienesUso) %></td>
+        <td class="numero"><%= moneda(datos.solicitadoBienesUso) %></td>
+    </tr>
+    <tr>
+        <td>Mano de obra</td>
+        <td class="numero"><%= moneda(datos.aporteManoObra) %></td>
+        <td class="gris"></td>
+    </tr>
+    <tr>
+        <td>COSTO TOTAL DEL PROYECTO</td>
+        <td class="numero"><%= moneda(datos.totalProyectoPropio) %></td>
+        <td class="numero"><%= moneda(datos.totalProyectoSolicitado) %></td>
+    </tr>
+</table>
+

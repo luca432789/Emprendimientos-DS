@@ -1,0 +1,293 @@
+/* Formulario de Subsidios no Reintegrables: medidas copiadas de la hoja oficial (A4) */
+@page { size: A4; margin: 0; }
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    color: #000;
+}
+
+p { margin: 0; }
+
+/* Cada hoja ocupa exactamente una página: así la hoja 3 siempre es la de los adjuntos */
+.hoja {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    padding: 52mm 20mm 30mm 20mm;
+    overflow: hidden;
+    page-break-after: always;
+    z-index: 0; /* contexto propio: el escudo (z-index -1) queda detrás del texto pero dentro de la hoja */
+}
+.hoja:last-child { page-break-after: auto; }
+
+/* ---------- Encabezado y pie comunes ---------- */
+.logo {
+    position: absolute;
+    top: 12.7mm;
+    left: 20mm;
+    width: 59mm;
+}
+
+.cuadro-expediente {
+    position: absolute;
+    top: 28.5mm;
+    left: 20mm;
+    width: 80mm;
+    height: 11mm;
+    border: 0.75pt solid #444;
+    padding: 1mm 2mm;
+    font-size: 10pt;
+}
+.numero-expediente {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    margin-left: 1.5mm;
+}
+
+.pie {
+    position: absolute;
+    top: 270.5mm;
+    left: 20mm;
+    right: 20mm;
+    text-align: center;
+}
+.pie-titulo { font-weight: bold; font-size: 11pt; }
+.pie-resolucion { font-size: 8pt; letter-spacing: 0.6pt; }
+.pie-numero { position: absolute; top: 0; right: 0; font-size: 12pt; }
+
+/* ---------- Datos completados ---------- */
+/* Los datos se escriben en Arial sobre la línea punteada, como si se llenara la hoja impresa */
+.relleno {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10.5pt;
+    border-bottom: 1px dotted #000;
+    padding: 0 1.5mm;
+}
+.relleno.corto {
+    display: inline-block;
+    min-width: 38mm;
+    line-height: 1.2;
+}
+
+.campo {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5mm;
+    margin-bottom: 1.6mm;
+    font-size: 12.5pt;
+}
+.campo .relleno { flex: 1; min-height: 5.5mm; }
+.campo-doble { display: flex; gap: 4mm; }
+.campo-doble .campo { flex: 1; }
+.subrayado { text-decoration: underline; }
+
+/* ---------- Hoja 1: carátula ---------- */
+.escudo {
+    position: absolute;
+    top: 61.7mm;
+    left: 23.6mm;
+    width: 174.6mm;
+    z-index: -1;
+}
+
+.titulos { text-align: center; margin: 1mm 0 9mm; }
+.titulos .subsecretaria { font-size: 14pt; margin-top: -0.5mm; }
+.titulos .ministerio {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 16pt;
+    text-decoration: underline;
+    margin: 3mm 0 7mm;
+}
+.titulos .gobierno { font-size: 19pt; line-height: 1.1; }
+.titulos .plan { font-size: 11pt; }
+.titulos .presentacion { font-weight: bold; font-size: 11pt; margin-top: 7mm; }
+.titulos .tipo { font-weight: bold; font-size: 15pt; text-decoration: underline; }
+
+.tabla-rubro {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6mm 0 7mm;
+    font-size: 11pt;
+}
+.tabla-rubro td { border: 0.75pt solid #444; padding: 0.5mm 2mm; }
+.tabla-rubro td:first-child { width: 22mm; }
+.tabla-rubro .valor { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; }
+
+.declaracion-titular {
+    text-align: justify;
+    font-size: 12.5pt;
+    line-height: 1.35;
+}
+
+.firmas-titular {
+    display: flex;
+    gap: 6mm;
+    margin-top: 1mm;
+    font-size: 12.5pt;
+}
+.firmas-titular > div { flex: 1; display: flex; flex-direction: column; text-align: center; }
+.firmas-titular .valor-firma {
+    margin-top: 14mm;
+    min-height: 6mm;
+    border-bottom: 1px dotted #000;
+    text-align: center;
+}
+.firmas-titular .relleno { border-bottom: 1px dotted #000; padding: 0; }
+
+/* ---------- Tablas de las hojas 2 y 3 ---------- */
+.titulo-seccion { font-weight: bold; font-size: 11pt; margin-bottom: 2mm; }
+.titulo-seccion small { font-weight: normal; font-size: 9pt; }
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 11pt;
+}
+.tabla th, .tabla td {
+    border: 0.75pt solid #444;
+    height: 7.8mm;
+    padding: 0 2mm;
+    font-weight: normal;
+}
+.tabla td {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 8.5pt;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.tabla .numero { text-align: right; }
+
+.tabla-bienes { margin-bottom: 8mm; }
+.tabla-bienes th { text-align: center; }
+
+.tabla-recursos th { text-align: left; font-size: 13.5pt; }
+.tabla-recursos .fila-total td:first-child {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 13.5pt;
+    text-align: right;
+}
+
+.total-solicitado {
+    margin-top: 7mm;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12pt;
+}
+.total-solicitado small { font-size: 9pt; }
+.total-solicitado .relleno {
+    display: inline-block;
+    min-width: 52mm;
+    border-bottom: 1px solid #000;
+    font-weight: normal;
+}
+
+.titulo-costos { font-size: 12pt; }
+.titulo-costos span { font-weight: normal; }
+
+.tabla-costos th, .tabla-costos td { border-color: #4f81bd; height: 7.4mm; }
+.tabla-costos th { text-align: center; }
+.tabla-costos td:first-child {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+}
+.tabla-costos td:first-child small { font-size: 9pt; }
+.tabla-costos .gris { background: #c0c0c0; }
+
+/* ---------- Firma del titular (firma.ejs) ---------- */
+/* Los márgenes negativos dejan la firma apoyada sobre la línea sin agrandar el renglón */
+.firma-imagen {
+    height: 13mm;
+    margin: -8mm 0 -1.5mm;
+    vertical-align: bottom;
+}
+.firma-texto {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+    font-weight: normal;
+    font-size: 13pt;
+}
+
+/* ---------- Hojas 4, 5 y 6: textos legales ---------- */
+.texto-legal {
+    text-align: justify;
+    font-size: 12pt;
+    line-height: 1.75;
+}
+.texto-legal.compacto { line-height: 1.6; }
+
+.titulo-acta {
+    font-weight: bold;
+    font-size: 15pt;
+    text-decoration: underline;
+    text-align: justify;
+    text-align-last: justify;
+    word-spacing: 6mm;
+    line-height: 1.6;
+    margin-top: 1mm;
+}
+.titulo-acta .ultima { text-align-last: left; display: block; }
+/* Sombra del título: una copia gris corrida detrás. Con text-shadow Chrome rasteriza el texto
+   y cada PDF tardaba ~3 s más en generarse. */
+.titulo-acta-caja { position: relative; }
+.titulo-acta.sombra {
+    position: absolute;
+    top: 0.3mm;
+    left: 0.3mm;
+    width: 100%;
+    margin: 0;
+    color: #999;
+    z-index: -1;
+}
+
+.lista-acta { margin: 0; padding-left: 12mm; }
+.lista-acta li { padding-left: 2mm; }
+
+.firma-campos p { font-weight: bold; margin-top: 5mm; }
+.firma-campos .relleno { font-weight: normal; }
+
+.titulo-notificacion {
+    text-align: center;
+    font-weight: bold;
+    text-decoration: underline;
+    margin: 3mm 0 8mm;
+}
+.sangria { text-indent: 13mm; }
+.lista-notificacion { margin: 0; padding-left: 13mm; }
+.notificado { font-weight: bold; font-size: 15.5pt; }
+.firmas-notificacion { margin-top: 2mm; }
+.firmas-notificacion p { font-weight: bold; line-height: 1.6; }
+.firmas-notificacion .relleno { font-weight: normal; }
+
+.titulo-declaracion {
+    text-align: center;
+    font-weight: bold;
+    font-size: 20pt;
+    line-height: 1.15;
+    margin: 0 0 6mm;
+}
+.datos-declaracion p { margin-bottom: 3mm; line-height: 1.5; }
+.normas-declaracion p { text-align: justify; margin-bottom: 3.5mm; line-height: 1.15; }
+
+.firma-responsable {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 8mm;
+}
+.firma-responsable .linea-firma {
+    display: inline-block;
+    width: 70mm;
+    border-bottom: 1px dotted #000;
+    margin-bottom: 0.5mm;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    font-size: 10.5pt;
+}
+.firma-responsable p { margin-top: 4mm; }
+.firma-responsable p:first-of-type { margin-top: 0; }

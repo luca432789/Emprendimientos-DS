@@ -1,0 +1,32 @@
+<p class="titulo-seccion">CON QUE CUENTA PARA LA EJECUCIÓN DEL PROYECTO <small>(mencione los bienes y el valor en el estado actual)</small></p>
+<table class="tabla tabla-bienes">
+    <colgroup><col style="width: 44.5%"><col style="width: 18.8%"><col style="width: 17%"><col style="width: 19.7%"></colgroup>
+    <tr><th>Bienes</th><th>Cantidad</th><th>Antigüedad</th><th>Monto estimado</th></tr>
+    <% filasBienes.forEach((fila) => { %>
+    <tr>
+        <td><%= fila.bien %></td>
+        <td class="numero"><%= fila.cantidad || '' %></td>
+        <td><%= fila.antiguedad %></td>
+        <td class="numero"><%= moneda(fila.montoEstimado) %></td>
+    </tr>
+    <% }) %>
+</table>
+
+<p class="titulo-seccion">1.&nbsp; RECURSOS NECESARIOS PARA LLEVAR A CABO EL PROYECTO:</p>
+<table class="tabla tabla-recursos">
+    <colgroup><col style="width: 40%"><col style="width: 17%"><col style="width: 21.5%"><col style="width: 21.5%"></colgroup>
+    <tr><th>Recursos</th><th>Cantidad</th><th>Precio Unitario</th><th>Total</th></tr>
+    <% filasRecursos.forEach((fila) => { %>
+    <tr>
+        <td><%= fila.bien %></td>
+        <td class="numero"><%= fila.cantidad || '' %></td>
+        <td class="numero"><%= moneda(fila.precioUnitario) %></td>
+        <td class="numero"><%= moneda(fila.subtotal) %></td>
+    </tr>
+    <% }) %>
+    <tr class="fila-total"><td colspan="3">TOTAL</td><td class="numero"><%= moneda(totalRecursos) %></td></tr>
+</table>
+
+<p class="total-solicitado">
+    TOTAL SOLICITADO <small>(sume los cuadros anteriores)</small>: <span class="relleno"><%= moneda(datos.montoSolicitado) %></span>
+</p>

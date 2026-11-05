@@ -502,14 +502,17 @@ export const ModelRegistrarEmprendimientoHistorico = async (idUsuario, ipCliente
         const valorSeguimiento = aprobado === true ? 0 : null;
         const tablaAyuda = ayuda.tipo === 'Subsidio' ? 'Subsidio' : 'Credito';
         const columnaPdf = ayuda.tipo === 'Subsidio' ? 'PathFormularioSub' : 'PathFormularioCredito';
+        // Subsidio.EstadoRevision: un subsidio ya resuelto queda finalizado (2); uno pendiente, sin revisar (0)
+        const columnaEstado = ayuda.tipo === 'Subsidio' ? ', EstadoRevision' : '';
+        const valoresEstado = ayuda.tipo === 'Subsidio' ? [aprobado === null ? 0 : 2] : [];
         await conexion.query(
             `INSERT INTO ${tablaAyuda} (${columnaPdf}, monto, FechaRecibido, Aprobado, FechaResolucion,
-                    MensajeResolucion, FacturasEntregadas, PuestaMarchaAcreditada, idSolicitudInicio)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    MensajeResolucion, FacturasEntregadas, PuestaMarchaAcreditada, idSolicitudInicio${columnaEstado})
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?${valoresEstado.length ? ', ?' : ''})`,
             [
                 ayuda.direccionPdf, ayuda.monto, ayuda.fechaRecibido, aprobado,
                 aprobado === null ? null : ayuda.fechaResolucion, ayuda.mensajeResolucion,
-                valorSeguimiento, valorSeguimiento, idSolicitud
+                valorSeguimiento, valorSeguimiento, idSolicitud, ...valoresEstado
             ]
         );
 

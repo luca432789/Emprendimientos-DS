@@ -1,0 +1,15 @@
+<%# Marco común a las seis hojas: logo, cuadro de expediente y pie de declaración jurada %>
+<section class="hoja">
+    <header class="encabezado">
+        <img class="logo" src="<%= logo %>" alt="Ministerio de Desarrollo Social">
+        <div class="cuadro-expediente"><strong>EXPEDIENTE Nº</strong> <span class="numero-expediente"><%= datos.expediente %></span></div>
+    </header>
+
+    <%- contenido %>
+
+    <footer class="pie">
+        <p class="pie-titulo">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA</p>
+        <p class="pie-resolucion">RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</p>
+        <span class="pie-numero"><%= numero %></span>
+    </footer>
+</section>

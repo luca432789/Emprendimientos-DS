@@ -40,6 +40,53 @@
     text-overflow: ellipsis;
 }
 
+/* Subsidios: Nº de expediente, correo y DNI de la solicitud de inicio antes de mostrar las hojas */
+.formulario-inicio .verificacion-subsidio {
+    background: white;
+    padding: 6px 24px 22px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid var(--azul);
+}
+
+.formulario-inicio .acciones-verificacion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.formulario-inicio .mensaje-verificacion {
+    margin: 14px 0 0;
+    color: var(--azul);
+    font-weight: bold;
+}
+
+.formulario-inicio .mensaje-verificacion:empty {
+    display: none;
+}
+
+.formulario-inicio .verificacion-subsidio .linea[readonly] {
+    color: #555;
+}
+
+/* Datos que salen de la solicitud de inicio: se ven, pero no se pueden cambiar */
+.formulario-inicio .linea[data-dato-solicitud] {
+    background: #eef0f3;
+    color: #444;
+    cursor: default;
+}
+
+.formulario-inicio textarea.linea {
+    resize: none;
+}
+
+.formulario-inicio .nota-solicitud {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: #666;
+}
+
 /* Encabezado de la nota */
 .formulario-inicio .fecha-lugar {
     text-align: right;
@@ -104,6 +151,54 @@
 .formulario-inicio .campo-responsable .linea {
     min-width: 0;
     margin-top: 0;
+}
+
+.formulario-inicio .firma-referencia {
+    font-weight: normal;
+    font-style: italic;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Recuadro para dibujar la firma (js/firma-digital.js) */
+.formulario-inicio .firma-digital {
+    margin-top: 24px;
+}
+
+.formulario-inicio .firma-lienzo {
+    display: block;
+    width: 100%;
+    max-width: 540px;
+    aspect-ratio: 3 / 1; /* misma proporción que la imagen que se envía (900 x 300) */
+    margin-top: 8px;
+    border: 1px dashed #999;
+    border-radius: 6px;
+    background: #fff;
+    cursor: crosshair;
+    touch-action: none; /* al firmar con el dedo no se desplaza la página */
+}
+
+.formulario-inicio .firma-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    max-width: 540px;
+    margin: 6px 0 10px;
+}
+
+.formulario-inicio .firma-borrar {
+    padding: 6px 14px;
+    font-size: 13px;
+    background: #2f4e78;
+    color: #fff;
+}
+
+/* Mientras se genera y envía el documento el botón queda gris y no se puede volver a pulsar */
+.formulario-inicio .btn.enviar:disabled {
+    background: #9aa3ad;
+    cursor: not-allowed;
 }
 
 .formulario-inicio .firmas-en-linea {

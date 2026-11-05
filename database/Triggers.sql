@@ -641,8 +641,16 @@ BEGIN
             @usuario_ip);
     END IF;
     
-    -- 4. SEGURO DE INTEGRIDAD: Si se cambió el monto
-    IF (OLD.monto <> NEW.monto) THEN
+    -- 4. Reenvío del formulario (el emprendedor lo vuelve a completar antes de la resolución)
+    IF (OLD.PathFormularioSub <> NEW.PathFormularioSub) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio, 
+			CONCAT('Formulario de Subsidio reenviado para Solicitud ID: ', NEW.idSolicitudInicio, '. Monto solicitado: $', NEW.monto,
+				' (antes $', OLD.monto, '). Ubicacion del formulario: ', NEW.PathFormularioSub),
+			@usuario_ip);
+    -- 5. SEGURO DE INTEGRIDAD: Si se cambió el monto sin reenviar el formulario
+    ELSEIF (OLD.monto <> NEW.monto) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
 			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio, 

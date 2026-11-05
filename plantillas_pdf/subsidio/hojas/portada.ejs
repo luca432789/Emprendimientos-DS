@@ -1,0 +1,35 @@
+<img class="escudo" src="<%= escudo %>" alt="">
+
+<div class="titulos">
+    <p class="subsecretaria">SUBSECRETARIA DE DESARROLLO SOCIAL</p>
+    <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL</p>
+    <p class="gobierno">GOBIERNO DE LA PROVINCIA DE<br>SANTIAGO DEL ESTERO</p>
+    <p class="plan">PLAN PROVINCIAL SANTIAGO PRODUCTIVO</p>
+    <p class="presentacion">FORMULARIO DE PRESENTACIÓN DE PROYECTOS</p>
+    <p class="tipo">SUBSIDIOS NO REINTEGRABLES</p>
+</div>
+
+<div class="campo"><span class="subrayado">Nombre del proyecto:</span><span class="relleno"><%= datos.nombreEmprendimiento %></span></div>
+<div class="campo-doble">
+    <div class="campo"><span>Localidad:</span><span class="relleno"><%= datos.localidad %></span></div>
+    <div class="campo"><span>Dpto:</span><span class="relleno"><%= datos.departamento %></span></div>
+</div>
+<div class="campo"><span>Beneficiarios:</span><span class="relleno"><%= datos.beneficiarios %></span></div>
+<div class="campo"><span>Actividad principal:</span><span class="relleno"><%= datos.rubro %></span></div>
+
+<table class="tabla-rubro">
+    <tr><td>Rubro</td><td class="valor"><%= rubroEmprendimiento %></td></tr>
+</table>
+
+<p class="declaracion-titular">
+    El que suscribe <span class="relleno"><%= datos.nombreApellido %></span> DNI Nº <span class="relleno"><%= datos.dniCuit %></span>
+    en su carácter de titular del proyecto de referencia, afirma que los datos consignados en este formulario son
+    correctos y completos, y que éste formulario del Plan Provincial Santiago Productivo, se ha confeccionado sin
+    omitir ni falsear dato alguno que deba contener, siendo fiel expresión de la verdad como asimismo autentica/s
+    la/s firma/s, comprometiéndose a informar en los plazos que fijan las normas vigentes, cualquier cambio en los mismos.
+</p>
+<div class="firmas-titular">
+    <div><span class="valor-firma"><%- include('../firma.ejs') %></span><span>Firma</span></div>
+    <div><span class="valor-firma relleno"><%= datos.aclaracionProyecto %></span><span>Aclaración</span></div>
+    <div><span class="valor-firma relleno"><%= datos.dniProyecto %></span><span>DNI Nº</span></div>
+</div>
