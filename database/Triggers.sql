@@ -105,14 +105,14 @@ DELIMITER //
 CREATE TRIGGER tg_auditoria_SolicitudInicio_update
 AFTER UPDATE ON SolicitudInicio
 FOR EACH ROW
-BEGIN    
+BEGIN
     -- 1. Cambio en el Estado de Revisión del area
     IF OLD.EstadoRevisionArea <> NEW.EstadoRevisionArea THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio, 
-			CONCAT('Estado de revisión de area cambió a: ', 
-				CASE NEW.EstadoRevisionArea WHEN 0 THEN 'Sin revisar' WHEN 1 THEN 'En proceso' ELSE 'Finalizado' END), 
+			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio,
+			CONCAT('Estado de revisión de area cambió a: ',
+				CASE NEW.EstadoRevisionArea WHEN 0 THEN 'Sin revisar' WHEN 1 THEN 'En proceso' ELSE 'Finalizado' END),
 			@usuario_ip);
     END IF;
 
@@ -120,18 +120,19 @@ BEGIN
     IF (OLD.AprobacionArea IS NULL AND NEW.AprobacionArea IS NOT NULL) OR (OLD.AprobacionArea <> NEW.AprobacionArea) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio, 
-			CONCAT('Dictamen del Área: ', CASE WHEN NEW.AprobacionArea = 1 THEN 'APROBADO' ELSE 'RECHAZADO' END, 
-				' Revisores - Tecnico: ', COALESCE(NEW.idEmpleadoTecRevisor, 'N/C'), ' - Social: ', COALESCE(NEW.idEmpleadoSocRevisor, 'N/C')), 
+			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio,
+			CONCAT('Dictamen del Área: ', CASE WHEN NEW.AprobacionArea = 1 THEN 'APROBADO' ELSE 'RECHAZADO' END,
+				' Revisores - Tecnico: ', COALESCE(NEW.idEmpleadoTecRevisor, 'N/C'), ' - Social: ', COALESCE(NEW.idEmpleadoSocRevisor, 'N/C'),
+				IF(NEW.AprobacionArea = 0 AND NEW.MotivoRechazo IS NOT NULL, CONCAT(' - Motivo: ', NEW.MotivoRechazo), '')),
 			@usuario_ip);
     END IF;
-    
+
     -- 3. Envío de documentos a ministro (solicitudInicio y subsidio/credito)
     IF OLD.EnvioMinistro <> NEW.EnvioMinistro AND NEW.EnvioMinistro = 1 THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio, 
-			CONCAT('Se enviaron los documentos al ministro'), 
+			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio,
+			CONCAT('Se enviaron los documentos al ministro'),
 			@usuario_ip);
     END IF;
 
@@ -139,8 +140,16 @@ BEGIN
     IF (OLD.AprobacionMinistro IS NULL AND NEW.AprobacionMinistro IS NOT NULL) OR (OLD.AprobacionMinistro <> NEW.AprobacionMinistro) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio, 
-			CONCAT('Resolución del Ministro: ', CASE WHEN NEW.AprobacionMinistro = 1 THEN 'APROBADA' ELSE 'RECHAZADA' END), 
+			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio,
+			CONCAT('Resolución del Ministro: ', CASE WHEN NEW.AprobacionMinistro = 1 THEN 'APROBADA' ELSE 'RECHAZADA' END,
+				IF(NEW.AprobacionMinistro = 0 AND NEW.MotivoRechazo IS NOT NULL, CONCAT(' - Motivo: ', NEW.MotivoRechazo), '')),
+			@usuario_ip);
+    -- 5. Solicitud cerrada sin pasar por el Ministro (ej: "Rechazado por Subsidio" o por falta de formulario)
+    ELSEIF (OLD.MensajeResolucionFinal IS NULL AND NEW.MensajeResolucionFinal IS NOT NULL) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'SolicitudInicio', NEW.idSolicitudInicio,
+			CONCAT('Solicitud finalizada: ', NEW.MensajeResolucionFinal),
 			@usuario_ip);
     END IF;
 END;
@@ -226,6 +235,7 @@ END;
 //
 DELIMITER ;
 -- Trigger Delete_Auditoria_DatosSolicitudInicio
+DROP TRIGGER IF EXISTS tg_auditoria_DatosSolicitudInicio_delete;
 DELIMITER //
 CREATE TRIGGER tg_auditoria_DatosSolicitudInicio_delete
 BEFORE DELETE ON DatosSolicitudInicio
@@ -617,9 +627,10 @@ BEGIN
     IF (OLD.Aprobado IS NULL AND NEW.Aprobado IS NOT NULL) OR (OLD.Aprobado <> NEW.Aprobado) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio, 
-			CONCAT('Estado del Subsidio actualizado a: ', CASE WHEN NEW.Aprobado = 1 THEN 'OTORGADO' ELSE 'RECHAZADO' END,
-				' - Revisor/Ministro ID: ', COALESCE(NEW.idEmpleadoRevisor, 'N/C')),
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio,
+			CONCAT('Estado del Subsidio actualizado a: ', CASE WHEN NEW.Aprobado = 1 THEN 'APROBADO' ELSE 'RECHAZADO' END,
+				' - Revisor ID: ', COALESCE(NEW.idEmpleadoRevisor, 'N/C'),
+				IF(NEW.Aprobado = 0 AND NEW.MotivoRechazo IS NOT NULL, CONCAT(' - Motivo: ', NEW.MotivoRechazo), '')),
 			@usuario_ip);
     END IF;
 
@@ -627,8 +638,8 @@ BEGIN
     IF (OLD.FacturasEntregadas IS NULL AND NEW.FacturasEntregadas IS NOT NULL) OR (OLD.FacturasEntregadas <> NEW.FacturasEntregadas) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio, 
-			CONCAT('Rendición de facturas: ', CASE WHEN NEW.FacturasEntregadas = 1 THEN 'Entregadas y en revisión' ELSE 'Sin entregar/Retiradas' END), 
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio,
+			CONCAT('Rendición de facturas: ', CASE WHEN NEW.FacturasEntregadas = 1 THEN 'Entregadas y en revisión' ELSE 'Sin entregar/Retiradas' END),
             @usuario_ip);
     END IF;
 
@@ -636,16 +647,16 @@ BEGIN
     IF (OLD.PuestaMarchaAcreditada IS NULL AND NEW.PuestaMarchaAcreditada IS NOT NULL) OR (OLD.PuestaMarchaAcreditada <> NEW.PuestaMarchaAcreditada) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio, 
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio,
 			CONCAT('Verificación de campo: Puesta en marcha ', CASE WHEN NEW.PuestaMarchaAcreditada = 1 THEN 'ACREDITADA POSITIVA' ELSE 'NO ACREDITADA' END),
             @usuario_ip);
     END IF;
-    
-    -- 4. Reenvío del formulario (el emprendedor lo vuelve a completar antes de la resolución)
+
+    -- 4. Reenvío del formulario (el emprendedor lo vuelve a completar porque el Área se lo pidió)
     IF (OLD.PathFormularioSub <> NEW.PathFormularioSub) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio, 
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio,
 			CONCAT('Formulario de Subsidio reenviado para Solicitud ID: ', NEW.idSolicitudInicio, '. Monto solicitado: $', NEW.monto,
 				' (antes $', OLD.monto, '). Ubicacion del formulario: ', NEW.PathFormularioSub),
 			@usuario_ip);
@@ -653,11 +664,28 @@ BEGIN
     ELSEIF (OLD.monto <> NEW.monto) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio, 
-			CONCAT('¡ALERTA DE CONTROL! Alteración de valor económico. Monto anterior: $', OLD.monto, ' -> Nuevo Monto: $', NEW.monto), 
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio,
+			CONCAT('¡ALERTA DE CONTROL! Alteración de valor económico. Monto anterior: $', OLD.monto, ' -> Nuevo Monto: $', NEW.monto),
 			@usuario_ip);
     END IF;
-    
+
+    -- 6. Un empleado del Área comenzó la revisión (pasa a "En Revisión")
+    IF (OLD.EstadoRevision = 0 AND NEW.EstadoRevision = 1) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio,
+			CONCAT('Revisión del Subsidio iniciada para Solicitud ID: ', NEW.idSolicitudInicio),
+			@usuario_ip);
+    END IF;
+
+    -- 7. El Área le pidió al emprendedor que reenvíe el formulario
+    IF (OLD.ReenvioSolicitado = 0 AND NEW.ReenvioSolicitado = 1) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'Subsidio', NEW.idSubsidio,
+			CONCAT('Se solicitó al emprendedor el reenvío del formulario de Subsidio: ', COALESCE(NEW.MensajeSolicitudReenvio, '')),
+			@usuario_ip);
+    END IF;
 END;
 //
 DELIMITER ;
@@ -783,7 +811,7 @@ BEGIN
     INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
     VALUES (
         @usuario_id, 'INSERT', 'Expediente', NEW.idExpediente, 
-        CONCAT('Expediente generado para Solicitud ID: ', NEW.idSolicitudInicio, ' por Empleado ID: ', NEW.idEmpleadoCargo),
+        CONCAT('Expediente generado para Solicitud ID: ', NEW.idSolicitudInicio, ' por Usuario ID: ', NEW.idUsuarioCargo),
         @usuario_ip
     );
 END;

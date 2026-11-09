@@ -13,10 +13,13 @@ const hashCodigo = (codigo) => crypto.createHash('sha256').update(String(codigo)
 // Datos del emprendedor para armar el correo (solo cuentas de Emprendedor)
 export const modelDatosCorreoActivacion = async (idUsuario) => {
     const [filas] = await pool.query(
-        `SELECT u.idUsuario, u.Correo, em.Nombre, em.Apellido, e.Nombre AS NombreEmprendimiento
+        `SELECT u.idUsuario, u.Correo, em.Nombre, em.Apellido, e.Nombre AS NombreEmprendimiento,
+                s.CargaHistorica, d.EleccionAyuda
          FROM Usuario u
          INNER JOIN Emprendedor em ON em.idEmprendedor = u.idEmprendedor
          INNER JOIN Emprendimiento e ON e.idEmprendimiento = em.idEmprendimiento
+         LEFT JOIN SolicitudInicio s ON s.idSolicitudInicio = e.idSolicitudInicio
+         LEFT JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = e.idSolicitudInicio
          WHERE u.idUsuario = ? AND u.TipoUsuario = 'Emprendedor';`,
         [idUsuario]
     );

@@ -25,8 +25,7 @@ if (form) {
   const definicionesTablas = {
     bienesPropios: { cantidad: 10, columnas: ['bien', 'cantidad', 'antiguedad', 'montoEstimado'] },
     activoFijo: { cantidad: 7, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] },
-    bienesUso: { cantidad: 9, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] },
-    recursosNecesarios: { cantidad: 9, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] }
+    bienesUso: { cantidad: 9, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] }
   };
   const etiquetasColumnas = {
     bien: 'Bien', cantidad: 'Cantidad', antiguedad: 'Antigüedad',
@@ -80,35 +79,9 @@ if (form) {
   };
   const sumarMontos = (nombreTabla, campo) => filasDeTabla(nombreTabla)
     .reduce((total, fila) => total + numero(fila[campo]), 0);
+  // Crédito y subsidio: la columna "Solicitado" del costo total sale de los cuadros de activo fijo y bienes de uso
   const actualizarCalculosCredito = () => {
-    if (esFormularioSubsidio) {
-      const cuerpo = cuerposTabla.find((elemento) => elemento.dataset.tablaLineas === 'recursosNecesarios');
-      cuerpo?.querySelectorAll('tr').forEach((fila) => {
-        const cantidad = numero(fila.querySelector('[data-campo-fila="cantidad"]')?.value);
-        const precio = numero(fila.querySelector('[data-campo-fila="precioUnitario"]')?.value);
-        const subtotal = fila.querySelector('[data-campo-fila="subtotal"]');
-        if (subtotal) subtotal.value = cantidad && precio ? (cantidad * precio).toFixed(2) : '';
-      });
-      const total = sumarMontos('recursosNecesarios', 'subtotal');
-      const oculto = form.querySelector('[name="montoSolicitado"]');
-      if (oculto) oculto.value = total.toFixed(2);
-      const formato = (valor) => valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const totalVisible = form.querySelector('#total-recursos');
-      const totalSolicitadoVisible = form.querySelector('#total-solicitado');
-      if (totalVisible) totalVisible.textContent = formato(total);
-      if (totalSolicitadoVisible) totalSolicitadoVisible.textContent = `$ ${formato(total)}`;
-      const propio = numero(form.querySelector('[name="aporteActivoFijo"]')?.value)
-        + numero(form.querySelector('[name="aporteBienesUso"]')?.value)
-        + numero(form.querySelector('[name="aporteManoObra"]')?.value);
-      const solicitado = numero(form.querySelector('[name="solicitadoActivoFijo"]')?.value)
-        + numero(form.querySelector('[name="solicitadoBienesUso"]')?.value);
-      const outputPropio = form.querySelector('#costo-total-propio');
-      const outputSolicitado = form.querySelector('#costo-total-solicitado');
-      if (outputPropio) outputPropio.textContent = formato(propio);
-      if (outputSolicitado) outputSolicitado.textContent = formato(solicitado);
-      return;
-    }
-    if (!esFormularioCredito) return;
+    if (!esFormularioCredito && !esFormularioSubsidio) return;
     ['activoFijo', 'bienesUso'].forEach((nombreTabla) => {
       const cuerpo = cuerposTabla.find((elemento) => elemento.dataset.tablaLineas === nombreTabla);
       cuerpo?.querySelectorAll('tr').forEach((fila) => {
@@ -131,12 +104,14 @@ if (form) {
     };
     mostrar('#solicitado-activo-fijo', totalActivoFijo);
     mostrar('#solicitado-bienes-uso', totalBienesUso);
+    mostrar('#total-solicitado-activo-fijo', totalActivoFijo);
+    mostrar('#total-solicitado-bienes-uso', totalBienesUso);
     mostrar('#total-solicitado', totalSolicitado);
     mostrar('#costo-total-propio', aporteTotal);
     mostrar('#costo-total-solicitado', totalSolicitado);
   };
   form.addEventListener('input', (evento) => {
-    if (evento.target.matches('[data-campo-fila], [name="aporteActivoFijo"], [name="aporteBienesUso"], [name="aporteManoObra"], [name="solicitadoActivoFijo"], [name="solicitadoBienesUso"]')) {
+    if (evento.target.matches('[data-campo-fila], [name="aporteActivoFijo"], [name="aporteBienesUso"], [name="aporteManoObra"]')) {
       actualizarCalculosCredito();
     }
   });
@@ -467,14 +442,13 @@ if (form) {
       if (esSubsidio) {
         datos.verificacion = verificacion;
         datos.bienesPropios = filasDeTabla('bienesPropios').filter((fila) => Object.values(fila).some(Boolean));
-        datos.recursosNecesarios = filasDeTabla('recursosNecesarios').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
-        datos.aporteActivoFijo = form.querySelector('[name="aporteActivoFijo"]')?.value || '';
-        datos.solicitadoActivoFijo = form.querySelector('[name="solicitadoActivoFijo"]')?.value || '';
-        datos.aporteBienesUso = form.querySelector('[name="aporteBienesUso"]')?.value || '';
-        datos.solicitadoBienesUso = form.querySelector('[name="solicitadoBienesUso"]')?.value || '';
-        datos.aporteManoObra = form.querySelector('[name="aporteManoObra"]')?.value || '';
-        datos.totalProyectoPropio = numero(datos.aporteActivoFijo) + numero(datos.aporteBienesUso) + numero(datos.aporteManoObra);
-        datos.totalProyectoSolicitado = numero(datos.solicitadoActivoFijo) + numero(datos.solicitadoBienesUso);
+        datos.activoFijo = filasDeTabla('activoFijo').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
+        datos.bienesUso = filasDeTabla('bienesUso').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
+        if (!sumarMontos('activoFijo', 'subtotal') && !sumarMontos('bienesUso', 'subtotal')) {
+          resultado.textContent = 'Ingrese al menos un bien solicitado (activo fijo o bienes de uso) con cantidad y precio unitario.';
+          if (boton) boton.disabled = false;
+          return;
+        }
       }
       datos.fechaLugar = datos.dia
         ? `${datos.dia} de ${datos.mes} de ${datos.anio}`

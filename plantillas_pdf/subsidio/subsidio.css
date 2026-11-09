@@ -167,25 +167,23 @@ p { margin: 0; }
 .tabla-bienes { margin-bottom: 8mm; }
 .tabla-bienes th { text-align: center; }
 
-.tabla-recursos th { text-align: left; font-size: 13.5pt; }
-.tabla-recursos .fila-total td:first-child {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 13.5pt;
-    text-align: right;
-}
+.subtitulo-seccion { font-weight: bold; font-size: 11pt; margin: 0 0 2mm 4mm; }
+.subtitulo-seccion small { font-weight: normal; font-size: 9pt; }
 
-.total-solicitado {
-    margin-top: 7mm;
-    text-align: center;
-    font-weight: bold;
-    font-size: 12pt;
-}
-.total-solicitado small { font-size: 9pt; }
-.total-solicitado .relleno {
+.tabla-solicitados { margin-bottom: 6mm; }
+.tabla-solicitados th { text-align: center; }
+
+/* "TOTAL SOLICITADO" de la hoja 3: un renglón por cuadro (activo fijo y bienes de uso) */
+.totales-solicitados { font-size: 12pt; margin-bottom: 6mm; }
+.totales-solicitados p { margin: 0 0 1.5mm; }
+.totales-solicitados p + p { padding-left: 10mm; }
+.totales-solicitados .relleno {
     display: inline-block;
     min-width: 52mm;
     border-bottom: 1px solid #000;
-    font-weight: normal;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    text-align: right;
 }
 
 .titulo-costos { font-size: 12pt; }

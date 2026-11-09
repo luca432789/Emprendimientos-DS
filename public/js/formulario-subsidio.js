@@ -43,7 +43,9 @@
     contenido.hidden = !bloquear;
   };
 
-  const avisoReemplazo = 'Ya hay un formulario de subsidio enviado para este expediente que todavía no fue resuelto: si envía uno nuevo, reemplazará al anterior.';
+  // Ya hay un formulario enviado: solo se llega acá si el Área pidió el reenvío
+  const avisoReemplazo = (pedido) => 'El Área le solicitó reenviar el formulario de subsidio; el nuevo envío reemplazará al anterior.'
+    + (pedido ? ` Lo que le solicitaron: "${pedido}"` : '');
 
   const verificar = async () => {
     const verificacion = {
@@ -70,12 +72,12 @@
         return;
       }
 
-      const { reemplazaEnvioAnterior, ...solicitud } = datos;
+      const { reemplazaEnvioAnterior, pedidoReenvio, ...solicitud } = datos;
       verificado = { verificacion, solicitud };
       completarCampos();
       bloquearVerificacion(true);
       mensaje.textContent = `Datos verificados. Complete el formulario a nombre de ${solicitud.nombreApellido}.`
-        + (reemplazaEnvioAnterior ? ` ${avisoReemplazo}` : '');
+        + (reemplazaEnvioAnterior ? ` ${avisoReemplazo(pedidoReenvio)}` : '');
       form.querySelector('[name="beneficiarios"]')?.focus();
     } catch {
       mensaje.textContent = 'No se pudo conectar con el servidor. Intente nuevamente.';
@@ -97,6 +99,8 @@
   botonCambiar.addEventListener('click', () => {
     verificado = null;
     form.reset();
+    // Los totales de los cuadros no son campos: se recalculan para que vuelvan a 0,00
+    form.querySelector('[data-campo-fila]')?.dispatchEvent(new Event('input', { bubbles: true }));
     window.firmaDigital?.reiniciar();
     form.querySelector('#resultado-formulario')?.replaceChildren();
     bloquearVerificacion(false);
@@ -111,7 +115,7 @@
     restaurar: () => {
       if (!verificado) return;
       completarCampos();
-      mensaje.textContent = `Formulario enviado. ${avisoReemplazo}`;
+      mensaje.textContent = 'Formulario enviado. El Área lo revisará; si necesita que corrija algo, se lo solicitará por correo.';
     }
   };
 })();

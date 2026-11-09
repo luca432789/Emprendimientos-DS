@@ -435,6 +435,12 @@ async function abrirDecisionRevisionArea(solicitud) {
                 <option value="1">Aprobar emprendimiento</option>
                 <option value="0">Rechazar emprendimiento</option>
             </select>
+            <p id="aviso-correo-decision" style="display:none; text-align:left; margin:8px 0 0; padding:10px; background:#eef4fb; border-radius:4px; font-size:14px;"></p>
+            <div id="motivo-rechazo-area" style="display:none; text-align:left; margin-top:12px;">
+                <label for="revision-motivo-rechazo" style="font-weight:600;">Motivo del rechazo (se enviará al emprendedor)</label>
+                <textarea id="revision-motivo-rechazo" class="swal2-textarea" maxlength="512" rows="4"
+                    style="width:100%; box-sizing:border-box; margin:6px 0 0;"></textarea>
+            </div>
             <div id="coordenadas-revision" style="display:none; grid-template-columns:1fr 1fr; gap:10px; text-align:left; margin-top:12px;">
                 <label>Latitud
                     <input id="revision-latitud" type="number" step="any" min="-90" max="90" class="swal2-input" placeholder="-27.78" style="width:100%; margin:5px 0 0;">
@@ -447,8 +453,20 @@ async function abrirDecisionRevisionArea(solicitud) {
         didOpen: () => {
             const decision = document.getElementById('decision-area');
             const coordenadas = document.getElementById('coordenadas-revision');
+            const motivo = document.getElementById('motivo-rechazo-area');
+            const aviso = document.getElementById('aviso-correo-decision');
+            const formularioAyuda = solicitud.ayuda === 'Subsidio' ? 'Formulario de Subsidio' : 'Formulario de Crédito';
             decision.addEventListener('change', () => {
                 coordenadas.style.display = decision.value === '1' ? 'grid' : 'none';
+                motivo.style.display = decision.value === '0' ? 'block' : 'none';
+                aviso.style.display = decision.value ? 'block' : 'none';
+                aviso.innerHTML = decision.value === '1'
+                    ? `<i class="fa-solid fa-envelope"></i> Se enviará al emprendedor (${escaparDatoRevision(solicitud.correo)}) el correo
+                       "<i>Solicitud de Inicio de Emprendimiento - Aprobado</i>", pidiéndole completar el ${formularioAyuda}
+                       (con su link) y recomendándole pedir presupuestos antes.`
+                    : `<i class="fa-solid fa-envelope"></i> Se enviará al emprendedor (${escaparDatoRevision(solicitud.correo)}) el correo
+                       "<i>Solicitud de Inicio de Emprendimiento - Rechazo</i>" con el motivo, su N° de expediente y el aviso
+                       de que podrá presentar una nueva solicitud en 7 días. La revisión quedará finalizada.`;
                 if (decision.value !== '1') {
                     document.getElementById('revision-latitud').value = '';
                     document.getElementById('revision-longitud').value = '';
@@ -462,7 +480,14 @@ async function abrirDecisionRevisionArea(solicitud) {
                 return false;
             }
 
-            if (decision === '0') return { aprobacionArea: 0, latitud: null, longitud: null };
+            if (decision === '0') {
+                const motivoRechazo = document.getElementById('revision-motivo-rechazo').value.trim();
+                if (motivoRechazo.length < 10) {
+                    Swal.showValidationMessage('Escriba el motivo del rechazo (al menos 10 caracteres): se le enviará al emprendedor.');
+                    return false;
+                }
+                return { aprobacionArea: 0, latitud: null, longitud: null, motivoRechazo };
+            }
 
             const latitudTexto = document.getElementById('revision-latitud').value.trim();
             const longitudTexto = document.getElementById('revision-longitud').value.trim();
@@ -490,7 +515,7 @@ async function abrirDecisionRevisionArea(solicitud) {
         : 'rechazar';
     const confirmacion = await Swal.fire({
         title: 'Confirmar decisión del Área',
-        text: `Se va a ${decisionTexto} la solicitud #${solicitud.id}. La fecha de finalización se registrará automáticamente.`,
+        text: `Se va a ${decisionTexto} la solicitud #${solicitud.id} y se le enviará el correo al emprendedor. La fecha de finalización se registrará automáticamente.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sí, registrar decisión',
@@ -514,30 +539,138 @@ async function abrirDecisionRevisionArea(solicitud) {
         const resultado = await respuesta.json();
         if (!respuesta.ok) throw new Error(resultado.error || 'No se pudo registrar la decisión.');
 
-        await Swal.fire({
-            icon: 'success',
-            title: 'Decisión registrada',
-            text: resultado.mensaje,
-            confirmButtonColor: '#1a3a5f'
-        });
+        await mostrarResultadoCorreoDecision(resultado, solicitud.id);
         cargarRevisionesAsignadas();
     } catch (error) {
         Swal.fire('Error', `No se pudo guardar la decisión del Área: ${error.message}`, 'error');
     }
 }
 
+// "Subsidio" o "Crédito" según la ayuda que eligió en la solicitud de inicio
+const nombreAyudaSolicitud = (solicitud) => solicitud.ayuda === 'Subsidio' ? 'Subsidio' : 'Crédito';
+
+const enlaceVerPdf = (direccion) => direccion
+    ? `<a href="${escaparDatoRevision(direccion)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf"></i> VER PDF</a>`
+    : '<span style="color:#94a3b8;">Sin archivo</span>';
+
+const botonExportarPdf = (direccion, texto) => direccion
+    ? `<a href="${escaparDatoRevision(direccion)}" target="_blank" rel="noopener noreferrer"
+        class="btn-filtro" style="display:inline-block; background-color:#2f4e78; color:white; text-decoration:none; font-size:13px;">
+        <i class="fa-solid fa-download"></i> ${texto}
+    </a>`
+    : '';
+
+// Si el correo no salió, la decisión igual quedó guardada: se ofrece reintentar el envío
+async function mostrarResultadoCorreoDecision(resultado, idSolicitud, titulo = 'Decisión registrada') {
+    if (resultado.correoEnviado !== false) {
+        await Swal.fire({ icon: 'success', title: titulo, text: resultado.mensaje, confirmButtonColor: '#1a3a5f' });
+        return;
+    }
+
+    let mensaje = resultado.mensaje;
+    for (;;) {
+        const decision = await Swal.fire({
+            icon: 'warning',
+            title: titulo,
+            text: mensaje,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Reintentar envío del correo',
+            cancelButtonText: 'Más tarde',
+            confirmButtonColor: '#1a3a5f'
+        });
+        if (!decision.isConfirmed) return;
+
+        try {
+            const respuesta = await fetch(`/api/solicitudes/${encodeURIComponent(idSolicitud)}/reenviar-correo`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token_ministerio')}` }
+            });
+            const datos = await respuesta.json().catch(() => ({}));
+            if (!respuesta.ok) throw new Error(datos.error || 'No se pudo enviar el correo.');
+            await Swal.fire({ icon: 'success', title: 'Correo enviado', text: datos.mensaje, confirmButtonColor: '#1a3a5f' });
+            return;
+        } catch (error) {
+            mensaje = `${error.message} Puede volver a intentarlo.`;
+        }
+    }
+}
+
+// Pide el texto que se le enviará por correo al emprendedor (con un texto por defecto que se puede editar)
+async function pedirTextoParaEmprendedor({ titulo, etiqueta, texto, aviso, confirmar, color }) {
+    const ventana = await Swal.fire({
+        title: titulo,
+        width: '620px',
+        html: `
+            <label for="texto-para-emprendedor" style="display:block; text-align:left; font-weight:600;">${etiqueta}</label>
+            <textarea id="texto-para-emprendedor" class="swal2-textarea" maxlength="512" rows="5"
+                style="width:100%; box-sizing:border-box; margin:6px 0 0;"></textarea>
+            <p style="text-align:left; margin:10px 0 0; padding:10px; background:#eef4fb; border-radius:4px; font-size:14px;">
+                <i class="fa-solid fa-envelope"></i> ${aviso}</p>`,
+        didOpen: () => { document.getElementById('texto-para-emprendedor').value = texto; },
+        preConfirm: () => {
+            const valor = document.getElementById('texto-para-emprendedor').value.trim();
+            if (valor.length < 10) {
+                Swal.showValidationMessage('Escriba el mensaje (al menos 10 caracteres): se le enviará al emprendedor.');
+                return false;
+            }
+            return valor;
+        },
+        showCancelButton: true,
+        confirmButtonText: confirmar,
+        cancelButtonText: 'Volver',
+        confirmButtonColor: color
+    });
+    return ventana.isConfirmed ? ventana.value : null;
+}
+
+// El emprendedor nunca envió el formulario de subsidio / crédito: se rechaza y queda finalizada
+async function abrirRechazoFaltaFormulario(solicitud) {
+    const ayuda = nombreAyudaSolicitud(solicitud);
+    const mensaje = await pedirTextoParaEmprendedor({
+        titulo: `Rechazo por falta de formulario · Solicitud #${solicitud.id}`,
+        etiqueta: 'Mensaje del rechazo (se enviará al emprendedor y quedará como resolución final)',
+        texto: `Rechazado por falta de envío de formulario de ${ayuda}`,
+        aviso: `Se enviará al emprendedor el correo "<i>Solicitud de Inicio de Emprendimiento - Rechazo por inactividad</i>"
+            con este mensaje, su N° de expediente (${escaparDatoRevision(solicitud.expediente || 'sin expediente')}) y el aviso de que
+            podrá presentar una nueva solicitud en 7 días. La solicitud quedará finalizada y no se enviará al Ministro.`,
+        confirmar: '<i class="fa-solid fa-ban"></i> Rechazar solicitud',
+        color: '#c0392b'
+    });
+    if (!mensaje) return;
+
+    try {
+        const resultado = await enviarEtapaMinistro(solicitud.id, 'rechazo-falta-formulario', { mensaje });
+        await mostrarResultadoCorreoDecision(resultado, solicitud.id, 'Solicitud rechazada');
+        cargarRevisionesAsignadas();
+    } catch (error) {
+        Swal.fire('Error', `No se pudo registrar el rechazo: ${error.message}`, 'error');
+    }
+}
+
 function htmlDatosEtapaMinistro(solicitud) {
+    const ayuda = nombreAyudaSolicitud(solicitud);
     return `
         <div style="text-align:left; margin:0 0 12px; padding:12px; background:#f1f5f9; border-radius:4px;">
             <div><b>N° de expediente:</b> ${escaparDatoRevision(solicitud.expediente || 'Sin expediente')}</div>
             <div><b>Departamento:</b> ${escaparDatoRevision(solicitud.departamento)}</div>
             <div><b>Ayuda:</b> ${escaparDatoRevision(solicitud.ayuda)}</div>
+            <div><b>Formulario de Inicio:</b> ${enlaceVerPdf(solicitud.pdf)}</div>
+            <div><b>Formulario de ${ayuda}:</b> ${enlaceVerPdf(solicitud.pdfAyuda)}</div>
         </div>
-        ${solicitud.pdf ? `<a href="${escaparDatoRevision(solicitud.pdf)}" target="_blank" rel="noopener noreferrer"
-            class="btn-filtro" style="display:inline-block; background-color:#2f4e78; color:white; text-decoration:none; font-size:13px;">
-            <i class="fa-solid fa-download"></i> Exportar PDF
-        </a>` : ''}
+        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            ${botonExportarPdf(solicitud.pdf, 'Exportar PDF de Inicio')}
+            ${botonExportarPdf(solicitud.pdfAyuda, `Exportar PDF del ${ayuda}`)}
+        </div>
     `;
+}
+
+// Subsidio: solo se confirma el envío con el formulario de subsidio aprobado por el Área
+// (para el crédito se agregará cuando exista su revisión)
+function ayudaPendienteDeAprobacion(solicitud) {
+    if (solicitud.ayuda !== 'Subsidio' || solicitud.ayudaAprobada === '1') return '';
+    return solicitud.idAyuda
+        ? `El Subsidio de la solicitud aún no fue aprobado (Subsidio #${String(solicitud.idAyuda).padStart(4, '0')}).`
+        : 'No se encontró formulario de Subsidio enviado por el emprendedor.';
 }
 
 async function enviarEtapaMinistro(idSolicitud, ruta, cuerpo) {
@@ -558,15 +691,30 @@ async function enviarEtapaMinistro(idSolicitud, ruta, cuerpo) {
 }
 
 async function abrirEnvioMinistro(solicitud) {
+    const pendiente = ayudaPendienteDeAprobacion(solicitud);
+    const sinFormulario = !solicitud.idAyuda;
     const ventana = await Swal.fire({
         title: `Envío al Ministro · Solicitud #${solicitud.id}`,
         width: '620px',
-        html: htmlDatosEtapaMinistro(solicitud),
+        html: `${htmlDatosEtapaMinistro(solicitud)}
+            ${pendiente ? `<p style="margin:14px 0 0; padding:10px; background:#fef3c7; border-radius:4px; color:#92400e;">
+                <i class="fa-solid fa-triangle-exclamation"></i> ${escaparDatoRevision(pendiente)}</p>` : ''}`,
         showCancelButton: true,
+        showDenyButton: sinFormulario,
         confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Confirmar envío al Ministro',
+        denyButtonText: '<i class="fa-solid fa-ban"></i> Rechazar por falta de formulario',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#1a3a5f'
+        confirmButtonColor: pendiente ? '#9aa3ad' : '#1a3a5f',
+        denyButtonColor: '#c0392b',
+        didOpen: () => {
+            if (!pendiente) return;
+            const confirmar = Swal.getConfirmButton();
+            confirmar.disabled = true;
+            confirmar.style.cursor = 'not-allowed';
+            confirmar.title = pendiente;
+        }
     });
+    if (ventana.isDenied) return abrirRechazoFaltaFormulario(solicitud);
     if (!ventana.isConfirmed) return;
 
     const confirmacion = await Swal.fire({
@@ -689,6 +837,23 @@ async function abrirResolucionMinistro(solicitud) {
     const cuerpo = { aprobacionMinistro };
     let detalleAprobacion = '';
 
+    if (aprobacionMinistro === 0) {
+        const nombre = solicitud.nombreEmprendimiento || '';
+        const motivoRechazo = await pedirTextoParaEmprendedor({
+            titulo: `Rechazo del Ministro · Solicitud #${solicitud.id}`,
+            etiqueta: 'Mensaje para el emprendedor',
+            texto: 'Lamentamos informarle que su emprendimiento no logró pasar la revisión final para el otorgamiento del PLAN PROVINCIAL SANTIAGO PRODUCTIVO.',
+            aviso: `Se enviará al emprendedor el correo "<i>Su emprendimiento ${escaparDatoRevision(`"${nombre}"`)} fue rechazado</i>"
+                con este mensaje, su N° de expediente (${escaparDatoRevision(solicitud.expediente || 'sin expediente')}) y el aviso de que
+                podrá presentar una nueva solicitud en 7 días.`,
+            confirmar: 'Continuar',
+            color: '#c0392b'
+        });
+        if (!motivoRechazo) return;
+        cuerpo.motivoRechazo = motivoRechazo;
+        detalleAprobacion = ' Se le enviará el correo del rechazo al emprendedor.';
+    }
+
     if (aprobacionMinistro === 1) {
         const datosProyecto = await pedirDatosProyectoAprobado(solicitud);
         if (!datosProyecto) return;
@@ -710,7 +875,8 @@ async function abrirResolucionMinistro(solicitud) {
 
     try {
         const resultado = await enviarEtapaMinistro(solicitud.id, 'resolucion-ministro', cuerpo);
-        await mostrarResultadoConCorreo('Resolución registrada', resultado);
+        if (aprobacionMinistro === 1) await mostrarResultadoConCorreo('Resolución registrada', resultado);
+        else await mostrarResultadoCorreoDecision(resultado, solicitud.id, 'Resolución registrada');
         cargarRevisionesAsignadas();
     } catch (error) {
         Swal.fire('Error', `No se pudo registrar la resolución del Ministro: ${error.message}`, 'error');
@@ -805,9 +971,13 @@ async function cargarRevisionesAsignadas() {
                 : 'Sin fecha';
             const decisionAreaTomada = solicitud.AprobacionArea !== null;
             const enviadoMinistro = Number(solicitud.EnvioMinistro) === 1;
+            const subsidioPendiente = solicitud.EleccionAyuda === 'Subsidio' && Number(solicitud.SubsidioAprobado) !== 1;
             const estadoEtapa = enviadoMinistro
                 ? 'Enviado al Ministro · En espera de resolución'
-                : 'Aprobado por el Área · Pendiente de envío al Ministro';
+                : subsidioPendiente
+                    ? 'Aprobado por el Área · Subsidio pendiente de aprobación'
+                    : 'Aprobado por el Área · Pendiente de envío al Ministro';
+            const esSubsidio = solicitud.EleccionAyuda === 'Subsidio';
             const datosEtapaMinistro = `
                     data-id="${escaparDatoRevision(solicitud.idSolicitudInicio)}"
                     data-expediente="${escaparDatoRevision(solicitud.NroExpediente || '')}"
@@ -815,7 +985,10 @@ async function cargarRevisionesAsignadas() {
                     data-ayuda="${escaparDatoRevision(solicitud.EleccionAyuda)}"
                     data-nombre="${escaparDatoRevision(solicitud.EmprendimientoNombre || '')}"
                     data-rubro="${escaparDatoRevision(solicitud.EmprendimientoRubro || '')}"
-                    data-pdf="${escaparDatoRevision(solicitud.DireccionPDF || '')}"`;
+                    data-pdf="${escaparDatoRevision(solicitud.DireccionPDF || '')}"
+                    data-id-ayuda="${escaparDatoRevision((esSubsidio ? solicitud.idSubsidio : solicitud.idCredito) ?? '')}"
+                    data-ayuda-aprobada="${escaparDatoRevision((esSubsidio ? solicitud.SubsidioAprobado : solicitud.CreditoAprobado) ?? '')}"
+                    data-pdf-ayuda="${escaparDatoRevision((esSubsidio ? solicitud.PathFormularioSub : solicitud.PathFormularioCredito) || '')}"`;
             const accion = decisionAreaTomada
                 ? `<div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
                     <span>${escaparDatoRevision(estadoEtapa)}</span>
@@ -865,7 +1038,10 @@ async function cargarRevisionesAsignadas() {
             ayuda: boton.dataset.ayuda,
             nombreEmprendimiento: boton.dataset.nombre,
             rubro: boton.dataset.rubro,
-            pdf: boton.dataset.pdf
+            pdf: boton.dataset.pdf,
+            idAyuda: boton.dataset.idAyuda,
+            ayudaAprobada: boton.dataset.ayudaAprobada,
+            pdfAyuda: boton.dataset.pdfAyuda
         });
         cuerpo.querySelectorAll('.btn-envio-ministro').forEach(boton => {
             boton.addEventListener('click', () => abrirEnvioMinistro(datosBotonMinistro(boton)));

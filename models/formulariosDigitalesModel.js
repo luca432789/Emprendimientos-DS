@@ -1,4 +1,5 @@
 import { pool } from '../config/db.js';
+import { DIAS_ESPERA_NUEVA_SOLICITUD } from '../helpers/correo.js';
 
 // Ejecuta las consultas en una conexión dedicada con las variables de auditoría cargadas,
 // así los triggers registran quién hizo la acción (idUsuario null = formulario público)
@@ -19,13 +20,23 @@ const ejecutarConAuditoria = async (datosAuditoria, consultas) => {
         throw error;
     } finally {
         await conexion.query('SET @usuario_id = NULL, @usuario_ip = NULL;').catch(() => {});
+        await conexion.query('DO RELEASE_ALL_LOCKS();').catch(() => {}); // por si la consulta tomó un GET_LOCK
         conexion.release();
     }
 };
 
-// Formulario de Inicio: crea la SolicitudInicio y sus datos (tabla inmutable)
+// Formulario de Inicio: crea la SolicitudInicio y sus datos (tabla inmutable).
+// La restricción por DNI / correo se vuelve a comprobar con un bloqueo, para que dos envíos simultáneos
+// de la misma persona no pasen los dos
 export const modelRegistrarSolicitudInicio = async (direccionPDF, datos, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [[bloqueo]] = await conexion.query("SELECT GET_LOCK('nueva_solicitud_inicio', 15) AS tomado;");
+        if (Number(bloqueo.tomado) !== 1) {
+            throw Object.assign(new Error('El servidor está ocupado. Vuelva a intentarlo en unos segundos.'), { code: 'SOLICITUD_RESTRINGIDA' });
+        }
+        const restriccion = await modelRestriccionNuevaSolicitud(datos.dniCuit, datos.correo, conexion);
+        if (restriccion) throw Object.assign(new Error(restriccion), { code: 'SOLICITUD_RESTRINGIDA' });
+
         const [solicitud] = await conexion.query(
             'INSERT INTO SolicitudInicio (DireccionPDF) VALUES (?);',
             [direccionPDF]
@@ -51,10 +62,45 @@ export const modelRegistrarSolicitudInicio = async (direccionPDF, datos, datosAu
     });
 };
 
-// Evita que un emprendedor ya registrado vuelva a enviar un Formulario de Inicio con su correo
-export const modelExisteEmprendedorConCorreo = async (correo) => {
-    const [filas] = await pool.query('SELECT 1 FROM Emprendedor WHERE Correo = ? LIMIT 1;', [correo]);
-    return filas.length > 0;
+// Una persona (mismo DNI o mismo correo) solo puede presentar una nueva Solicitud de Inicio si:
+//  - no tiene un usuario registrado (emprendedor, incluso de carga histórica, empleado o cualquier cuenta con ese correo),
+//  - no tiene otra solicitud en trámite (sin resolución final) ni una aprobada por el Ministro,
+//  - y su último rechazo fue hace al menos DIAS_ESPERA_NUEVA_SOLICITUD días.
+// Devuelve el mensaje para el emprendedor, o null si puede presentarla.
+export const modelRestriccionNuevaSolicitud = async (dni, correo, conexion = pool) => {
+    const [[registrado]] = await conexion.query(
+        `SELECT EXISTS (SELECT 1 FROM Emprendedor WHERE DNI = ? OR Correo = ?)
+                OR EXISTS (SELECT 1 FROM Empleado WHERE DNI = ? OR Correo = ?)
+                OR EXISTS (SELECT 1 FROM Usuario WHERE Correo = ?) AS existe;`,
+        [dni, correo, dni, correo, correo]
+    );
+    if (Number(registrado.existe) === 1) {
+        return 'Ya existe un usuario registrado con este DNI o correo electrónico. Si ya tiene un emprendimiento aprobado, '
+            + 'inicie sesión con su cuenta.';
+    }
+
+    const [[anteriores]] = await conexion.query(
+        `SELECT COALESCE(SUM(s.MensajeResolucionFinal IS NULL), 0) AS EnTramite,
+                COALESCE(SUM(s.AprobacionMinistro = 1), 0) AS Aprobadas,
+                MAX(DATE_ADD(s.FechaResolucionFinal, INTERVAL ? DAY)) > CURRENT_DATE AS EnEspera,
+                DATE_FORMAT(MAX(DATE_ADD(s.FechaResolucionFinal, INTERVAL ? DAY)), '%d/%m/%Y') AS HabilitadaDesde
+         FROM DatosSolicitudInicio d
+         INNER JOIN SolicitudInicio s ON s.idSolicitudInicio = d.idSolicitudInicio
+         WHERE d.PersonaDNI = ? OR d.PersonaCorreo = ?;`,
+        [DIAS_ESPERA_NUEVA_SOLICITUD, DIAS_ESPERA_NUEVA_SOLICITUD, dni, correo]
+    );
+    if (Number(anteriores.EnTramite) > 0) {
+        return 'Ya hay una Solicitud de Inicio en trámite con este DNI o correo electrónico. '
+            + 'Podrá presentar otra solo si esa solicitud es rechazada.';
+    }
+    if (Number(anteriores.Aprobadas) > 0) {
+        return 'Ya hay una Solicitud de Inicio aprobada con este DNI o correo electrónico. Inicie sesión con su cuenta de emprendedor.';
+    }
+    if (Number(anteriores.EnEspera) === 1) {
+        return `Su Solicitud de Inicio anterior fue rechazada hace menos de ${DIAS_ESPERA_NUEVA_SOLICITUD} días. `
+            + `Podrá presentar una nueva a partir del ${anteriores.HabilitadaDesde}.`;
+    }
+    return null;
 };
 
 // Busca la solicitud de inicio vinculada al usuario emprendedor logueado
@@ -87,11 +133,12 @@ export const modelObtenerSolicitudDeEmprendimiento = async (idEmprendimiento) =>
 // Devuelve la solicitud con sus datos y el último subsidio enviado (si hay), o undefined si no coinciden los tres.
 export const modelBuscarSolicitudParaSubsidio = async (nroExpediente, correo, dni) => {
     const [filas] = await pool.query(
-        `SELECT s.idSolicitudInicio, s.AprobacionArea, s.EnvioMinistro, x.NroExpediente,
+        `SELECT s.idSolicitudInicio, s.AprobacionArea, s.EnvioMinistro, s.MensajeResolucionFinal, x.NroExpediente,
                 d.PersonaNombre, d.PersonaApellido, d.PersonaDNI, d.PersonaDepartamento, d.PersonaLocalidad,
                 d.PersonaDomicilio, d.PersonaTeléfono AS PersonaTelefono, d.PersonaCorreo, d.EmprendimientoNombre,
                 d.EmprendimientoDepto, d.EmprendimientoLocalidad, d.EmprendimientoActPrincipal, d.EmprendimientoRubro,
-                d.EleccionAyuda, sub.idSubsidio, sub.Aprobado AS SubsidioAprobado, sub.EstadoRevision AS SubsidioEstado
+                d.EleccionAyuda, sub.idSubsidio, sub.Aprobado AS SubsidioAprobado, sub.EstadoRevision AS SubsidioEstado,
+                sub.ReenvioSolicitado, sub.MensajeSolicitudReenvio
          FROM Expediente x
          INNER JOIN SolicitudInicio s ON s.idSolicitudInicio = x.idSolicitudInicio
          INNER JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = s.idSolicitudInicio
@@ -106,21 +153,24 @@ export const modelBuscarSolicitudParaSubsidio = async (nroExpediente, correo, dn
 
 const errorSubsidio = (mensaje, codigo) => Object.assign(new Error(mensaje), { codigo });
 
-// Registra el subsidio de la solicitud. Si ya hay uno sin finalizar (EstadoRevision 0 o 1) lo reemplaza
-// (el Área puede pedirle al emprendedor que lo complete de nuevo) y devuelve el PDF anterior para borrarlo.
+export const MENSAJE_SUBSIDIO_EN_REVISION = 'Ya recibimos su formulario de subsidio y el Área lo está revisando. '
+    + 'Solo puede volver a enviarlo si el Área se lo solicita por correo.';
+
+// Registra el subsidio de la solicitud. Si ya hay uno sin finalizar, solo lo reemplaza cuando el Área pidió
+// el reenvío (ReenvioSolicitado), y devuelve el PDF anterior para borrarlo.
 // Las condiciones se vuelven a comprobar con las filas bloqueadas, por si cambiaron desde la verificación.
 export const modelRegistrarSubsidioDeSolicitud = async (idSolicitudInicio, pathFormulario, monto, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
         const [[solicitud]] = await conexion.query(
-            'SELECT AprobacionArea, EnvioMinistro FROM SolicitudInicio WHERE idSolicitudInicio = ? FOR UPDATE;',
+            'SELECT AprobacionArea, EnvioMinistro, MensajeResolucionFinal FROM SolicitudInicio WHERE idSolicitudInicio = ? FOR UPDATE;',
             [idSolicitudInicio]
         );
-        if (!solicitud || Number(solicitud.AprobacionArea) !== 1 || Number(solicitud.EnvioMinistro) !== 0) {
+        if (!solicitud || Number(solicitud.AprobacionArea) !== 1 || Number(solicitud.EnvioMinistro) !== 0 || solicitud.MensajeResolucionFinal) {
             throw errorSubsidio('La solicitud ya no admite el envío del formulario de subsidio.', 'SOLICITUD_NO_DISPONIBLE');
         }
 
         const [[previo]] = await conexion.query(
-            `SELECT idSubsidio, PathFormularioSub, Aprobado, EstadoRevision FROM Subsidio
+            `SELECT idSubsidio, PathFormularioSub, Aprobado, EstadoRevision, ReenvioSolicitado FROM Subsidio
              WHERE idSolicitudInicio = ? ORDER BY idSubsidio DESC LIMIT 1 FOR UPDATE;`,
             [idSolicitudInicio]
         );
@@ -128,10 +178,19 @@ export const modelRegistrarSubsidioDeSolicitud = async (idSolicitudInicio, pathF
             throw errorSubsidio('El subsidio de este expediente ya fue resuelto y no admite cambios.', 'SUBSIDIO_FINALIZADO');
         }
 
+        if (previo && !Number(previo.ReenvioSolicitado)) {
+            throw errorSubsidio(MENSAJE_SUBSIDIO_EN_REVISION, 'REENVIO_NO_SOLICITADO');
+        }
+
         if (previo) {
+            // MontoAnterior va antes que monto: MySQL asigna en orden y así toma el monto del envío anterior.
+            // Recibido el reenvío, se cierra el pedido (el Área puede volver a pedirlo).
             await conexion.query(
-                'UPDATE Subsidio SET PathFormularioSub = ?, monto = ?, FechaRecibido = CURRENT_DATE() WHERE idSubsidio = ?;',
-                [pathFormulario, monto, previo.idSubsidio]
+                `UPDATE Subsidio
+                 SET PathFormularioSub = ?, MontoAnterior = IF(monto <> ?, monto, MontoAnterior), monto = ?,
+                     FechaRecibido = CURRENT_DATE(), ReenvioSolicitado = 0
+                 WHERE idSubsidio = ?;`,
+                [pathFormulario, monto, monto, previo.idSubsidio]
             );
             return { idSubsidio: previo.idSubsidio, pathAnterior: previo.PathFormularioSub };
         }

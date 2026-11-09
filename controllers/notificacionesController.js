@@ -6,7 +6,7 @@ import {
     modelMarcarVistas
 } from '../models/notificacionesModel.js';
 import { ModelObtenerSolicitudesParaArea, ModelListarRevisionesAsignadas } from '../models/solicitudesInicioModel.js';
-import { modelAyudasSinRevisar } from '../models/ayudasModel.js';
+import { modelAyudasSinRevisar, modelSubsidiosEnRevision } from '../models/ayudasModel.js';
 
 // Roles que moderan publicaciones (mismos que en publicacionesController)
 const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
@@ -57,13 +57,17 @@ const revisionesAsignadas = async (idUsuario) => {
 // que tiene asignadas), con su contador.
 // "pendientes" trae una clave por elemento para avisar cuando llega uno nuevo.
 const notificacionesModerador = async (idUsuario) => {
-    const [inicios, subsidios, creditos, publicaciones, enRevision] = await Promise.all([
+    const [inicios, subsidios, creditos, publicaciones, enRevision, subsidiosEnRevision] = await Promise.all([
         ModelObtenerSolicitudesParaArea(),
         modelAyudasSinRevisar('subsidio'),
         modelAyudasSinRevisar('credito'),
         modelPublicacionesEnEspera(),
-        revisionesAsignadas(idUsuario)
+        revisionesAsignadas(idUsuario),
+        modelSubsidiosEnRevision()
     ]);
+    // Subsidios en revisión que esperan al Área (no los que esperan el reenvío del emprendedor).
+    // La clave cambia con cada formulario recibido: un reenvío llega como novedad.
+    const subsidiosParaRevisar = subsidiosEnRevision.filter((s) => !Number(s.ReenvioSolicitado));
 
     const categorias = [
         { seccion: 'inicio-sin-revisar', nombre: 'Solicitudes de Inicio', singular: 'solicitud de inicio sin revisar', plural: 'solicitudes de inicio sin revisar',
@@ -74,6 +78,8 @@ const notificacionesModerador = async (idUsuario) => {
           claves: creditos.map((c) => `cre-${c.id}`) },
         { seccion: 'inicio-en-revision', nombre: 'En Revisión - Inicio', singular: 'solicitud de inicio en revisión', plural: 'solicitudes de inicio en revisión',
           claves: enRevision.map((s) => `rev-${s.idSolicitudInicio}`) },
+        { seccion: 'subsidio-en-revision', nombre: 'En Revisión - Subsidio', singular: 'subsidio en revisión para continuar', plural: 'subsidios en revisión para continuar',
+          claves: subsidiosParaRevisar.map((s) => `subr-${s.id}-${huella(s.DireccionPDF || '')}`) },
         { seccion: 'publicaciones-espera', nombre: 'Publicaciones en Espera', singular: 'publicación para revisar', plural: 'publicaciones para revisar',
           claves: publicaciones.map((p) => `pend-${p.idPublicacion}-${fechaISO(p.FechaSolicitud)}-${huella(`${p.TituloPendiente}|${p.DescripcionPendiente}`)}`) }
     ];

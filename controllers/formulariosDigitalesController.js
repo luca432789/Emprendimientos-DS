@@ -8,9 +8,10 @@ import {
   modelObtenerSolicitudDeEmprendimiento,
   modelTienePedidoPendiente,
   modelRegistrarPedidoAyuda,
-  modelExisteEmprendedorConCorreo,
+  modelRestriccionNuevaSolicitud,
   modelBuscarSolicitudParaSubsidio,
-  modelRegistrarSubsidioDeSolicitud
+  modelRegistrarSubsidioDeSolicitud,
+  MENSAJE_SUBSIDIO_EN_REVISION
 } from '../models/formulariosDigitalesModel.js';
 import { escribirConNumero } from '../helpers/archivosPdf.js';
 import { generarPdfDesdePlantilla, imagenComoDataUri } from '../helpers/pdfDesdeHtml.js';
@@ -305,8 +306,8 @@ const generarPdfSubsidio = async (datos) => generarPdfDesdePlantilla(path.join(c
   rubroEmprendimiento: datos.rubroEmprendimiento || '',
   fecha: datos.fechaLugar || fechaLugarHoy(),
   filasBienes: completarRenglones(datos.bienesPropios, 8),
-  filasRecursos: completarRenglones(datos.recursosNecesarios, 8),
-  totalRecursos: (datos.recursosNecesarios || []).reduce((total, fila) => total + fila.subtotal, 0),
+  filasActivoFijo: completarRenglones(datos.activoFijo, 8),
+  filasBienesUso: completarRenglones(datos.bienesUso, 9),
   moneda: (valor) => valor === undefined || valor === '' ? '' : formatearImporte(valor)
 });
 
@@ -352,29 +353,28 @@ const validarDatosSubsidio = (datos, imagenes, dniTitular) => {
     throw new ErrorValidacion('El D.N.I. Nº junto a la firma debe ser el mismo del titular de la solicitud de inicio.');
   }
 
+  // Mismos cuadros que el formulario de crédito: bienes propios, activo fijo y bienes de uso
   datos.bienesPropios = prepararFilasCredito(datos.bienesPropios || [], 'bienesPropios');
-  if (!Array.isArray(datos.recursosNecesarios)) throw new ErrorValidacion('Revise el cuadro de recursos necesarios.');
-  datos.recursosNecesarios = datos.recursosNecesarios.map((fila) => {
-    const bien = limpiarTexto(fila?.bien || '').slice(0, 42);
-    const cantidad = numeroCredito(fila?.cantidad, 'Cantidad');
-    const precioUnitario = numeroCredito(fila?.precioUnitario, 'Precio unitario');
-    if (!bien && !cantidad && !precioUnitario) return null;
-    if (!bien || !Number.isInteger(cantidad) || !cantidad || !precioUnitario) {
-      throw new ErrorValidacion('Complete recurso, cantidad entera y precio unitario en cada renglón utilizado.');
-    }
-    return { bien, cantidad, precioUnitario, subtotal: cantidad * precioUnitario };
-  }).filter(Boolean);
-  if (datos.recursosNecesarios.length > 9) throw new ErrorValidacion('El cuadro de recursos necesarios admite hasta 9 renglones.');
+  datos.activoFijo = prepararFilasCredito(datos.activoFijo || [], 'activoFijo');
+  datos.bienesUso = prepararFilasCredito(datos.bienesUso || [], 'bienesUso');
 
-  for (const campo of ['aporteActivoFijo', 'solicitadoActivoFijo', 'aporteBienesUso', 'solicitadoBienesUso', 'aporteManoObra']) {
-    datos[campo] = numeroCredito(datos[campo], campo);
+  for (const [campo, etiqueta] of [
+    ['aporteActivoFijo', 'Aporte propio de activo fijo'],
+    ['aporteBienesUso', 'Aporte propio de bienes de uso'],
+    ['aporteManoObra', 'Aporte propio de mano de obra']
+  ]) {
+    datos[campo] = numeroCredito(datos[campo], etiqueta);
   }
+  // La columna "Solicitado" del costo total son los totales de los cuadros (no se toma lo que manda el navegador)
+  datos.solicitadoActivoFijo = datos.activoFijo.reduce((total, fila) => total + fila.subtotal, 0);
+  datos.solicitadoBienesUso = datos.bienesUso.reduce((total, fila) => total + fila.subtotal, 0);
   datos.totalProyectoPropio = datos.aporteActivoFijo + datos.aporteBienesUso + datos.aporteManoObra;
   datos.totalProyectoSolicitado = datos.solicitadoActivoFijo + datos.solicitadoBienesUso;
-  const totalRecursos = datos.recursosNecesarios.reduce((total, fila) => total + fila.subtotal, 0);
-  if (!totalRecursos) throw new ErrorValidacion('Complete al menos un recurso solicitado con cantidad y precio unitario.');
-  // El total solicitado siempre es la suma del cuadro de recursos (no se toma el que manda el navegador)
-  datos.montoSolicitado = validarMonto(totalRecursos);
+  if (!datos.totalProyectoSolicitado) {
+    throw new ErrorValidacion('Ingrese al menos un bien solicitado (activo fijo o bienes de uso) con cantidad y precio unitario.');
+  }
+  // El monto solicitado que se guarda es el total de la columna "Solicitado" del costo total del proyecto
+  datos.montoSolicitado = validarMonto(datos.totalProyectoSolicitado);
 };
 
 // estado: código HTTP con el que se responde (400 por defecto; 409 si la solicitud ya no admite el envío, etc.)
@@ -781,16 +781,18 @@ export const crearFormularioInicio = async (req, res) => {
 
     validarDocumentoYTelefono(datos, documentoExtranjero, true);
     validarInicio(datos);
-    if (await modelExisteEmprendedorConCorreo(datos.correo)) {
-      throw new ErrorValidacion('Ya existe un emprendedor registrado con este correo electrónico. Si ya tiene un emprendimiento aprobado, inicie sesión con su cuenta.');
-    }
+    // Mismo DNI o correo: usuario registrado, solicitud en trámite o aprobada, o rechazo de hace menos de 7 días
+    const restriccion = await modelRestriccionNuevaSolicitud(datos.dniCuit, datos.correo);
+    if (restriccion) throw new ErrorValidacion(restriccion, 409);
     await validarDominioCorreo(datos.correo);
 
     const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);
     const datosAuditoria = { idUsuario: null, ipCliente: obtenerIpCliente(req) };
 
     await guardarYResponder(res, tipoFormulario, bytesPdf,
-      (direccionWeb) => modelRegistrarSolicitudInicio(direccionWeb, datos, datosAuditoria));
+      (direccionWeb) => modelRegistrarSolicitudInicio(direccionWeb, datos, datosAuditoria).catch((error) => {
+        throw error.code === 'SOLICITUD_RESTRINGIDA' ? new ErrorValidacion(error.message, 409) : error;
+      }));
   } catch (error) {
     responderError(res, error, 'No se pudo registrar el Formulario de Inicio.');
   }
@@ -906,8 +908,15 @@ const resolverSolicitudSubsidio = async (verificacion, ip) => {
   if (Number(solicitud.EnvioMinistro) !== 0) {
     throw new ErrorValidacion('Su solicitud ya fue enviada al Ministro para su resolución: el formulario de subsidio ya no se puede enviar ni modificar.', 409);
   }
+  if (solicitud.MensajeResolucionFinal) {
+    throw new ErrorValidacion('Su solicitud de inicio ya fue finalizada: el formulario de subsidio ya no se puede enviar.', 409);
+  }
   if (solicitud.idSubsidio && (solicitud.SubsidioAprobado !== null || Number(solicitud.SubsidioEstado) === 2)) {
     throw new ErrorValidacion('El subsidio de este expediente ya fue resuelto y no admite cambios.', 409);
+  }
+  // Un formulario ya enviado solo se puede reemplazar cuando el Área pidió el reenvío
+  if (solicitud.idSubsidio && !Number(solicitud.ReenvioSolicitado)) {
+    throw new ErrorValidacion(MENSAJE_SUBSIDIO_EN_REVISION, 409);
   }
   return solicitud;
 };
@@ -937,7 +946,9 @@ export const verificarSolicitudSubsidio = async (req, res) => {
       // Se proponen, pero el emprendedor los puede corregir
       domicilio: solicitud.PersonaDomicilio,
       lugarFirma: `${solicitud.PersonaLocalidad}, ${solicitud.PersonaDepartamento}`,
-      reemplazaEnvioAnterior: Boolean(solicitud.idSubsidio)
+      reemplazaEnvioAnterior: Boolean(solicitud.idSubsidio),
+      // Lo que el Área le pidió corregir (se muestra al emprendedor)
+      pedidoReenvio: solicitud.idSubsidio ? solicitud.MensajeSolicitudReenvio || '' : ''
     });
   } catch (error) {
     responderError(res, error, 'No se pudo verificar la solicitud.');
@@ -946,8 +957,8 @@ export const verificarSolicitudSubsidio = async (req, res) => {
 
 // Campos que completa el emprendedor; el resto del pedido se ignora y se toma de la solicitud de inicio
 const CAMPOS_EDITABLES_SUBSIDIO = [
-  'beneficiarios', 'domicilio', 'lugarFirma', 'aclaracionProyecto', 'dniProyecto', 'firma', 'bienesPropios', 'recursosNecesarios',
-  'aporteActivoFijo', 'solicitadoActivoFijo', 'aporteBienesUso', 'solicitadoBienesUso', 'aporteManoObra'
+  'beneficiarios', 'domicilio', 'lugarFirma', 'aclaracionProyecto', 'dniProyecto', 'firma', 'bienesPropios', 'activoFijo', 'bienesUso',
+  'aporteActivoFijo', 'aporteBienesUso', 'aporteManoObra'
 ];
 
 // Borra el PDF del envío anterior (solo dentro de /uploads/subsidios)

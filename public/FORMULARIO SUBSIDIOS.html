@@ -149,33 +149,40 @@
                 <p class="pie-declaracion">EL PRESENTE FORMULARIO REVISTE EL CARÁCTER DE DECLARACION JURADA<br><span>RESOLUCION MINISTERIAL Nº 2023-713-E-GDESDE-MDS</span></p>
             </section>
 
-            <!-- HOJA 2: CUADROS DE BIENES DEL FORMULARIO OFICIAL -->
+            <!-- HOJA 2: BIENES PROPIOS Y ACTIVO FIJO -->
             <section class="hoja">
-                <h3 class="titulo-campos">CON QUÉ CUENTA PARA LA EJECUCIÓN DEL PROYECTO</h3>
-                <p class="parrafo">Mencione los bienes y el valor en el estado actual.</p>
+                <h3 class="titulo-campos">1. BIENES PROPIOS APORTADOS PARA LA EJECUCIÓN DEL PROYECTO</h3>
+                <p class="parrafo">Mencione las maquinarias, herramientas, inmuebles e insumos y el valor en el estado actual de los mismos.</p>
                 <div class="tabla-responsive"><table class="tabla-oficial">
                     <thead><tr><th>Bienes</th><th>Cantidad</th><th>Antigüedad</th><th>Monto estimado</th></tr></thead>
                     <tbody id="tabla-bienes-propios" data-tabla-lineas="bienesPropios" data-cantidad="9" data-columnas="bien,cantidad,antiguedad,montoEstimado"></tbody>
                 </table></div>
-                <h3 class="titulo-campos">1. RECURSOS NECESARIOS PARA LLEVAR A CABO EL PROYECTO</h3>
+                <h3 class="titulo-campos">2. DESTINO DEL SUBSIDIO</h3>
+                <p class="parrafo">Mencione los bienes solicitados en el proyecto.</p>
+                <h4>a) ACTIVO FIJO (maquinarias y herramientas)</h4>
                 <div class="tabla-responsive"><table class="tabla-oficial">
-                    <thead><tr><th>Recursos</th><th>Cantidad</th><th>Precio unitario</th><th>Total</th></tr></thead>
-                    <tbody id="tabla-recursos-necesarios" data-tabla-lineas="recursosNecesarios" data-cantidad="9" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
-                    <tfoot><tr><th colspan="3">TOTAL</th><td><output id="total-recursos">0,00</output></td></tr></tfoot>
+                    <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                    <tbody id="tabla-activo-fijo" data-tabla-lineas="activoFijo" data-cantidad="7" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
                 </table></div>
-                <p class="parrafo">TOTAL SOLICITADO: <strong id="total-solicitado">$ 0,00</strong></p>
-                <input type="hidden" name="montoSolicitado" value="">
             </section>
 
-            <!-- HOJA 3: COSTO TOTAL Y ADJUNTOS (VAN COMO HOJAS AL FINAL DEL PDF) -->
+            <!-- HOJA 3: BIENES DE USO, TOTAL SOLICITADO, COSTO TOTAL Y ADJUNTOS (VAN COMO HOJAS AL FINAL DEL PDF) -->
             <section class="hoja">
+                <h4>b) BIENES DE USO (materia prima e insumos)</h4>
+                <div class="tabla-responsive"><table class="tabla-oficial">
+                    <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                    <tbody id="tabla-bienes-uso" data-tabla-lineas="bienesUso" data-cantidad="9" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                </table></div>
+                <p class="parrafo"><strong>TOTAL SOLICITADO:</strong></p>
+                <p class="parrafo">Activo Fijo: <strong>$ <output id="total-solicitado-activo-fijo">0,00</output></strong></p>
+                <p class="parrafo">Bienes de Uso: <strong>$ <output id="total-solicitado-bienes-uso">0,00</output></strong></p>
                 <h3 class="titulo-campos">COSTO TOTAL DEL PROYECTO</h3>
                 <p class="parrafo">Tenga en cuenta un ciclo de producción completo.</p>
                 <div class="tabla-responsive"><table class="tabla-oficial tabla-costos">
                     <thead><tr><th></th><th>Aporte propio</th><th>Solicitado</th></tr></thead>
                     <tbody>
-                        <tr><th>Activo fijo (maquinarias y herramientas)</th><td><input type="number" name="aporteActivoFijo" min="0" step="0.01" aria-label="Aporte propio para activo fijo"></td><td><input type="number" name="solicitadoActivoFijo" min="0" step="0.01" aria-label="Monto solicitado para activo fijo"></td></tr>
-                        <tr><th>Bienes de uso (insumo y materia prima)</th><td><input type="number" name="aporteBienesUso" min="0" step="0.01" aria-label="Aporte propio para bienes de uso"></td><td><input type="number" name="solicitadoBienesUso" min="0" step="0.01" aria-label="Monto solicitado para bienes de uso"></td></tr>
+                        <tr><th>Activo fijo (maquinarias y herramientas)</th><td><input type="number" name="aporteActivoFijo" min="0" step="0.01" aria-label="Aporte propio para activo fijo"></td><td><output id="solicitado-activo-fijo">0,00</output></td></tr>
+                        <tr><th>Bienes de uso (insumo y materia prima)</th><td><input type="number" name="aporteBienesUso" min="0" step="0.01" aria-label="Aporte propio para bienes de uso"></td><td><output id="solicitado-bienes-uso">0,00</output></td></tr>
                         <tr><th>Mano de obra</th><td><input type="number" name="aporteManoObra" min="0" step="0.01" aria-label="Aporte propio en mano de obra"></td><td class="celda-no-aplica"></td></tr>
                         <tr><th>COSTO TOTAL DEL PROYECTO</th><td><output id="costo-total-propio">0,00</output></td><td><output id="costo-total-solicitado">0,00</output></td></tr>
                     </tbody>

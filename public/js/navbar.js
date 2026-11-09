@@ -230,7 +230,8 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
                 const sinRevisar = ['inicio-sin-revisar', 'subsidio-sin-revisar', 'creditos-sin-revisar']
                     .reduce((suma, seccion) => suma + (contadores[seccion] || 0), 0);
                 ponerContador(document.getElementById('categoria-sin-revisar'), sinRevisar);
-                ponerContador(document.getElementById('categoria-en-revision'), contadores['inicio-en-revision'] || 0);
+                ponerContador(document.getElementById('categoria-en-revision'),
+                    (contadores['inicio-en-revision'] || 0) + (contadores['subsidio-en-revision'] || 0));
                 avisarPublicacionesNuevas(datos.pendientes || []);
                 return;
             }

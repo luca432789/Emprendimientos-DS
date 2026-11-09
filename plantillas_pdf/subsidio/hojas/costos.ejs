@@ -1,3 +1,12 @@
+<p class="subtitulo-seccion">b) BIENES DE USO <small>(materia prima e insumos)</small></p>
+<%- include('../tabla-solicitados.ejs', { filas: filasBienesUso }) %>
+
+<div class="totales-solicitados">
+    <p><strong>TOTAL SOLICITADO:</strong></p>
+    <p>Activo Fijo: <span class="relleno"><%= moneda(datos.solicitadoActivoFijo) %></span></p>
+    <p>Bienes de Uso: <span class="relleno"><%= moneda(datos.solicitadoBienesUso) %></span></p>
+</div>
+
 <p class="titulo-seccion titulo-costos">COSTO TOTAL DEL PROYECTO <span>(tenga en cuenta un ciclo de producción completo)</span></p>
 <table class="tabla tabla-costos">
     <colgroup><col style="width: 39.7%"><col style="width: 26.9%"><col style="width: 33.4%"></colgroup>

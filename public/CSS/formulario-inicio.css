@@ -587,6 +587,16 @@
         margin-bottom: 30px;
     }
 
+    /* En celular la fecha completa no entra en un renglón: se deja cortar para que no salga de la hoja */
+    .formulario-inicio .fecha-automatica {
+        display: inline;
+        white-space: normal;
+    }
+
+    .formulario-inicio .parrafo:has(.fecha-automatica) {
+        text-align: left;
+    }
+
     .formulario-inicio .opciones {
         flex-wrap: wrap;
     }

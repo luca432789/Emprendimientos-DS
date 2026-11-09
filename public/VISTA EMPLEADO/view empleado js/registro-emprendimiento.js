@@ -89,7 +89,6 @@ function renderizarRegistroEmprendimiento(zonaRender) {
                             <option value="Pendiente">Pendiente de resolución</option>
                         </select>`)}
                         <label id="historico-contenedor-fecha-resolucion">Fecha de resolución de la ayuda${fecha('historico-ayuda-fecha-resolucion')}</label>
-                        ${campo('Mensaje de resolución (opcional)', `<textarea id="historico-ayuda-mensaje" rows="2" maxlength="512" style="${ESTILO_CAMPO_EMPRENDIMIENTO} resize:vertical;"></textarea>`, true)}
                     </div>
                 </fieldset>
 
@@ -242,8 +241,7 @@ function inicializarFormularioRegistroEmprendimiento() {
                 estado: estadoAyuda.value,
                 monto: valor('historico-ayuda-monto'),
                 fechaRecibido: valor('historico-ayuda-fecha'),
-                fechaResolucion: valor('historico-ayuda-fecha-resolucion'),
-                mensajeResolucion: valor('historico-ayuda-mensaje')
+                fechaResolucion: valor('historico-ayuda-fecha-resolucion')
             }
         };
 

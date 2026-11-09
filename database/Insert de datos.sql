@@ -1,7 +1,7 @@
 use ProyectoEmprendimientos2026;
 
 -- PARA REALIZAR PRUEBA DE AUDITORIA EJECUTAR AMBAS LINEAS DE ABAJO
-SET @usuario_id = 10; -- El ID del empleado que está logueado en ese momento
+SET @usuario_id = 1000; -- El ID del empleado que está logueado en ese momento
 SET @usuario_ip = '222.555.33.4';
 
 
@@ -39,24 +39,14 @@ values ('Sebastian', 'Santillan', '20987654', 'Av. Belgrano 550, Edificio A, Pis
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- SolicitudInicio -----------------------------------------------------------------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CorreoVal)
--- SolicitudInicio (DireccionPDF, FechaRecibidoMesa)
-insert into SolicitudInicio (DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea, FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor, idEmpleadoSocRevisor, AprobacionArea, EnvioMinistro, FechaEnvioMinistro, AprobacionMinistro, FechaResolucionMin)
-values ('/uploads/solicitudesinicio/SolicitudInicialFormIni01.pdf', '2010-01-15', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 1
-('/uploads/solicitudesinicio/SolicitudInicialFormIni02.pdf', '2010-01-15', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 2 
-('/uploads/solicitudesinicio/SolicitudInicialFormIni03.pdf', '2011-01-28', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 3 
-('/uploads/solicitudesinicio/SolicitudInicialFormIni04.pdf', '2012-05-18', '2026-9-01', 2, '2026-9-15', '2026-9-25', 6, 10, True, 1, '2026-9-21', True, '2026-10-03'), -- 4 
-('/uploads/solicitudesinicio/SolicitudInicialFormIni05.pdf', '2015-04-08', '2026-9-01', 2, '2026-9-15', '2026-9-25', 6, 11, True, 1, '2026-9-21', True, '2026-10-03'); -- 5 
-/*-- SolicitudInicio (DireccionPDF, FechaRecibido, EstadoRevisionTec, FechaInicioTec, FechaFinTec, idEmpleadoTecRevisor (FK), AprobacionTec)
-insert into SolicitudInicio (DireccionPDF, DirectorioFotos, FechaRecibido, EstadoRevisionTec, FechaInicioTec, FechaFinTec, idEmpleadoTecRevisor, AprobacionTec)
-values ('C:\Solicitudes\SolicitudInicial\FormIni04.pdf', 'C:\Fotos\FotosSolicitudInicial\FormIni04', '2010-01-15', 1, '2010-01-18', default, 1, default), -- 4
-('C:\Solicitudes\SolicitudInicial\FormIni05.pdf', 'C:\Fotos\FotosSolicitudInicial\FormIni05', '2010-01-17', 2, '2010-01-20', '2010-01-25', 1, 1); -- 5
- 
--- SolicitudInicio (DireccionPDF, DirectorioFotos, FechaRecibido, EstadoRevisionTec, FechaInicioTec, FechaFinTec, idEmpleadoTecRevisor (FK), AprobacionTec, EstadoRevisionSoc, FechaInicioSoc, FechaFinSoc, idEmpleadoSocRevisor(FK), AprobacionSoc, Válido (Si-No), FechaResolucion, CorreoVal)
-insert into SolicitudInicio (DireccionPDF, DirectorioFotos, FechaRecibido, EstadoRevisionTec, FechaInicioTec, FechaFinTec, idEmpleadoTecRevisor, AprobacionTec, EstadoRevisionSoc, FechaInicioSoc, FechaFinSoc, idEmpleadoSocRevisor, AprobacionSoc, Válido, FechaResolucion, CorreoVal)
-values ('C:\Solicitudes\SolicitudInicial\FormIni06.pdf', 'C:\Fotos\FotosSolicitudInicial\FormIni06', '2010-01-26', 2, '2010-01-27', '2010-01-28', 2, 1, 
-2, '2010-01-29', '2010-01-30', 4, 1, 1, '2010-01-30', 'TE ACEPTAMOS, EN ESTE LINK INGRESA LA CONTRASEÑA DE TU USUARIO DEL SISTEMA. PARA INGRESAR EN EL SISTEMA UTILIZA TU CORREO X PARA INICIAR SECION Y LA CONTRASEÑA'); -- 6
-*/
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, MensajeResolucionFinal, FechaResolucionFinal, CargaHistorica)
+-- Aprobadas por el Ministro: quedan finalizadas igual que las que resuelve el sistema (MensajeResolucionFinal y FechaResolucionFinal)
+insert into SolicitudInicio (DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea, FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor, idEmpleadoSocRevisor, AprobacionArea, EnvioMinistro, FechaEnvioMinistro, AprobacionMinistro, FechaResolucionMin, MensajeResolucionFinal, FechaResolucionFinal)
+values ('/uploads/solicitudesinicio/SolicitudInicialFormIni01.pdf', '2010-01-15', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03', 'Emprendimiento Aprobado por ministro', '2026-10-03'), -- 1
+('/uploads/solicitudesinicio/SolicitudInicialFormIni02.pdf', '2010-01-15', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03', 'Emprendimiento Aprobado por ministro', '2026-10-03'), -- 2 
+('/uploads/solicitudesinicio/SolicitudInicialFormIni03.pdf', '2011-01-28', '2026-9-01', 2, '2026-9-15', '2026-9-25', 5, 10, True, 1, '2026-9-21', True, '2026-10-03', 'Emprendimiento Aprobado por ministro', '2026-10-03'), -- 3 
+('/uploads/solicitudesinicio/SolicitudInicialFormIni04.pdf', '2012-05-18', '2026-9-01', 2, '2026-9-15', '2026-9-25', 6, 10, True, 1, '2026-9-21', True, '2026-10-03', 'Emprendimiento Aprobado por ministro', '2026-10-03'), -- 4 
+('/uploads/solicitudesinicio/SolicitudInicialFormIni05.pdf', '2015-04-08', '2026-9-01', 2, '2026-9-15', '2026-9-25', 6, 11, True, 1, '2026-9-21', True, '2026-10-03', 'Emprendimiento Aprobado por ministro', '2026-10-03'); -- 5 
 
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- DatosSolicitudInicio -----------------------------------------------------------------------------------------------------------------------------------------------
@@ -169,39 +159,8 @@ values ('Madera', true),
 ('Reutilizacion', true);
 
 
-/*insert into Subsidio (PathFormularioSub, monto, FechaRecibido, Aprobado, FechaAprobacion, PathDirectorioFacturas, FacturasEntregadas, FechaFacturasValidadas, PuestaMarchaAcreditada, FechaPuestaMarcha, idEmprendimiento, idEmpleadoRevisor)
-values ('C:\Solicitudes\Subsidio\Formularios\FormSub01.pdf', 500000.00, '2010-03-20', true, '2010-04-01', 'C:\Solicitudes\Subsidio\Facturas\Formulario01', true, '2010-04-20', true, '2010-05-01', 1, 1), -- 1. Aprobado (Empr 1 - Empleado 1)
-('C:\Solicitudes\Subsidio\Formularios\FormSub02.pdf', 9500000.00, '2010-03-21', false, '2010-04-01', null, null, null, null, null, 1, 2), -- 2. Denegado (Empr 1 - Empleado 2)
-('C:\Solicitudes\Subsidio\Formularios\FormSub03.pdf', 400000.00, '2010-04-21', null, null, null, null, null, null, null, 2, null), -- 3. Sin revisar (Empr 2)
--- aprobados ------------
-('C:\Solicitudes\Subsidio\Formularios\FormSub04.pdf', 700000.00, '2011-01-05', true, '2011-01-20', 'C:\Solicitudes\Subsidio\Facturas\Formulario04', true, '2011-02-10', true, '2011-03-01', 3, 3), -- 4. Aprobado (Empr 3 - Empleado 3)
-('C:\Solicitudes\Subsidio\Formularios\FormSub05.pdf', 550000.00, '2011-01-10', true, '2011-01-25', 'C:\Solicitudes\Subsidio\Facturas\Formulario05', true, '2011-02-15', true, '2011-03-10', 4, 4), -- 5. Aprobado (Empr 4 - Empleado 4)
-('C:\Solicitudes\Subsidio\Formularios\FormSub06.pdf', 850000.00, '2011-02-01', true, '2011-02-15', 'C:\Solicitudes\Subsidio\Facturas\Formulario06', true, '2011-03-05', true, '2011-04-01', 5, 5), -- 6. Aprobado (Empr 5 - Empleado 5)
-('C:\Solicitudes\Subsidio\Formularios\FormSub07.pdf', 600000.00, '2011-02-10', true, '2011-02-25', 'C:\Solicitudes\Subsidio\Facturas\Formulario07', true, '2011-03-15', true, '2011-04-10', 6, 6), -- 7. Aprobado (Empr 6 - Empleado 6)
-('C:\Solicitudes\Subsidio\Formularios\FormSub08.pdf', 900000.00, '2011-03-01', true, '2011-03-15', 'C:\Solicitudes\Subsidio\Facturas\Formulario08', true, '2011-04-05', true, '2011-05-01', 7, 1), -- 8. Aprobado (Empr 7 - Empleado 1)
-('C:\Solicitudes\Subsidio\Formularios\FormSub09.pdf', 450000.00, '2011-03-10', true, '2011-03-25', 'C:\Solicitudes\Subsidio\Facturas\Formulario09', true, '2011-04-15', true, '2011-05-10', 8, 2), -- 9. Aprobado (Empr 8 - Empleado 2)
-('C:\Solicitudes\Subsidio\Formularios\FormSub10.pdf', 900000.00, '2011-06-10', true, '2011-06-25', 'C:\Solicitudes\Subsidio\Facturas\Formulario10', true, '2011-07-15', true, '2011-08-10', 6, 6), -- 10. Aprobado (Empr 6 - Empleado 6)
--- Denegados -------------------------
-('C:\Solicitudes\Subsidio\Formularios\FormSub11.pdf', 750000.00, '2011-04-01', false, '2011-04-15', null, null, null, null, null, 2, 3), -- 11. Denegado (Empr 2 - Empleado 3)
-('C:\Solicitudes\Subsidio\Formularios\FormSub12.pdf', 500000.00, '2011-04-10', false, '2011-04-25', null, null, null, null, null, 3, 4), -- 12. Denegado (Empr 3 - Empleado 4)
-('C:\Solicitudes\Subsidio\Formularios\FormSub13.pdf', 650000.00, '2011-05-01', false, '2011-05-15', null, null, null, null, null, 4, 5), -- 13. Denegado (Empr 4 - Empleado 5)
--- Sin revisar --------------------
-('C:\Solicitudes\Subsidio\Formularios\FormSub14.pdf', 400000.00, '2011-05-10', null, null, null, null, null, null, null, 5, null), -- 14. Sin Revisar (Empr 5)
-('C:\Solicitudes\Subsidio\Formularios\FormSub15.pdf', 800000.00, '2011-06-01', null, null, null, null, null, null, null, 7, null); -- 15. Sin Revisar (Empr 7)
-
-insert into Credito (PathFormularioCredito, monto, FechaRecibido, Aprobado, FechaAprobacion, PathDirectorioFacturas, FacturasEntregadas, FechaFacturasValidadas, PuestaMarchaAcreditada, FechaPuestaMarcha, idEmprendimiento, idEmpleadoRevisor)
-values ('C:\Solicitudes\Credito\Formularios\FormSub01.pdf', 200000.00, '2010-05-20', true, '2010-06-01', 'C:\Solicitudes\Credito\Facturas\Formulario01', true, '2010-06-20', true, '2010-07-01', 1, 1), -- 1. Aprobado (Empr 1 - Empleado 1)
-('C:\Solicitudes\Credito\Formularios\FormSub02.pdf', 9000000.00, '2010-04-21', false, '2010-05-01', null, null, null, null, null, 1, 2), -- 2. Denegado (Empr 1 - Empleado 2)
-('C:\Solicitudes\Credito\Formularios\FormSub03.pdf', 400000.00, '2010-04-23', null, null, null, null, null, null, null, 2, null), -- 3. Sin revisar (Empr 2)
-('C:\Solicitudes\Credito\Formularios\FormCredito04.pdf', 750000.00, '2011-01-15', true, '2011-02-01', 'C:\Solicitudes\Credito\Facturas\Formulario04', true, '2011-02-20', true, '2011-03-15', 3, 3),   -- 4. Aprobado (Empr 3 - Empleado 3)
-('C:\Solicitudes\Credito\Formularios\FormCredito05.pdf', 500000.00, '2011-03-01', false, '2011-03-15', null, null, null, null, null, 4, 4), -- 5. Denegado (Empr 4 - Empleado 4)
-('C:\Solicitudes\Credito\Formularios\FormCredito06.pdf', 800000.00, '2011-04-01', false, '2011-04-15', null, null, null, null, null, 5, 5), -- 6. Denegado (Empr 5 - Empleado 5)
-('C:\Solicitudes\Credito\Formularios\FormCredito07.pdf', 450000.00, '2011-05-01', null, null, null, null, null, null, null, 6, null), -- 7. Sin Revisar (Empr 6)
-('C:\Solicitudes\Credito\Formularios\FormCredito08.pdf', 600000.00, '2011-06-01', null, null, null, null, null, null, null, 7, null); -- 8. Sin Revisar (Empr 7)
-*/
-
--- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
-insert into Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+-- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idUsuarioCargo (FK a Usuario: los usuarios 14 y 15 son de Mesa de Entrada))
+insert into Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idUsuarioCargo)
 values ('EX-2026-FORMINICIO-BAND-001', 1, '2026-09-01 02:42:40', 14),
 ('EX-2026-FORMINICIO-JIM-002', 2, '2026-09-01 02:42:40', 14),
 ('EX-2026-FORMINICIO-RIV-003', 3, '2026-09-01 02:42:40', 15),

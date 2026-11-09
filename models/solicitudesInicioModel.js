@@ -5,14 +5,13 @@ import { pool } from '../config/db.js';
 // 1. Buscar las solicitudes iniciales que NO tienen asignado un expediente electrónico todavía
 export const ModelObtenerSinExpediente = async () => {
     // Hacemos un LEFT JOIN con Expediente. Si no existe expediente, las columnas de la tabla Expediente vendrán como NULL.
-    // El nombre del Emprendedor sale de DatosSolicitudInicio (lo que cargó en el Formulario de Inicio);
-    // si la solicitud no tiene datos cargados, se usa CorreoVal como antes.
+    // El nombre del Emprendedor sale de DatosSolicitudInicio (lo que cargó en el Formulario de Inicio).
     const querySQL = `
         SELECT
             s.idSolicitudInicio,
             COALESCE(
                 NULLIF(TRIM(CONCAT_WS(' ', d.PersonaNombre, d.PersonaApellido)), ''),
-                s.CorreoVal
+                'Sin datos del formulario'
             ) AS Emprendedor,
             s.FechaRecibidoMesa AS FechaRecibido,
             s.DireccionPDF
@@ -38,7 +37,7 @@ export const ModelAsignarExpediente = async (idSolicitud, nroExpediente, idUsuar
         await conexion.query('SET @usuario_ip = ?;', [ipCliente]);
 
         const [resultado] = await conexion.query(
-            `INSERT INTO Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+            `INSERT INTO Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idUsuarioCargo)
              VALUES (?, ?, NOW(), ?);`,
             [nroExpediente, idSolicitud, idUsuario]
         );
@@ -127,7 +126,7 @@ export const ModelListarRevisionesAsignadas = async (idUsuario, departamento = n
     const revisor = await obtenerRevisorArea(pool, idUsuario);
     const asignadoSql = '(s.idEmpleadoTecRevisor = ? OR s.idEmpleadoSocRevisor = ?)';
     const etapaPendienteSql = `((s.EstadoRevisionArea = 1 AND s.AprobacionArea IS NULL)
-        OR (s.EstadoRevisionArea = 2 AND s.AprobacionArea = 1 AND s.AprobacionMinistro IS NULL))`;
+        OR (s.EstadoRevisionArea = 2 AND s.AprobacionArea = 1 AND s.AprobacionMinistro IS NULL AND s.MensajeResolucionFinal IS NULL))`;
     const parametrosBase = [revisor.idEmpleado, revisor.idEmpleado];
     const [departamentos] = await pool.query(
         `SELECT DISTINCT d.EmprendimientoDepto
@@ -159,10 +158,17 @@ export const ModelListarRevisionesAsignadas = async (idUsuario, departamento = n
                 s.EnvioMinistro,
                 s.FechaEnvioMinistro,
                 s.AprobacionMinistro,
-                e.NroExpediente
+                e.NroExpediente,
+                sub.idSubsidio, sub.Aprobado AS SubsidioAprobado, sub.PathFormularioSub,
+                cre.idCredito, cre.Aprobado AS CreditoAprobado, cre.PathFormularioCredito
          FROM SolicitudInicio s
          INNER JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = s.idSolicitudInicio
          LEFT JOIN Expediente e ON e.idSolicitudInicio = s.idSolicitudInicio
+         -- Formulario de subsidio / crédito más reciente de la solicitud (para el envío al Ministro)
+         LEFT JOIN Subsidio sub ON sub.idSubsidio =
+              (SELECT MAX(u.idSubsidio) FROM Subsidio u WHERE u.idSolicitudInicio = s.idSolicitudInicio)
+         LEFT JOIN Credito cre ON cre.idCredito =
+              (SELECT MAX(c.idCredito) FROM Credito c WHERE c.idSolicitudInicio = s.idSolicitudInicio)
          WHERE ${condiciones.join(' AND ')}
          ORDER BY s.FechaInicioRev DESC, s.idSolicitudInicio DESC`,
         parametros
@@ -174,7 +180,7 @@ export const ModelListarRevisionesAsignadas = async (idUsuario, departamento = n
     };
 };
 
-export const ModelResolverRevisionArea = async (idSolicitud, idUsuario, aprobacionArea, latitud, longitud, ipCliente) => {
+export const ModelResolverRevisionArea = async (idSolicitud, idUsuario, aprobacionArea, latitud, longitud, ipCliente, motivoRechazo = null) => {
     const conexion = await pool.getConnection();
 
     try {
@@ -227,11 +233,19 @@ export const ModelResolverRevisionArea = async (idSolicitud, idUsuario, aprobaci
             );
         }
 
+        // Rechazada: queda finalizada con el motivo (que también va en el correo al emprendedor)
         await conexion.query(
             `UPDATE SolicitudInicio
-             SET AprobacionArea = ?, FechaFinRev = CURRENT_DATE, EstadoRevisionArea = 2
+             SET AprobacionArea = ?, FechaFinRev = CURRENT_DATE, EstadoRevisionArea = 2,
+                 MotivoRechazo = ?, MensajeResolucionFinal = ?, FechaResolucionFinal = IF(? = 1, NULL, CURRENT_DATE)
              WHERE idSolicitudInicio = ?`,
-            [aprobacionArea, idSolicitud]
+            [
+                aprobacionArea,
+                aprobacionArea === 1 ? null : motivoRechazo,
+                aprobacionArea === 1 ? null : 'Rechazado por el Área',
+                aprobacionArea,
+                idSolicitud
+            ]
         );
 
         await conexion.commit();
@@ -244,12 +258,28 @@ export const ModelResolverRevisionArea = async (idSolicitud, idUsuario, aprobaci
     }
 };
 
+// Datos para los correos al emprendedor sobre su solicitud (decisión del Área, rechazo por falta de formulario,
+// rechazo del Ministro) y para reintentarlos si fallaron
+export const ModelDatosCorreoSolicitud = async (idSolicitud) => {
+    const [[datos]] = await pool.query(
+        `SELECT s.idSolicitudInicio, s.EstadoRevisionArea, s.AprobacionArea, s.MotivoRechazo, s.FechaFinRev,
+                s.EnvioMinistro, s.AprobacionMinistro, s.MensajeResolucionFinal, s.FechaResolucionFinal, x.NroExpediente, d.PersonaCorreo AS Correo, d.EmprendimientoNombre AS Emprendimiento,
+                d.EleccionAyuda, TRIM(CONCAT_WS(' ', d.PersonaNombre, d.PersonaApellido)) AS Solicitante
+         FROM SolicitudInicio s
+         INNER JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = s.idSolicitudInicio
+         LEFT JOIN Expediente x ON x.idSolicitudInicio = s.idSolicitudInicio
+         WHERE s.idSolicitudInicio = ?`,
+        [idSolicitud]
+    );
+    return datos;
+};
+
 // Bloquea la solicitud y valida que el usuario sea uno de sus revisores y que el Área la haya aprobado
 const obtenerSolicitudEtapaMinistro = async (conexion, idSolicitud, idUsuario) => {
     const revisor = await obtenerRevisorArea(conexion, idUsuario, true);
     const [solicitudes] = await conexion.query(
         `SELECT idSolicitudInicio, EstadoRevisionArea, idEmpleadoTecRevisor, idEmpleadoSocRevisor,
-                AprobacionArea, EnvioMinistro, AprobacionMinistro
+                AprobacionArea, EnvioMinistro, AprobacionMinistro, MensajeResolucionFinal
          FROM SolicitudInicio
          WHERE idSolicitudInicio = ?
          FOR UPDATE`,
@@ -272,8 +302,63 @@ const obtenerSolicitudEtapaMinistro = async (conexion, idSolicitud, idUsuario) =
         error.code = 'MINISTER_STAGE_INVALID';
         throw error;
     }
+    if (solicitud.MensajeResolucionFinal && solicitud.AprobacionMinistro === null) {
+        const error = new Error(`La solicitud ya fue finalizada: ${solicitud.MensajeResolucionFinal}.`);
+        error.code = 'MINISTER_STAGE_INVALID';
+        throw error;
+    }
 
     return solicitud;
+};
+
+// El emprendedor nunca envió el formulario de subsidio / crédito: la solicitud queda finalizada sin pasar por el
+// Ministro (EnvioMinistro = 2, "No corresponde") con el mensaje que escribió el empleado
+export const ModelRechazarPorFaltaFormulario = async (idSolicitud, idUsuario, ipCliente, mensaje) => {
+    const conexion = await pool.getConnection();
+
+    try {
+        await conexion.beginTransaction();
+        await conexion.query('SET @usuario_id = ?;', [idUsuario]);
+        await conexion.query('SET @usuario_ip = ?;', [ipCliente]);
+
+        const solicitud = await obtenerSolicitudEtapaMinistro(conexion, idSolicitud, idUsuario);
+        if (Number(solicitud.EnvioMinistro) !== 0) {
+            const error = new Error('La solicitud ya fue enviada al Ministro.');
+            error.code = 'MINISTER_ALREADY_SENT';
+            throw error;
+        }
+
+        const [[ayuda]] = await conexion.query(
+            `SELECT d.EleccionAyuda,
+                    (SELECT MAX(u.idSubsidio) FROM Subsidio u WHERE u.idSolicitudInicio = d.idSolicitudInicio) AS idSubsidio,
+                    (SELECT MAX(c.idCredito) FROM Credito c WHERE c.idSolicitudInicio = d.idSolicitudInicio) AS idCredito
+             FROM DatosSolicitudInicio d
+             WHERE d.idSolicitudInicio = ?`,
+            [idSolicitud]
+        );
+        const idAyuda = ayuda?.EleccionAyuda === 'Subsidio' ? ayuda.idSubsidio : ayuda?.idCredito;
+        if (idAyuda) {
+            const error = new Error(ayuda.EleccionAyuda === 'Subsidio'
+                ? `El emprendedor ya envió el formulario de Subsidio (Subsidio #${idAyuda}): resuélvalo desde la revisión del subsidio.`
+                : `El emprendedor ya tiene un formulario de Crédito (Crédito #${idAyuda}).`);
+            error.code = 'AYUDA_FORM_EXISTS';
+            throw error;
+        }
+
+        await conexion.query(
+            `UPDATE SolicitudInicio
+             SET EnvioMinistro = 2, MensajeResolucionFinal = ?, FechaResolucionFinal = CURRENT_DATE
+             WHERE idSolicitudInicio = ?`,
+            [mensaje, idSolicitud]
+        );
+
+        await conexion.commit();
+    } catch (error) {
+        await conexion.rollback();
+        throw error;
+    } finally {
+        conexion.release();
+    }
 };
 
 export const ModelRegistrarEnvioMinistro = async (idSolicitud, idUsuario, ipCliente) => {
@@ -288,6 +373,24 @@ export const ModelRegistrarEnvioMinistro = async (idSolicitud, idUsuario, ipClie
         if (Number(solicitud.EnvioMinistro) !== 0) {
             const error = new Error('El envío al Ministro ya fue registrado para esta solicitud.');
             error.code = 'MINISTER_ALREADY_SENT';
+            throw error;
+        }
+
+        // Subsidio: solo se envía al Ministro con el formulario de subsidio aprobado por el Área
+        // (el de crédito se agregará cuando exista su revisión)
+        const [[ayuda]] = await conexion.query(
+            `SELECT d.EleccionAyuda, sub.idSubsidio, sub.Aprobado
+             FROM DatosSolicitudInicio d
+             LEFT JOIN Subsidio sub ON sub.idSubsidio =
+                  (SELECT MAX(u.idSubsidio) FROM Subsidio u WHERE u.idSolicitudInicio = d.idSolicitudInicio)
+             WHERE d.idSolicitudInicio = ?`,
+            [idSolicitud]
+        );
+        if (ayuda?.EleccionAyuda === 'Subsidio' && Number(ayuda.Aprobado) !== 1) {
+            const error = new Error(ayuda.idSubsidio
+                ? `El Subsidio de la solicitud aún no fue aprobado (Subsidio #${ayuda.idSubsidio}).`
+                : 'No se encontró formulario de Subsidio enviado por el emprendedor.');
+            error.code = 'AYUDA_NOT_APPROVED';
             throw error;
         }
 
@@ -417,7 +520,7 @@ const crearEmprendimientoAprobado = async (conexion, idSolicitud, nroProyecto, i
     });
 };
 
-export const ModelRegistrarResolucionMinistro = async (idSolicitud, idUsuario, aprobacionMinistro, ipCliente, nroProyecto = null, idRubro = null) => {
+export const ModelRegistrarResolucionMinistro = async (idSolicitud, idUsuario, aprobacionMinistro, ipCliente, nroProyecto = null, idRubro = null, motivoRechazo = null) => {
     const conexion = await pool.getConnection();
 
     try {
@@ -439,9 +542,15 @@ export const ModelRegistrarResolucionMinistro = async (idSolicitud, idUsuario, a
 
         await conexion.query(
             `UPDATE SolicitudInicio
-             SET AprobacionMinistro = ?, FechaResolucionMin = CURRENT_DATE
+             SET AprobacionMinistro = ?, FechaResolucionMin = CURRENT_DATE, MensajeResolucionFinal = ?,
+                 FechaResolucionFinal = CURRENT_DATE, MotivoRechazo = ?
              WHERE idSolicitudInicio = ?`,
-            [aprobacionMinistro, idSolicitud]
+            [
+                aprobacionMinistro,
+                aprobacionMinistro === 1 ? 'Emprendimiento Aprobado por ministro' : 'Emprendimiento Rechazado por ministro',
+                aprobacionMinistro === 1 ? null : motivoRechazo,
+                idSolicitud
+            ]
         );
 
         // Si aprobó: se crean emprendimiento, emprendedor y cuenta (para enviarle el correo)
@@ -481,14 +590,14 @@ export const ModelRegistrarEmprendimientoHistorico = async (idUsuario, ipCliente
 
         const [solicitud] = await conexion.query(
             `INSERT INTO SolicitudInicio (DireccionPDF, FechaRecibidoMesa, EstadoRevisionArea, AprobacionArea,
-                    EnvioMinistro, AprobacionMinistro, FechaResolucionMin, CargaHistorica)
-             VALUES (?, ?, 2, TRUE, 1, TRUE, ?, TRUE)`,
-            [carga.direccionPdfSolicitud, carga.fechaRecibidoMesa, carga.fechaResolucionMin]
+                    EnvioMinistro, AprobacionMinistro, FechaResolucionMin, MensajeResolucionFinal, FechaResolucionFinal, CargaHistorica)
+             VALUES (?, ?, 2, TRUE, 1, TRUE, ?, 'Emprendimiento Aprobado por ministro', ?, TRUE)`,
+            [carga.direccionPdfSolicitud, carga.fechaRecibidoMesa, carga.fechaResolucionMin, carga.fechaResolucionMin]
         );
         const idSolicitud = solicitud.insertId;
 
         await conexion.query(
-            'INSERT INTO Expediente (NroExpediente, idSolicitudInicio, idEmpleadoCargo) VALUES (?, ?, ?)',
+            'INSERT INTO Expediente (NroExpediente, idSolicitudInicio, idUsuarioCargo) VALUES (?, ?, ?)',
             [carga.nroExpediente, idSolicitud, idUsuario]
         );
 
@@ -507,11 +616,11 @@ export const ModelRegistrarEmprendimientoHistorico = async (idUsuario, ipCliente
         const valoresEstado = ayuda.tipo === 'Subsidio' ? [aprobado === null ? 0 : 2] : [];
         await conexion.query(
             `INSERT INTO ${tablaAyuda} (${columnaPdf}, monto, FechaRecibido, Aprobado, FechaResolucion,
-                    MensajeResolucion, FacturasEntregadas, PuestaMarchaAcreditada, idSolicitudInicio${columnaEstado})
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?${valoresEstado.length ? ', ?' : ''})`,
+                    FacturasEntregadas, PuestaMarchaAcreditada, idSolicitudInicio${columnaEstado})
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?${valoresEstado.length ? ', ?' : ''})`,
             [
                 ayuda.direccionPdf, ayuda.monto, ayuda.fechaRecibido, aprobado,
-                aprobado === null ? null : ayuda.fechaResolucion, ayuda.mensajeResolucion,
+                aprobado === null ? null : ayuda.fechaResolucion,
                 valorSeguimiento, valorSeguimiento, idSolicitud, ...valoresEstado
             ]
         );

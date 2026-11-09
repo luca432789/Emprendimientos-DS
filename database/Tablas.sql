@@ -9,7 +9,7 @@ use ProyectoEmprendimientos2026;
 /* Tablas modelo relacional
 -- Empleado (idEmpleado (PK), Nombre, Apellido, DNI, Domicilio, Teléfono, Correo, Cargo (Mesa de Entrada - Técnico - Social - Administrador), Activo (Si-No))
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica)
 
 -- DatosSolicitudInicio (idDatosSolicitudInicio (PK), PersonaNombre, PersonaApellido, PersonaDNI, PersonaDepartamento, PersonaLocalidad, PersonaDomicilio, PersonaTeléfono, PersonaCorreo, EmprendimientoNombre, EmprendimientoCalle, EmprendimientoNroCalle, EmprendimientoBarrio, EmprendimientoDepto, EmprendimientoLocalidad, EmprendimientoActPrincipal, EmprendimientoMarcha, EmprendimientoRubro, EleccionAyuda, EmprendimientoLatitud, EmprendimientoLongitud, idSolicitudInicio (fk))
 
@@ -35,7 +35,7 @@ use ProyectoEmprendimientos2026;
 
 -- Garante (idGarante (PK), NombreCompleto, DNI, Teléfono, Correo, PathFotocopiaDNIautenticada, ConstanciaCuil,  PathCertificadoResidencia, PathBoletaImpuesto, PathCopiaResiboSueldo, idCredito (FK))
 
--- Expediente (NroExpediente (PK), idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+-- Expediente (NroExpediente (PK), idSolicitudInicio, FechaCarga, idUsuarioCargo)
 
 -- Auditoria (idLog (PK), idUsuario (FK), Accion, Tabla_Afectada, idRegistroAfectado, Detalle, Fecha_Hora, DirecciónIP)
 
@@ -62,7 +62,7 @@ CONSTRAINT chk_CargoEmpleado
 	CHECK (Cargo IN ('Mesa de Entrada', 'Técnico', 'Social', 'Administrador')) -- Solo habran esos cargos
 );
 
--- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica, CorreoVal)
+-- SolicitudInicio (idSolicitudInicio (PK), DireccionPDF, FechaRecibidoMesa, FechaRecibidoArea, EstadoRevisionArea (0: Sin revisar, 1: En proceso, 2: Finalizado), FechaInicioRev, FechaFinRev, idEmpleadoTecRevisor (FK), idEmpleadoSocRevisor (FK), AprobacionArea (si-no), EnvioMinistro (0: Sin enviar, 1: Enviado a ministro, 2: No corresponde), FechaEnvioMinistro, AprobacionMinistro (Si-No), FechaResolucionMin, CargaHistorica)
 create table SolicitudInicio (
 idSolicitudInicio int auto_increment primary key,
 DireccionPDF varchar (1024) not null,
@@ -76,14 +76,16 @@ FechaFinRev date null,       -- Cuando presiona "Terminar"
 idEmpleadoTecRevisor int null,
 idEmpleadoSocRevisor int null,
 AprobacionArea boolean null,  -- Resultado posterior a visita: 1/true = aceptado
+MotivoRechazo varchar(512) null, -- lo que escribió el Área (o el empleado, por el Ministro) al rechazar: también se envía por correo al emprendedor
 
 -- Etapa Final de Solicitud
 EnvioMinistro tinyint default 0, -- 0: Sin enviar, 1: Enviado a ministro, 2: No corresponde
 FechaEnvioMinistro date null,
 AprobacionMinistro boolean null,  -- La respuesta de aprobacion/rechazo del ministro
 FechaResolucionMin date null,
+MensajeResolucionFinal varchar(512) null, -- Cómo terminó: "Rechazado por el Área", "Rechazado por Subsidio", "Emprendimiento Aprobado por ministro", "Emprendimiento Rechazado por ministro" o el texto del rechazo por falta de formulario (EnvioMinistro = 2)
+FechaResolucionFinal date null, -- Día en que quedó finalizada (junto con MensajeResolucionFinal): tras un rechazo, la misma persona puede presentar otra solicitud pasados 7 días
 CargaHistorica boolean not null default False, -- True: emprendimiento antiguo cargado directo por un empleado (sin DatosSolicitudInicio ni fechas de revisión)
-CorreoVal varchar(512) null,-- comentario del porqué de rechazo || validación con usuario y link de contraseña
 CONSTRAINT fk_Solicitud_EmpleadoTec
 	FOREIGN KEY (idEmpleadoTecRevisor) REFERENCES Empleado(idEmpleado),
 CONSTRAINT fk_Solicitud_EmpleadoSoc
@@ -114,6 +116,8 @@ EleccionAyuda varchar(10) not null, -- Subsidio o Credito
 EmprendimientoLatitud decimal(12, 10) null,
 EmprendimientoLongitud decimal(13, 10) null,
 idSolicitudInicio int not null unique,
+INDEX idx_DatosSolicitud_DNI (PersonaDNI),      -- solicitudes anteriores de la misma persona
+INDEX idx_DatosSolicitud_Correo (PersonaCorreo),
 CONSTRAINT fk_DatosSolicitud_SolicitudInicio
 	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio(idSolicitudInicio),
 CONSTRAINT chk_EleccionAyuda
@@ -160,8 +164,8 @@ Localidad varchar (40) not null,
 Domicilio varchar(512) not null,
 Teléfono varchar(25) not null, 
 Correo varchar(150) not null unique,
-Antecedentes boolean null default False,
-DescripcionAntecedente varchar(512) null,
+Antecedentes boolean null default False, -- (para la futura administración de emprendedores) True: no entregó todas las FACTURAS de LEY en los 30 días desde la aprobación del Ministro
+DescripcionAntecedente varchar(512) null, -- detalle del antecedente, lo carga un empleado
 idEmprendimiento int not null unique, -- unica para asegurar que cada emprendimiento solo esta conectado con un emprendedor
 constraint fk_Emprendedor_Emprendimiento
 	FOREIGN KEY (idEmprendimiento) REFERENCES Emprendimiento(idEmprendimiento)
@@ -239,15 +243,19 @@ create table Subsidio (
 idSubsidio int auto_increment primary key,
 PathFormularioSub varchar(1024) not null,
 monto decimal (12, 2) not null, 	-- maximo 9.000.000.000,00
+MontoAnterior decimal (12, 2) null, -- monto del envío anterior, si el reenvío del formulario trajo un monto distinto
 FechaRecibido date not null default (current_date),
-EstadoRevision tinyint not null default 0, -- 0: Sin revisar, 1: En proceso, 2: Finalizado (solo con Aprobado en True o False; antes el emprendedor puede reenviar el formulario)
+EstadoRevision tinyint not null default 0, -- 0: Sin revisar, 1: En proceso, 2: Finalizado (solo con Aprobado en True o False)
+ReenvioSolicitado boolean not null default False, -- True: el Área pidió reenviar el formulario (solo así el emprendedor puede reenviarlo); vuelve a False al recibirlo
 Aprobado boolean null, 		-- null = sin ver/pendiente, True= Aprobado, False= Rechazado
 FechaResolucion date null,
-MensajeResolucion varchar(512) null, 		-- Para explicar por qué se rechazó o notas de la aprobación
-PathDirectorioFacturas varchar(1024) null, -- null hasta que se apruebe el subsidio
+MotivoRechazo varchar(512) null, -- lo que escribió el empleado al rechazar (también se envía por correo al emprendedor)
+MensajeSolicitudReenvio varchar(512) null, 		-- Para explicar por qué se solicitó el reenvio de formulario
+
+PathDirectorioFacturas varchar(1024) null, -- null hasta que se apruebe el subsidio; carpeta de las facturas que sube el emprendedor desde su cuenta
 FacturasEntregadas boolean null default 0, -- hasta 30 dias desde la parobación  -- CAMBIAR A TINYINT? Emprendedor entrega todas las facturas = 1 (entregadas y en revision), 2= Validadas - 3 = no validadas?
-FechaFacturasValidadas date null,
-PuestaMarchaAcreditada boolean null default 0,-- hasta 90 dias desde la aprobación
+FechaFacturasValidadas date null, -- cuando un empleado validó las facturas entregadas
+PuestaMarchaAcreditada boolean null default 0,-- hasta 90 dias desde la aprobación; la declara un empleado (no el emprendedor)
 FechaPuestaMarcha date null,
 idSolicitudInicio int not null,
 idEmpleadoRevisor int null,
@@ -284,6 +292,7 @@ FechaRecibido date not null,
 Aprobado boolean null, -- null = sin ver/pendiente, True= Aprobado, False= Rechazado
 FechaResolucion date null,
 MensajeResolucion varchar(512) null, -- Para explicar por qué se rechazó o notas de la aprobación
+
 PathDirectorioFacturas varchar(1024) null,-- null hasta que se apruebe el credito
 FacturasEntregadas boolean null default 0, -- hasta 30 dias desde la parobación
 FechaFacturasValidadas date null,
@@ -327,17 +336,17 @@ CONSTRAINT fk_Garante_Credito
 	FOREIGN KEY (idCredito) REFERENCES Credito (idCredito)
 );
 
--- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idEmpleadoCargo)
+-- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idUsuarioCargo)
 create table Expediente (
 idExpediente int auto_increment primary key,
 NroExpediente varchar(50) unique,
 idSolicitudInicio int not null unique,
 FechaCarga timestamp default current_timestamp,
-idEmpleadoCargo int not null, -- cargo = Mesa de Entrada
+idUsuarioCargo int not null, -- usuario que cargó el expediente (Mesa de Entrada; en la carga histórica, Área o Administrador)
 CONSTRAINT fk_Expediente_SolicitudInicio
 	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio (idSolicitudInicio),
 CONSTRAINT fk_Expediente_Usuario 
-	FOREIGN KEY (idEmpleadoCargo) REFERENCES Usuario (idUsuario)
+	FOREIGN KEY (idUsuarioCargo) REFERENCES Usuario (idUsuario)
 );
 
 -- Auditoria (idLog (PK), idUsuario (FK), Accion, Tabla_Afectada, idRegistroAfectado, Detalle, Fecha_Hora, DirecciónIP)
