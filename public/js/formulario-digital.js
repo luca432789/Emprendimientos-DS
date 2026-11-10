@@ -317,6 +317,8 @@ if (form) {
     campoTelefono.value = campoTelefono.value.replace(/\D/g, '').slice(0, 10);
     campoTelefono.setCustomValidity('');
   });
+  // El número de calle del emprendimiento solo admite números (con "Sin número" queda S/N y el campo bloqueado)
+  numeroEmprendimiento?.addEventListener('input', () => { numeroEmprendimiento.value = numeroEmprendimiento.value.replace(/\D/g, ''); });
   form.querySelectorAll('input[name="dniGarante"], input[name="dniFirmaGarante"], input[name="cuilGarante"], input[name="telefonoGarante"]').forEach((input) => {
     input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); });
   });
@@ -373,18 +375,25 @@ if (form) {
     const conGarante = esFormularioCredito && parte !== 'Titular';
 
     // El DNI que acompaña a la firma se escribe a mano, pero tiene que ser el del titular de la solicitud
+    // (en el Formulario de Inicio, el mismo DNI que se cargó arriba)
     const dniFirma = form.querySelector('[name="dniProyecto"]');
     const dniTitular = form.querySelector('[name="dniCuit"]')?.value.trim().toUpperCase();
-    if (esAyuda && conTitular && dniFirma && dniFirma.value.replace(/[.\s]/g, '').toUpperCase() !== dniTitular) {
-      resultado.textContent = 'El D.N.I. Nº junto a la firma debe ser el mismo del titular de la solicitud de inicio.';
+    if ((esInicio || (esAyuda && conTitular)) && dniFirma && dniFirma.value.replace(/[.\s]/g, '').toUpperCase() !== dniTitular) {
+      resultado.textContent = esInicio
+        ? 'El D.N.I. Nº junto a la firma debe ser el mismo DNI (o documento) ingresado arriba.'
+        : 'El D.N.I. Nº junto a la firma debe ser el mismo del titular de la solicitud de inicio.';
       dniFirma.focus();
       return;
     }
 
+    // El Formulario de Inicio lleva la misma firma que subsidio y crédito
     const firmas = window.firmasDigitales || {};
-    const firma = esAyuda && conTitular ? firmas.titular?.obtener() : null;
-    if (esAyuda && conTitular && !firma) {
-      resultado.textContent = 'Firme en el recuadro del titular o marque "No tengo firma" y escriba su nombre completo.';
+    const conFirma = esInicio || (esAyuda && conTitular);
+    const firma = conFirma ? firmas.titular?.obtener() : null;
+    if (conFirma && !firma) {
+      resultado.textContent = esInicio
+        ? 'Firme en el recuadro o marque "No tengo firma" y escriba su nombre completo.'
+        : 'Firme en el recuadro del titular o marque "No tengo firma" y escriba su nombre completo.';
       firmas.titular?.enfocar();
       return;
     }
@@ -524,6 +533,7 @@ if (form) {
         : `${fechaActual.getDate()} de ${meses[fechaActual.getMonth()]} de ${fechaActual.getFullYear()}`;
       datos.documentoExtranjero = Boolean(extranjero?.checked);
       if (esInicio) {
+        datos.firma = firma;
         datos.localidad = localidadPersona.valor(datos.localidad);
         if (localidadEmprendimiento) datos.localidadEmprendimiento = localidadEmprendimiento.valor(datos.localidadEmprendimiento);
         delete datos.localidadLibre;

@@ -24,97 +24,11 @@ const carpetasDestino = {
 };
 const carpetaPlantillas = path.join(process.cwd(), 'plantillas_pdf');
 
-// Plantilla PDF oficial sobre la que se escribe con coordenadas (solo el Formulario de Inicio).
-// Subsidio y crédito ya no usan PDF: se arman con HTML/CSS (plantillas_pdf/ayuda) y Puppeteer.
-const plantillas = {
-  'Formulario de Inicio': 'formulario_de_inicio.pdf'
-};
+// Subsidio y crédito (plantillas_pdf/ayuda) y el Formulario de Inicio (plantillas_pdf/inicio) se arman con HTML/CSS y Puppeteer
 const carpetaPlantillaAyuda = path.join(carpetaPlantillas, 'ayuda');
-
-const coordenadasBase = {
-  'Formulario de Inicio': {
-    // medidas sobre la hoja oficial (612 x 1008 pt); la fecha se escribe aparte, por partes
-    nombreApellido: [130, 576],
-    dniCuit: [72, 551],
-    domicilio: [88, 526],
-    telefono: [58, 500],
-    // el correo no tiene renglón propio en la plantilla: lo escribe dibujarDatosExtraInicio con su etiqueta
-    calleEmprendimiento: [210, 475],
-    numeroEmprendimiento: [442, 475],
-    barrio: [70, 450],
-    departamento: [334, 450],
-    rubro: [242, 374],
-    tipoFinanciamiento: [80, 349],
-    bien1: [50, 299],
-    bien2: [50, 274],
-    bien3: [50, 249],
-    firma: [76, 121]
-  }
-};
-
-const etiquetas = {
-  nombreApellido: 'Nombre y apellido',
-  dniCuit: 'DNI / CUIT',
-  telefono: 'Telefono',
-  correo: 'Correo electronico',
-  domicilio: 'Domicilio',
-  nombreEmprendimiento: 'Nombre del emprendimiento',
-  rubro: 'Rubro / actividad',
-  localidad: 'Localidad',
-  fechaInicio: 'Fecha de inicio de actividad',
-  descripcion: 'Descripcion del emprendimiento',
-  necesidadPrincipal: 'Necesidad principal',
-  antiguedad: 'Antiguedad del emprendimiento',
-  montoSolicitado: 'Monto solicitado',
-  destinoSubsidio: 'Destino del subsidio',
-  justificacion: 'Justificacion de la solicitud',
-  documentacion: 'Documentacion presentada',
-  ingresosMensuales: 'Ingresos mensuales aproximados',
-  destinoCredito: 'Destino del credito',
-  planDevolucion: 'Plan de devolucion propuesto',
-  garantia: 'Garantia / respaldo',
-  departamento: 'Departamento'
-};
+const carpetaPlantillaInicio = path.join(carpetaPlantillas, 'inicio');
 
 const limpiarTexto = (valor = '') => String(valor).replace(/[\r\n]+/g, ' ').trim();
-
-const dividirLineas = (texto, maximoCaracteres = 72) => {
-  const palabras = limpiarTexto(texto).split(' ').filter(Boolean);
-  const lineas = [];
-  let lineaActual = '';
-
-  for (const palabra of palabras) {
-    const candidata = lineaActual ? `${lineaActual} ${palabra}` : palabra;
-    if (candidata.length > maximoCaracteres) {
-      if (lineaActual) lineas.push(lineaActual);
-      lineaActual = palabra;
-    } else {
-      lineaActual = candidata;
-    }
-  }
-
-  if (lineaActual) lineas.push(lineaActual);
-  return lineas;
-};
-
-const escribirCampo = (pagina, fuente, clave, valor, x, y) => {
-  const contenido = limpiarTexto(valor);
-  if (!contenido) return;
-
-  const esTextoLargo = contenido.length > 55 || ['descripcion', 'necesidadPrincipal', 'destinoSubsidio', 'justificacion', 'documentacion', 'destinoCredito', 'planDevolucion', 'garantia'].includes(clave);
-  const lineas = esTextoLargo ? dividirLineas(contenido, 72) : [contenido];
-
-  lineas.forEach((linea, index) => {
-    pagina.drawText(linea, {
-      x,
-      y: y - (index * 13),
-      size: 9,
-      font: fuente,
-      color: rgb(0, 0, 0),
-      maxWidth: 455
-    });
-  });
-};
 
 const numeroCredito = (valor, campo) => {
   if (valor === undefined || valor === null || String(valor).trim() === '') return 0;
@@ -370,12 +284,28 @@ const validarInicio = (datos) => {
     if (valor.length > largoMaximo) throw new ErrorValidacion(`El campo "${etiqueta}" admite hasta ${largoMaximo} caracteres.`);
     datos[clave] = valor;
   }
+  if (datos.numeroEmprendimiento !== 'S/N' && !/^\d{1,6}$/.test(datos.numeroEmprendimiento)) {
+    throw new ErrorValidacion('El número de calle del emprendimiento admite solo números; si no tiene, marque "Sin número (S/N)".');
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.correo)) throw new ErrorValidacion('Ingrese un correo electrónico válido.');
   if (!departamentosSantiago.includes(datos.departamento) || !departamentosSantiago.includes(datos.departamentoPersona)) {
     throw new ErrorValidacion('Seleccione un departamento válido de Santiago del Estero.');
   }
   if (!['Sí', 'No'].includes(datos.enMarcha)) throw new ErrorValidacion('Indique si el emprendimiento está en marcha.');
   if (!['Subsidio', 'Credito'].includes(datos.tipoFinanciamiento)) throw new ErrorValidacion('Elija Subsidio o Crédito como tipo de ayuda.');
+  // Los tres renglones de "necesitamos comprar lo siguiente" son opcionales
+  ['bien1', 'bien2', 'bien3'].forEach((clave) => { datos[clave] = limpiarTexto(datos[clave] || '').slice(0, 80); });
+  datos.firma = validarFirma(datos.firma);
+  // Aclaración y DNI de la firma: se escriben a mano, pero el DNI tiene que ser el mismo que se cargó arriba
+  for (const [campo, etiqueta, maximo] of [['aclaracionProyecto', 'Aclaración', 80], ['dniProyecto', 'D.N.I. Nº de la firma', 20]]) {
+    datos[campo] = limpiarTexto(datos[campo] || '');
+    if (!datos[campo]) throw new ErrorValidacion(`Complete el campo "${etiqueta}".`);
+    if (datos[campo].length > maximo) throw new ErrorValidacion(`El campo "${etiqueta}" admite hasta ${maximo} caracteres.`);
+  }
+  datos.dniProyecto = datos.dniProyecto.replace(/[.\s]/g, '').toUpperCase();
+  if (datos.dniProyecto !== datos.dniCuit.toUpperCase()) {
+    throw new ErrorValidacion('El D.N.I. Nº junto a la firma debe ser el mismo DNI (o documento) ingresado arriba.');
+  }
 
   datos.nombreApellido = `${datos.nombre} ${datos.apellido}`;
 };
@@ -427,70 +357,6 @@ const validarMonto = (valor) => {
     throw new ErrorValidacion('Ingrese un monto solicitado válido, mayor a 0.');
   }
   return Math.round(monto * 100) / 100;
-};
-
-// Escribe en la hoja 1 del Formulario de Inicio lo que la plantilla oficial no tiene renglón:
-// el correo (junto al "Tel") y un bloque con nombre, localidad y actividad del emprendimiento sobre la firma.
-const dibujarDatosExtraInicio = async (pdfDoc, pagina, fuente, datos) => {
-  const fuenteEtiqueta = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-  const fuenteTitulo = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-  const negro = rgb(0, 0, 0);
-
-  // Correo: etiqueta con la tipografía de la plantilla; el texto se achica si no entra hasta el margen
-  const correo = limpiarTexto(datos.correo);
-  if (correo) {
-    const xEtiqueta = 276;
-    pagina.drawText('Correo:', { x: xEtiqueta, y: 500, size: 11, font: fuenteEtiqueta, color: negro });
-    const xCorreo = xEtiqueta + fuenteEtiqueta.widthOfTextAtSize('Correo: ', 11);
-    const anchoDisponible = 572 - xCorreo;
-    let tamanio = 9;
-    while (tamanio > 6 && fuente.widthOfTextAtSize(correo, tamanio) > anchoDisponible) tamanio -= 0.5;
-    pagina.drawText(correo, { x: xCorreo, y: 500, size: tamanio, font: fuente, color: negro, maxWidth: anchoDisponible });
-  }
-
-  // Bloque "Datos del emprendimiento" en el espacio libre entre el saludo y la FIRMA
-  const xEtiquetas = 50;
-  const xValores = 182;
-  const anchoValores = 562 - xValores;
-  let y = 202;
-  pagina.drawText('Datos del emprendimiento', { x: xEtiquetas, y, size: 11, font: fuenteTitulo, color: negro });
-
-  // Corta el texto según el ancho real que ocupa; si no entra en maximoLineas, termina en "..."
-  const lineasPorAncho = (texto, tamanio, maximoLineas) => {
-    const lineas = [];
-    let actual = '';
-    for (const palabra of limpiarTexto(texto).split(' ').filter(Boolean)) {
-      const candidata = actual ? `${actual} ${palabra}` : palabra;
-      if (actual && fuente.widthOfTextAtSize(candidata, tamanio) > anchoValores) {
-        lineas.push(actual);
-        actual = palabra;
-      } else {
-        actual = candidata;
-      }
-    }
-    if (actual) lineas.push(actual);
-    if (lineas.length > maximoLineas) {
-      lineas.length = maximoLineas;
-      let ultima = lineas[maximoLineas - 1];
-      while (ultima && fuente.widthOfTextAtSize(`${ultima}...`, tamanio) > anchoValores) ultima = ultima.slice(0, -1);
-      lineas[maximoLineas - 1] = `${ultima.trimEnd()}...`;
-    }
-    return lineas;
-  };
-
-  const filas = [
-    ['Nombre:', datos.nombreEmprendimiento, 9, 1],
-    ['Localidad:', datos.localidadEmprendimiento, 9, 1],
-    ['Actividad principal:', datos.actividadPrincipal, 8, 3]
-  ];
-  for (const [etiqueta, valor, tamanio, maximoLineas] of filas) {
-    y -= 13;
-    pagina.drawText(etiqueta, { x: xEtiquetas, y, size: 11, font: fuenteEtiqueta, color: negro });
-    lineasPorAncho(valor, tamanio, maximoLineas).forEach((linea, indice) => {
-      if (indice > 0) y -= 10;
-      pagina.drawText(linea, { x: xValores, y, size: tamanio, font: fuente, color: negro });
-    });
-  }
 };
 
 // Incrusta en pdfDoc los adjuntos que llegan en base64 (imágenes JPG/PNG o PDF) y los devuelve listos para dibujar.
@@ -627,17 +493,10 @@ const abrirPdfGuardado = async (direccionWeb) => {
   }
 };
 
-// Arma el PDF a partir de la plantilla, los datos y los adjuntos. Devuelve los bytes finales.
-const generarPdf = async (tipoFormulario, datos, imagenes) => {
-  if (tipoFormulario === 'Formulario de Inicio' && (!Array.isArray(imagenes) || imagenes.length === 0)) {
-    throw new ErrorValidacion('Debe adjuntar al menos una foto o un PDF para completar el formulario.');
-  }
-  if (tipoFormulario === 'Formulario de Subsidios no Reintegrables' && (!Array.isArray(imagenes) || imagenes.length === 0)) {
-    throw new ErrorValidacion('Adjunte al menos una fotografía o un PDF para completar el formulario de subsidio.');
-  }
-  if (!Array.isArray(imagenes) || imagenes.length > 8) {
-    throw new ErrorValidacion('Seleccione hasta 8 archivos adjuntos.');
-  }
+// Comprobaciones comunes a los adjuntos del Formulario de Inicio y del subsidio: al menos uno, hasta 8 y 16 MB en total
+const validarAdjuntosFormulario = (imagenes, mensajeSinAdjuntos) => {
+  if (!Array.isArray(imagenes) || imagenes.length === 0) throw new ErrorValidacion(mensajeSinAdjuntos);
+  if (imagenes.length > 8) throw new ErrorValidacion('Seleccione hasta 8 archivos adjuntos.');
   const totalBytes = imagenes.reduce((total, archivo) => {
     if (typeof archivo?.data !== 'string') return total;
     const base64 = archivo.data.slice(archivo.data.indexOf(',') + 1);
@@ -646,89 +505,60 @@ const generarPdf = async (tipoFormulario, datos, imagenes) => {
   if (totalBytes > 16 * 1024 * 1024) {
     throw new ErrorValidacion('El total de los archivos adjuntos no puede superar 16 MB.');
   }
+};
 
-  // El subsidio ya sale completo de la plantilla HTML; los demás parten del PDF oficial
-  const bytesPlantilla = tipoFormulario === 'Formulario de Subsidios no Reintegrables'
-    ? await generarHojasAyuda('subsidio.ejs', datos, false)
-    : await fs.readFile(path.join(carpetaPlantillas, plantillas[tipoFormulario]));
-  const pdfDoc = await PDFDocument.load(bytesPlantilla);
-  const fuente = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const pagina = pdfDoc.getPages()[0];
-  const coordenadas = coordenadasBase[tipoFormulario] || {};
+// Espacio libre para la imagen en las hojas de adjuntos del Formulario de Inicio, en mm desde los bordes de la hoja oficio
+// (debajo del logo y del título de plantillas_pdf/inicio/inicio.ejs)
+const ESPACIO_ADJUNTO = { arriba: 44, izquierda: 13, derecha: 13, abajo: 13 };
+const PUNTOS_POR_MM = 72 / 25.4;
 
-  Object.entries(coordenadas).forEach(([clave, posicion]) => {
-    // en la BD se guarda 'Credito' (sin tilde), en el papel se muestra con tilde
-    const valor = clave === 'tipoFinanciamiento' && datos[clave] === 'Credito' ? 'Crédito' : datos[clave];
-    escribirCampo(pagina, fuente, clave, valor, posicion[0], posicion[1]);
+// Formulario de Inicio: la hoja 1 y una hoja por adjunto salen de la plantilla HTML (plantillas_pdf/inicio);
+// cada imagen (o cada página de un PDF) se dibuja debajo del título de su hoja
+const generarPdfInicio = async (datos, imagenes) => {
+  validarAdjuntosFormulario(imagenes, 'Debe adjuntar al menos una foto o un PDF para completar el formulario.');
+  // Los adjuntos se leen antes de abrir Chrome: si alguno no sirve, se avisa enseguida
+  const pdfDoc = await PDFDocument.create();
+  const adjuntos = await incrustarAdjuntos(pdfDoc, imagenes, 8);
+  const plantilla = await PDFDocument.load(await generarPdfDesdePlantilla(path.join(carpetaPlantillaInicio, 'inicio.ejs'), {
+    datos,
+    // El mismo logo que subsidio y crédito
+    logo: await imagenComoDataUri(path.join(carpetaPlantillaAyuda, 'logo-ministerio.png')),
+    fecha: fechaLugarHoy(),
+    paginasAdjuntos: adjuntos.length
+  }));
+  if (plantilla.getPageCount() !== adjuntos.length + 1) {
+    throw new Error(`La plantilla del Formulario de Inicio generó ${plantilla.getPageCount()} hojas para ${adjuntos.length} adjuntos.`);
+  }
+  (await pdfDoc.copyPages(plantilla, plantilla.getPageIndices())).forEach((hoja) => pdfDoc.addPage(hoja));
+
+  adjuntos.forEach(({ contenido, esPaginaPdf, ancho, alto }, indice) => {
+    const pagina = pdfDoc.getPage(indice + 1);
+    const izquierda = ESPACIO_ADJUNTO.izquierda * PUNTOS_POR_MM;
+    const abajo = ESPACIO_ADJUNTO.abajo * PUNTOS_POR_MM;
+    const anchoLibre = pagina.getWidth() - (ESPACIO_ADJUNTO.izquierda + ESPACIO_ADJUNTO.derecha) * PUNTOS_POR_MM;
+    const altoLibre = pagina.getHeight() - (ESPACIO_ADJUNTO.arriba + ESPACIO_ADJUNTO.abajo) * PUNTOS_POR_MM;
+    // Ocupa todo el espacio libre, arriba y centrada, sin deformarse
+    const escala = Math.min(anchoLibre / ancho, altoLibre / alto);
+    const anchoFinal = ancho * escala;
+    const altoFinal = alto * escala;
+    const posicion = {
+      x: izquierda + (anchoLibre - anchoFinal) / 2,
+      y: abajo + altoLibre - altoFinal,
+      width: anchoFinal,
+      height: altoFinal
+    };
+    if (esPaginaPdf) pagina.drawPage(contenido, posicion);
+    else pagina.drawImage(contenido, posicion);
   });
+  return pdfDoc.save();
+};
 
-  if (tipoFormulario === 'Formulario de Inicio') {
-    // "SANTIAGO DEL ESTERO ....... de ............ de 202.": día, mes y el último dígito del año
-    const hoy = new Date();
-    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    const estiloFecha = { y: 877, size: 10, font: fuente, color: rgb(0, 0, 0) };
-    pagina.drawText(String(hoy.getDate()), { ...estiloFecha, x: 372 });
-    pagina.drawText(meses[hoy.getMonth()], { ...estiloFecha, x: 445 });
-    pagina.drawText(String(hoy.getFullYear()).slice(3), { ...estiloFecha, x: 564 });
-  }
-
-  if (tipoFormulario === 'Formulario de Inicio' && datos.enMarcha) {
-    const x = datos.enMarcha === 'Sí' ? 300 : 362;
-    pagina.drawText('X', { x, y: 425, size: 10, font: fuente, color: rgb(0, 0, 0) });
-  }
-
-  if (tipoFormulario === 'Formulario de Inicio') {
-    await dibujarDatosExtraInicio(pdfDoc, pagina, fuente, datos);
-  }
-
-  if (tipoFormulario === 'Formulario de Inicio') {
-    const paginaCroquis = pdfDoc.getPages()[1];
-    if (paginaCroquis) {
-      paginaCroquis.drawRectangle({
-        x: 32, y: 310, width: 545, height: 590,
-        color: rgb(1, 1, 1)
-      });
-      paginaCroquis.drawText('Imágenes del emprendimiento', {
-        x: 36, y: 875, size: 12, font: fuente, color: rgb(0, 0, 0), maxWidth: 470
-      });
-    }
-  }
-
-  const adjuntosParaHoja = await incrustarAdjuntos(pdfDoc, imagenes, 8);
-
-  if (tipoFormulario === 'Formulario de Inicio' && adjuntosParaHoja.length) {
-    const paginaAdjuntos = pdfDoc.getPages()[1];
-    if (!paginaAdjuntos) throw new Error('La plantilla del Formulario de Inicio no contiene la segunda hoja de adjuntos.');
-
-    // Los adjuntos se distribuyen dentro del recuadro existente de la hoja 2.
-    // Cada imagen o página de PDF ocupa una celda; así no se agregan hojas al documento.
-    const area = { x: 42, y: 325, width: 520, height: 520 };
-    const columnas = Math.ceil(Math.sqrt(adjuntosParaHoja.length * area.width / area.height));
-    const filas = Math.ceil(adjuntosParaHoja.length / columnas);
-    const espacio = 10;
-    const anchoCelda = (area.width - espacio * (columnas - 1)) / columnas;
-    const altoCelda = (area.height - espacio * (filas - 1)) / filas;
-
-    adjuntosParaHoja.forEach(({ contenido, esPaginaPdf, ancho, alto }, indice) => {
-      const columna = indice % columnas;
-      const fila = Math.floor(indice / columnas);
-      const escala = Math.min(anchoCelda / ancho, altoCelda / alto);
-      const anchoFinal = ancho * escala;
-      const altoFinal = alto * escala;
-      const x = area.x + columna * (anchoCelda + espacio) + (anchoCelda - anchoFinal) / 2;
-      const y = area.y + area.height - (fila + 1) * altoCelda - fila * espacio + (altoCelda - altoFinal) / 2;
-
-      if (esPaginaPdf) {
-        paginaAdjuntos.drawPage(contenido, { x, y, width: anchoFinal, height: altoFinal });
-      } else {
-        paginaAdjuntos.drawImage(contenido, { x, y, width: anchoFinal, height: altoFinal });
-      }
-    });
-  } else if (tipoFormulario !== 'Formulario de Inicio') {
-    // Subsidio: cada adjunto (presupuestos) va en una hoja nueva al final, después de las hojas del formulario
-    agregarHojasAdjuntos(pdfDoc, fuente, adjuntosParaHoja, () => 'Documentación adjunta (presupuestos)');
-  }
-
+// Subsidio: las hojas 1 a 6 de la plantilla HTML y cada presupuesto en una hoja nueva al final
+const generarPdfSubsidio = async (datos, imagenes) => {
+  validarAdjuntosFormulario(imagenes, 'Adjunte al menos una fotografía o un PDF para completar el formulario de subsidio.');
+  const pdfDoc = await PDFDocument.load(await generarHojasAyuda('subsidio.ejs', datos, false));
+  const adjuntos = await incrustarAdjuntos(pdfDoc, imagenes, 8);
+  agregarHojasAdjuntos(pdfDoc, await pdfDoc.embedFont(StandardFonts.Helvetica), adjuntos, () => 'Documentación adjunta (presupuestos)');
   return pdfDoc.save();
 };
 
@@ -781,7 +611,7 @@ export const crearFormularioInicio = async (req, res) => {
     if (restriccion) throw new ErrorValidacion(restriccion, 409);
     await validarDominioCorreo(datos.correo);
 
-    const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);
+    const bytesPdf = await generarPdfInicio(datos, imagenes);
     const datosAuditoria = { idUsuario: null, ipCliente: obtenerIpCliente(req) };
 
     await guardarYResponder(res, tipoFormulario, bytesPdf,
@@ -987,7 +817,7 @@ export const crearFormularioSubsidio = async (req, res) => {
     // la fecha es siempre la del envío
     datos.fechaLugar = `${datos.lugarFirma}, ${fechaLugarHoy()}`;
 
-    const bytesPdf = await generarPdf(tipoFormulario, datos, imagenes);
+    const bytesPdf = await generarPdfSubsidio(datos, imagenes);
     const datosAuditoria = { idUsuario: usuarioDelTokenOpcional(req)?.idUsuario ?? null, ipCliente };
 
     await guardarYResponder(res, tipoFormulario, bytesPdf,

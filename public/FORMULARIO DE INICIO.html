@@ -146,7 +146,7 @@
                     </div>
                     <div class="columna">
                         <label class="etiqueta">Nº</label>
-                        <input type="text" name="numeroEmprendimiento" class="linea" maxlength="6" required aria-label="Número de calle del emprendimiento">
+                        <input type="text" name="numeroEmprendimiento" class="linea" inputmode="numeric" maxlength="6" pattern="[0-9]{1,6}" title="Ingrese solo números, o marque Sin número (S/N)" required aria-label="Número de calle del emprendimiento">
                         <label class="extranjero-control"><input type="checkbox" name="calleSinNumero" value="true"><span>Sin número (S/N)</span></label>
                     </div>
                 </div>
@@ -231,8 +231,25 @@
 
                 <p class="saludo">Sin otro motivo, y esperando una respuesta a lo solicitado, lo saludamos atentamente.</p>
 
-                <label class="etiqueta">FIRMA</label>
-                <input type="text" name="firma" class="linea firma" maxlength="80" required aria-label="Firma (nombre completo)" placeholder="Escriba su nombre completo">
+                <!-- Misma firma que en subsidio y crédito -->
+                <div class="firma-digital" data-firma>
+                    <p class="etiqueta">FIRMA</p>
+                    <div class="firma-zona-dibujo">
+                        <canvas class="firma-lienzo" aria-label="Recuadro para dibujar la firma"></canvas>
+                        <div class="firma-acciones">
+                            <small>Firme dentro del recuadro con el mouse o con el dedo.</small>
+                            <button type="button" class="btn firma-borrar" data-firma-borrar>Borrar firma</button>
+                        </div>
+                    </div>
+                    <label class="extranjero-control"><input type="checkbox" data-firma-sin-firma><span>No tengo firma</span></label>
+                    <div class="firma-zona-nombre" hidden>
+                        <label class="etiqueta" for="firma-nombre">Escriba su nombre completo en lugar de la firma</label>
+                        <input type="text" id="firma-nombre" class="linea" maxlength="80" data-firma-nombre autocomplete="off">
+                    </div>
+                </div>
+                <label class="campo-firma">Aclaración:<input type="text" name="aclaracionProyecto" class="linea" maxlength="80" required aria-label="Aclaración de la firma"></label>
+                <label class="campo-firma">D.N.I. Nº:<input type="text" name="dniProyecto" class="linea" maxlength="20" required aria-label="DNI junto a la firma" autocomplete="off"></label>
+                <small>Debe ser el mismo DNI (o documento) ingresado arriba.</small>
 
                 <div class="nota-importante">
                     <p><strong>NOTA IMPORTANTE: ADJUNTAR FOTOCOPIAS DE DNI AUTENTICADAS POR POLICIA, CERTIFICADOS DE RESIDENCIA ADJUNTAR FOTOGRAFIAS DEL EMPRENDIMIENTO. SI TUVIESE CAPACITACION SOBRE EL RUBRO A INICIAR, DEBE PRESENTAR UNA FOTOCOPIA AUTENTICADA POR POLICIA DE LA MISMA.</strong></p>
@@ -242,10 +259,15 @@
 
             <!-- HOJA 2 -->
             <section class="hoja">
-                <h3 class="titulo-imagenes">Imágenes del emprendimiento</h3>
-                <p class="parrafo">Adjunte fotografías del emprendimiento en reemplazo del croquis de localización. Puede seleccionar varias imágenes.</p>
+                <h3 class="titulo-imagenes">Imágenes y documentación del emprendimiento</h3>
+                <!-- Lo que se pide adjuntar: se destaca para que el emprendedor sepa qué imágenes o documentos enviar -->
+                <div class="documentacion-solicitada">
+                    <p>Croquis de localización del emprendimiento (indique calles, avenidas, vías de acceso, distancias a rutas, caminos u otros puntos de referencia lo más claro posible)</p>
+                    <p><strong>NOTA IMPORTANTE: ADJUNTAR FOTOCOPIAS DE DNI AUTENTICADAS POR POLICIA, CERTIFICADOS DE RESIDENCIA ADJUNTAR FOTOGRAFIAS DEL EMPRENDIMIENTO. SI TUVIESE CAPACITACION SOBRE EL RUBRO A INICIAR, DEBE PRESENTAR UNA FOTOCOPIA AUTENTICADA POR POLICIA DE LA MISMA.</strong></p>
+                </div>
+                <p class="parrafo">Puede seleccionar varios archivos: cada imagen (y cada página de un PDF) ocupa una hoja propia del documento.</p>
 
-                <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar imágenes</label>
+                <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar imágenes o archivos</label>
                 <div class="zona-archivos">
                     <input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple required>
                 </div>
@@ -295,6 +317,7 @@
   
 
     <script src="js/achicar-fotos.js"></script>
+    <script src="js/firma-digital.js"></script>
     <script src="js/formulario-digital.js"></script>
 </Body>
 </html>

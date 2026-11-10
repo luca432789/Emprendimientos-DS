@@ -326,8 +326,18 @@
     margin: 35px 0 20px;
 }
 
-.formulario-inicio .firma {
-    max-width: 380px;
+/* Documentación que se pide adjuntar (hoja 2 del Formulario de Inicio) */
+.formulario-inicio .documentacion-solicitada {
+    margin: 12px 0 16px;
+    padding: 12px 16px;
+    border-left: 4px solid #2f4e78;
+    border-radius: 4px;
+    background: #eef3f9;
+    line-height: 1.5;
+}
+.formulario-inicio .documentacion-solicitada p + p {
+    margin-top: 10px;
+    font-size: 13px;
 }
 
 /* Nota legal al pie */

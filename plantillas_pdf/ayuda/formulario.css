@@ -67,6 +67,13 @@ p { margin: 0; }
     border-bottom: 1px dotted #000;
     padding: 0 1.5mm;
 }
+/* Dato sin completar (formulario en blanco): queda la línea para escribir a mano */
+.relleno:empty {
+    display: inline-block;
+    min-width: 35mm;
+    height: 4.5mm;
+    vertical-align: -1mm;
+}
 .relleno.corto {
     display: inline-block;
     min-width: 38mm;
