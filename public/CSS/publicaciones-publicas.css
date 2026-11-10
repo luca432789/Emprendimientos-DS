@@ -1,5 +1,10 @@
 /* Página "Publicaciones" del menú (publicaciones aprobadas de todos los emprendimientos) */
 
+/* Fondo de toda la página (el contenido va centrado): sin franjas blancas a los costados */
+body {
+  background: #eeeae3;
+}
+
 .publicaciones-publicas {
   max-width: 1150px;
   margin: 0 auto;
