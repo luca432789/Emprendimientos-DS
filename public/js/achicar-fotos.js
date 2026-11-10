@@ -1,4 +1,4 @@
-// Achica las fotos antes de subirlas (formularios digitales y facturas de ley del emprendedor).
+// Achica las fotos antes de subirlas (formularios digitales, facturas de ley, publicaciones, productos y noticias).
 // Fotos de los adjuntos: una foto de celular pesa 2 a 5 MB y en el PDF no hace falta tanta resolución.
 // Se redibuja con el lado mayor en hasta 2000 px (se sigue leyendo bien un documento A4) y se guarda en JPG.
 // Además queda derecha: el PDF no lee la orientación que guarda la cámara, y el navegador sí la aplica al dibujarla.

@@ -9,10 +9,13 @@ import {
     modelEliminarNoticia
 } from '../models/noticiasModel.js';
 import { usuarioDelTokenOpcional } from '../middlewares/loginMiddleware.js';
-import { ErrorImagen, validarImagenes, guardarImagenes, borrarSubida } from '../helpers/imagenes.js';
+import { ErrorImagen, validarImagenes, guardarImagenes, copiarFotos, listarFotos, borrarSubida } from '../helpers/imagenes.js';
 import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
+// Cada versión de las imágenes de una noticia va a su carpeta (ej: /uploads/NoticiasImagen/noticia-1729000000000,
+// con foto-1.jpg y foto-2.jpg) y Noticia.ImagenUrl guarda esa carpeta. Las noticias anteriores guardan un archivo suelto.
 const CARPETA_IMAGENES = '/uploads/NoticiasImagen';
+const MAXIMO_IMAGENES = 2;
 const NOTICIAS_POR_PAGINA = 5; // de a 5 en la columna de la derecha
 const MAXIMO_TITULO = 255;
 const MAXIMO_CONTENIDO = 10000;
@@ -45,19 +48,40 @@ const leerNoticia = (body) => {
     return { titulo, contenido };
 };
 
-// Guarda la imagen (si vino) en uploads/NoticiasImagen y devuelve su ruta web, o null
-const guardarImagenNoticia = async (imagenBase64) => {
-    const [imagen] = validarImagenes(imagenBase64 ? [imagenBase64] : [], 1);
-    if (!imagen) return null;
-    const [ruta] = await guardarImagenes(CARPETA_IMAGENES, [imagen], `noticia-${Date.now()}`);
-    return ruta;
+// Rutas web de las imágenes de una noticia (ImagenUrl es una carpeta, o un archivo en las noticias anteriores)
+const imagenesDeNoticia = async (imagenUrl) => {
+    if (!imagenUrl) return [];
+    if (/\.(jpe?g|png|webp)$/i.test(imagenUrl)) return [imagenUrl];
+    return listarFotos(imagenUrl);
 };
 
-const formatoNoticia = (n, usuario, esNoticiero) => ({
+// Arma la carpeta nueva con las imágenes que se conservan (primero) y las nuevas, y devuelve su ruta web,
+// o null si la noticia queda sin imágenes
+const guardarImagenesNoticia = async (nuevasBase64, conservadas = []) => {
+    const nuevas = validarImagenes(nuevasBase64 ?? [], MAXIMO_IMAGENES);
+    if (conservadas.length + nuevas.length > MAXIMO_IMAGENES) {
+        throw new ErrorImagen(`La noticia puede tener hasta ${MAXIMO_IMAGENES} imágenes.`);
+    }
+    if (!conservadas.length && !nuevas.length) return null;
+    const carpeta = `${CARPETA_IMAGENES}/noticia-${Date.now()}`;
+    const copiadas = await copiarFotos(conservadas, carpeta);
+    await guardarImagenes(carpeta, nuevas, 'foto', copiadas + 1);
+    return carpeta;
+};
+
+// Borra las imágenes que la noticia ya no usa (solo dentro de uploads/NoticiasImagen)
+const borrarImagenesNoticia = async (imagenUrl) => {
+    if (imagenUrl && imagenUrl.startsWith(`${CARPETA_IMAGENES}/`)) await borrarSubida(imagenUrl);
+};
+
+// Imágenes que llegan en el pedido: { imagenes: [dataURL, ...] } (o { imagen } como antes)
+const nuevasDelPedido = (body) => (Array.isArray(body.imagenes) ? body.imagenes : body.imagen ? [body.imagen] : []);
+
+const formatoNoticia = async (n, usuario, esNoticiero) => ({
     idNoticia: n.idNoticia,
     titulo: n.Titulo,
     contenido: n.Contenido,
-    imagen: n.ImagenUrl,
+    imagenes: await imagenesDeNoticia(n.ImagenUrl),
     visible: n.Visible,
     autor: n.Autor,
     fechaCreacion: n.FechaCreacion,
@@ -115,13 +139,13 @@ export const obtenerNoticia = async (req, res) => {
         const noticia = await modelObtenerNoticia(idNoticia);
         if (!noticia || (!noticia.Visible && !esNoticiero)) return res.status(404).json({ error: 'La noticia no existe o ya no está disponible.' });
 
-        res.json(formatoNoticia(noticia, usuario, esNoticiero));
+        res.json(await formatoNoticia(noticia, usuario, esNoticiero));
     } catch (error) {
         responderError(res, error, 'No se pudo obtener la noticia.');
     }
 };
 
-// POST /api/noticias  body: { titulo, contenido, imagen?: dataURL }
+// POST /api/noticias  body: { titulo, contenido, imagenes?: [dataURL] }  (hasta 2)
 export const crearNoticia = async (req, res) => {
     let imagenGuardada = null;
     try {
@@ -131,7 +155,7 @@ export const crearNoticia = async (req, res) => {
         if (datos.error) return res.status(400).json({ error: datos.error });
 
         // La imagen se guarda antes del alta para que el INSERT ya lleve su ruta (una sola entrada de auditoría)
-        imagenGuardada = await guardarImagenNoticia(req.body.imagen);
+        imagenGuardada = await guardarImagenesNoticia(nuevasDelPedido(req.body));
         const idNoticia = await modelCrearNoticia(req.usuarioLogueado.idUsuario, datos, imagenGuardada, datosAuditoriaDe(req));
 
         res.status(201).json({ mensaje: 'Noticia publicada. Puede editarla durante la próxima hora.', idNoticia });
@@ -141,7 +165,8 @@ export const crearNoticia = async (req, res) => {
     }
 };
 
-// PUT /api/noticias/:idNoticia  body: { titulo, contenido, imagen?: dataURL, quitarImagen?: boolean }
+// PUT /api/noticias/:idNoticia  body: { titulo, contenido, imagenes?: [dataURL], conservar?: [ruta web] }
+// conservar: cuáles de las imágenes actuales siguen (sin conservar se mantienen todas); las nuevas se suman, hasta 2
 export const editarNoticia = async (req, res) => {
     let imagenGuardada = null;
     try {
@@ -161,14 +186,21 @@ export const editarNoticia = async (req, res) => {
         const datos = leerNoticia(req.body);
         if (datos.error) return res.status(400).json({ error: datos.error });
 
-        imagenGuardada = await guardarImagenNoticia(req.body.imagen);
-        const imagenUrl = imagenGuardada ?? (req.body.quitarImagen === true ? null : noticia.ImagenUrl);
+        const actuales = await imagenesDeNoticia(noticia.ImagenUrl);
+        const conservadas = Array.isArray(req.body.conservar) ? actuales.filter((u) => req.body.conservar.includes(u)) : actuales;
+        const nuevas = nuevasDelPedido(req.body);
+        // Sin cambios en las imágenes: sigue la misma carpeta
+        const cambianImagenes = nuevas.length > 0 || conservadas.length !== actuales.length;
+        if (cambianImagenes) imagenGuardada = await guardarImagenesNoticia(nuevas, conservadas);
+        const imagenUrl = cambianImagenes ? imagenGuardada : noticia.ImagenUrl;
 
         const cambiadas = await modelEditarNoticia(idNoticia, req.usuarioLogueado.idUsuario, datos, imagenUrl, datosAuditoriaDe(req));
         if (!cambiadas) {
             await borrarSubida(imagenGuardada);
             return res.status(403).json({ error: 'Pasó la hora para editar esta noticia. Solo puede ocultarla o mostrarla.' });
         }
+        // Las imágenes anteriores se borran solo cuando la base ya confirmó el cambio
+        if (cambianImagenes) await borrarImagenesNoticia(noticia.ImagenUrl);
         res.json({ mensaje: 'Noticia actualizada.' });
     } catch (error) {
         await borrarSubida(imagenGuardada);
@@ -193,7 +225,7 @@ export const cambiarVisibilidadNoticia = async (req, res) => {
     }
 };
 
-// DELETE /api/noticias/:idNoticia  (cualquier noticiero, igual que ocultar): la borra junto con su imagen
+// DELETE /api/noticias/:idNoticia  (cualquier noticiero, igual que ocultar): la borra junto con sus imágenes
 export const eliminarNoticia = async (req, res) => {
     try {
         if (!(await verificarNoticiero(req, res))) return;
@@ -207,7 +239,7 @@ export const eliminarNoticia = async (req, res) => {
         if (!eliminadas) return res.status(404).json({ error: 'La noticia no existe.' });
 
         // La imagen se borra solo cuando la base ya confirmó: si falla el DELETE no se pierde nada
-        await borrarSubida(noticia.ImagenUrl);
+        await borrarImagenesNoticia(noticia.ImagenUrl);
         res.json({ mensaje: 'Noticia eliminada.' });
     } catch (error) {
         responderError(res, error, 'No se pudo eliminar la noticia.');

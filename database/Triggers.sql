@@ -3,7 +3,7 @@ use ProyectoEmprendimientos2026;
 -- ------------------------------------------------------------------------------------------------------------------------
 -- Seccion de TRIGGERS ------------------------------------------------------------------------------------------------------
 -- ------------------------------------------------------------------------------------------------------------------------
--- Orden de triggers: Empleado, SolicitudInicio, Emprendimiento, Emprendedor, Usuario, Publicacion, Etiqueta, Subsidio, Credito, Garante, Expediente, Producto, Noticia.
+-- Orden de triggers: Empleado, SolicitudInicio, Emprendimiento, Emprendedor, Usuario, Publicacion, Subsidio, Credito, Garante, Expediente, Producto, Noticia.
 -- drop trigger tg_auditoria_empleado_update; -- comando para eliminar triggers
 
 -- PARA REALIZAR PRUEBA DE AUDITORIA EJECUTAR LINEA DE ABAJO
@@ -553,49 +553,6 @@ BEGIN
             '. Título: "', COALESCE(OLD.TituloActual, OLD.TituloPendiente, 'Sin título'), '"',
             CASE WHEN OLD.TituloActual IS NOT NULL THEN ' (estaba visible en la web pública)' ELSE ' (no estaba aprobada)' END),
         @usuario_ip);
-END;
-//
-DELIMITER ;
-
--- TRIGGERS DE ETIQUETA - AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
--- Trigger Insert_Auditoria_Etiqueta
-DELIMITER //
-CREATE TRIGGER tg_auditoria_etiqueta_insert
-AFTER INSERT ON Etiqueta
-FOR EACH ROW
-BEGIN
-    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
-    VALUES (
-        @usuario_id, 'INSERT', 'Etiqueta', NEW.idEtiqueta, 
-        CONCAT('Nueva etiqueta global añadida al catálogo: "', NEW.Nombre, '"'),
-        @usuario_ip
-    );
-END;
-//
-DELIMITER ;
--- Trigger UPDATE_Auditoria_Etiqueta
-DELIMITER //
-CREATE TRIGGER tg_auditoria_etiqueta_update
-AFTER UPDATE ON Etiqueta
-FOR EACH ROW
-BEGIN
-    -- 1. Controlar si le cambiaron el nombre a la etiqueta
-    IF OLD.Nombre <> NEW.Nombre THEN
-        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
-        VALUES (
-			@usuario_id, 'UPDATE', 'Etiqueta', NEW.idEtiqueta, 
-			CONCAT('Se corrigió el nombre de la etiqueta: "', OLD.Nombre, '" -> "', NEW.Nombre, '"'),
-			@usuario_ip);
-    END IF;
-
-    -- 2. Controlar el Borrado Lógico (Activa / Desactivada)
-    IF OLD.Activa <> NEW.Activa THEN
-        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
-        VALUES (
-			@usuario_id, 'UPDATE', 'Etiqueta', NEW.idEtiqueta, 
-			CONCAT('Cambio de estado en etiqueta "', NEW.Nombre, '": ', CASE WHEN NEW.Activa = 1 THEN 'DISPONIBLE / ACTIVADA' ELSE 'DESACTIVADA' END),
-            @usuario_ip);
-    END IF;
 END;
 //
 DELIMITER ;

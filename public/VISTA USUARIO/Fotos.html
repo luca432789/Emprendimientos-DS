@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> Camino de los emprendedores </title>
     <link rel="icon" type="image/png" href="/Imagenes/Logo-Desarrollo-Social.png">
 
@@ -13,11 +13,12 @@
     <link rel="stylesheet" href="/VISTA USUARIO/CSS/perfil-funcional.css">
     <script src="/js/perfil-emprendedor.js" defer></script>
     <link rel="stylesheet" href="/VISTA USUARIO/CSS/fotos css.css">
-    <script src="/js/script.js" defer></script>
-    <script src="/js/registro-usuario.js" defer></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <!-- token para barra de nav-->
     <script src="/js/navbar.js" defer></script>
     <script src="/js/ampliar-imagen.js" defer></script> <!-- clic en una imagen = verla ampliada -->
 
@@ -40,34 +41,34 @@
             <li><a href="/mapa">Mapa</a></li>
             <li><a href="/formularios">Formularios</a></li>
             <li><a href="/contactos">Contactos</a></li>
-            
+
             <li id="contenedor-login-dinamico" class="login"><a href="/login">Inicio de sesion</a></li>
         </ul>
     </nav>
 
     <main class="perfil-container">
 
-    <!-- BANNER Y CABECERA DEL PERFIL -->
-    <section class="portada-section">
-        <div class="portada-banner">
-            <div class="portada-info">
-                <!-- El backend inyectará aquí el nombre y rubro desde la BD -->
-                <h2 id="emprendimiento-nombre">Nombre Emprendimiento</h2>
-                <span id="emprendimiento-rubro" class="rubro-tag">Rubro</span>
+        <!-- BANNER Y CABECERA DEL PERFIL -->
+        <section class="portada-section">
+            <div class="portada-banner">
+                <div class="portada-info">
+                    <!-- El backend inyectará aquí el nombre y rubro desde la BD -->
+                    <h2 id="emprendimiento-nombre">Nombre Emprendimiento</h2>
+                    <span id="emprendimiento-rubro" class="rubro-tag">Rubro</span>
+                </div>
             </div>
-        </div>
-        
-        <!-- SUB-NAVEGACIÓN DEL PERFIL -->
-        <nav class="perfil-subnav">
-            <ul>
-                <li><a href="/Emprendedor-Perfil">Acerca de</a></li>
-                <li><a href="/Emprendedor-Publicaciones">Publicaciones</a></li>
-                <li><a href="/Emprendedor-Productos">Productos</a></li>
-                <li><a href="/Emprendedor-Fotos" class="active">Fotos</a></li>
-                <li><a href="/Emprendedor-Contacto">Contacto</a></li>
-            </ul>
-        </nav>
-    </section>
+
+            <!-- SUB-NAVEGACIÓN DEL PERFIL -->
+            <nav class="perfil-subnav">
+                <ul>
+                    <li><a href="/Emprendedor-Perfil">Acerca de</a></li>
+                    <li><a href="/Emprendedor-Publicaciones">Publicaciones</a></li>
+                    <li><a href="/Emprendedor-Productos">Productos</a></li>
+                    <li><a href="/Emprendedor-Fotos" class="active">Fotos</a></li>
+                    <li><a href="/Emprendedor-Contacto">Contacto</a></li>
+                </ul>
+            </nav>
+        </section>
 
         <div class="perfil-content">
             <!-- GALERÍA DE FOTOS -->
@@ -77,7 +78,9 @@
                     <p class="nota-galeria">Fotos de las publicaciones aprobadas y de los productos.</p>
                 </div>
 
-                <div class="galeria-grid" id="galeria-grid"><p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p></div>
+                <div class="galeria-grid" id="galeria-grid">
+                    <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p>
+                </div>
             </section>
         </div>
 
@@ -86,38 +89,41 @@
 
 
 
- <!--FOOTER-->
- <footer>
-  <div class="footer-top">
-    <div class="footer-logo">
-        <img src="/Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
-        <img src="/Imagenes/Sgo logo.png" alt="Santiago del Estero">
-    </div>
-<!-- LINKS -->
-    <div class="footer-links">
-      <h3>Ministerios</h3>
-      <div class="columnas">
-        <ul>
-            
-          <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
-          <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
-          <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
-        </ul>
-        <ul>
-          <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li> <!--FALTA ESTE LINK-->
-          <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
-          <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
+    <!--FOOTER-->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="/Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="/Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <!-- LINKS -->
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
 
-  <div class="footer-bottom">
-    © 2026 Desarrollado por [nombre aquí]
-  </div>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y
+                                Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <!--FALTA ESTE LINK-->
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-</footer>
-  
+        <div class="footer-bottom">
+            © 2026 Desarrollado por alumnos del ITSE
+        </div>
+
+    </footer>
+
 
 </Body>
+
 </html>

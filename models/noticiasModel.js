@@ -53,7 +53,7 @@ export const modelObtenerNoticia = async (idNoticia) => {
     return filas[0] ? normalizarNoticia(filas[0]) : null;
 };
 
-// Alta (la imagen ya está guardada; imagenUrl puede ser null)
+// Alta (las imágenes ya están guardadas; imagenUrl es su carpeta o null)
 export const modelCrearNoticia = async (idAutor, datos, imagenUrl, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
         const [resultado] = await conexion.query(

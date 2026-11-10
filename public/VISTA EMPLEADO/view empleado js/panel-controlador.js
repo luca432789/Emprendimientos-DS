@@ -89,11 +89,6 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-folder-plus" style="margin-right: 8px;"></i> Registrar Emprendimiento
                 </a>
             </li>
-            <li class="item-simple" id="item-etiquetas-publicaciones">
-                <a href="#" onclick="cargarSección('etiquetas-publicaciones', 'Gestión de Etiquetas')">
-                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Etiquetas de Publicaciones
-                </a>
-            </li>
         `;
     } 
     else if (rol === 'Administrador') {
@@ -136,11 +131,6 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-folder-plus" style="margin-right: 8px;"></i> Registrar Emprendimiento
                 </a>
             </li>
-            <li class="item-simple" id="item-etiquetas-publicaciones">
-                <a href="#" onclick="cargarSección('etiquetas-publicaciones', 'Gestión de Etiquetas')">
-                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Etiquetas de Publicaciones
-                </a>
-            </li>
             <li class="item-simple" id="item-registrar-empleado">
                 <a href="#" onclick="cargarSección('registrar-empleado', 'Registrar Nuevo Empleado')">
                     <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Registrar Empleado
@@ -156,9 +146,9 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Registrar Usuario
                 </a>
             </li>
-            <li class="item-simple" id="item-estadisticas">
-                <a href="#" onclick="cargarSección('estadisticas', 'Estadísticas')">
-                    <i class="fa-solid fa-chart-column" style="margin-right: 8px;"></i> Estadísticas
+            <li class="item-simple" id="item-administrar-usuarios">
+                <a href="#" onclick="cargarSección('administrar-usuarios', 'Administración de Usuarios del Sistema')">
+                    <i class="fa-solid fa-users-gear" style="margin-right: 8px;"></i> Administrar Usuarios
                 </a>
             </li>
             <li class="item-simple" id="item-revisar-historial">
@@ -166,9 +156,9 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-history" style="margin-right: 8px;"></i> Revisar Historial
                 </a>
             </li>
-            <li class="item-simple" id="item-administrar-usuarios">
-                <a href="#" onclick="cargarSección('administrar-usuarios', 'Administración de Usuarios del Sistema')">
-                    <i class="fa-solid fa-users-gear" style="margin-right: 8px;"></i> Administrar Usuarios
+            <li class="item-simple" id="item-estadisticas">
+                <a href="#" onclick="cargarSección('estadisticas', 'Estadísticas')">
+                    <i class="fa-solid fa-chart-column" style="margin-right: 8px;"></i> Estadísticas
                 </a>
             </li>
         `;
@@ -237,38 +227,9 @@ function cargarSección(codigoSeccion, tituloSeccion) {
     const zonaRender = document.getElementById('zona-render-contenido');
     
     // ======================================================================
-    // CASO 1: GESTIÓN DE ETIQUETAS (Cambia la estructura por sus propios botones)
+    // CASO 1: ADMINISTRAR USUARIOS
     // ======================================================================
-    if (codigoSeccion === 'etiquetas-publicaciones') {
-        // Ocultamos los filtros por defecto de usuarios para pintar los filtros de etiquetas
-        filtrosTabla.style.display = 'none'; 
-        
-        // Inyectamos los botones de tu HTML original adaptados estéticamente al diseño del panel
-        zonaRender.innerHTML = `
-            <div class="tabla-filtros" style="justify-content: flex-start; margin-bottom: 20px;">
-                <button class="btn-filtro" style="background-color: #2f4e78;" onclick="fetchEtiquetasParaPanel('todas')"><i class="fa-solid fa-tags"></i> Ver Todas</button>
-                <button class="btn-filtro" style="background-color: #2ecc71;" onclick="fetchEtiquetasParaPanel('activas')"><i class="fa-solid fa-eye"></i> Solo Activas</button>
-                <button class="btn-filtro" style="background-color: #e74c3c;" onclick="fetchEtiquetasParaPanel('inactivas')"><i class="fa-solid fa-eye-slash"></i> Solo Inactivas</button>
-            </div>
-            <table class="tabla-datos">
-                <thead>
-                    <tr>
-                        <th>ID Etiqueta</th>
-                        <th>Nombre de la Etiqueta</th>
-                        <th style="text-align: center;">Estado Visible</th>
-                        <th style="text-align: center;">Editar</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-cuerpo-etiquetas">
-                    <tr><td colspan="4" style="text-align:center; color:gray; padding:20px;">Hacé clic en alguno de los botones superiores para cargar los datos...</td></tr>
-                </tbody>
-            </table>
-        `;
-    }
-    // ======================================================================
-    // CASO 2: ADMINISTRAR USUARIOS
-    // ======================================================================
-    else if (codigoSeccion === 'administrar-usuarios') {
+    if (codigoSeccion === 'administrar-usuarios') {
         filtrosTabla.style.display = 'none';
         
         zonaRender.innerHTML = `

@@ -151,14 +151,6 @@ values ('Emprendedor2prueba@gmail.com', '$2b$10$FWxrKuusrwuIVBWMlKWR0ury8TTFvC1b
 ('Emprendedor10prueba@gmail.com', 'contraseña', 'Emprendedor', true, 10, null); -- Emprendedor 10 1234Empre-10
 */
 
--- Etiqueta (idEtiqueta, nombre, activa) -----------------------------------------------------------------------------------------------------------------------------------------
-insert into Etiqueta (Nombre, Activa)
-values ('Madera', true),
-('Reciclaje', true),
-('Metal', false),
-('Reutilizacion', true);
-
-
 -- Expediente (idExpediente (PK), NroExpediente, idSolicitudInicio, FechaCarga, idUsuarioCargo (FK a Usuario: los usuarios 14 y 15 son de Mesa de Entrada))
 insert into Expediente (NroExpediente, idSolicitudInicio, FechaCarga, idUsuarioCargo)
 values ('EX-2026-FORMINICIO-BAND-001', 1, '2026-09-01 02:42:40', 14),

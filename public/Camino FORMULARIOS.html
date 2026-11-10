@@ -3,14 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> Camino de los emprendedores </title>
     <link rel="icon" type="image/png" href="/Imagenes/Logo-Desarrollo-Social.png">
 
     <link rel="stylesheet" href="CSS/CdE FORMULARIOS.css">
     <link rel="stylesheet" href="CSS/CdE Navbar.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <!-- token para barra de nav-->
     <script src="js/navbar.js" defer></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -38,106 +41,113 @@
 
     <main>
 
-      <section class="formularios">
+        <section class="formularios">
 
-          <h2>Formularios</h2>
+            <h2>Formularios</h2>
 
-          <!-- TARJETA 1 -->
-          <div class="formulario-card">
+            <!-- TARJETA 1 -->
+            <div class="formulario-card">
 
-              <div class="formulario-img">
-                  <img class="miniatura-formulario" src="Imagenes/miniatura-formulario-inicio.png" alt="Vista previa del Formulario de Inicio">
-              </div>
+                <div class="formulario-img">
+                    <img class="miniatura-formulario" src="Imagenes/miniatura-formulario-inicio.png"
+                        alt="Vista previa del Formulario de Inicio">
+                </div>
 
-              <div class="formulario-info">
-                  <h3>
-                      <a href="/formulario-Inicio">Formulario de Inicio</a>
-                  </h3>
+                <div class="formulario-info">
+                    <h3>
+                        <a href="/formulario-Inicio">Formulario de Inicio</a>
+                    </h3>
 
-                  <p>
-                      Llenando este formulario usted busca registrar su emprendimiento
-                      para poder recibir ayuda mediante subsidios/créditos con el objetivo
-                      de impulsar su crecimiento...
-                  </p>
-              </div>
+                    <p>
+                        Llenando este formulario usted busca registrar su emprendimiento
+                        para poder recibir ayuda mediante subsidios/créditos con el objetivo
+                        de impulsar su crecimiento...
+                    </p>
+                </div>
 
-          </div>
+            </div>
 
-          <!-- TARJETA 2 (solo Empleado de Área / Administrador) -->
-          <div class="formulario-card" data-solo-area style="display:none">
+            <!-- TARJETA 2 (solo Empleado de Área / Administrador) -->
+            <div class="formulario-card" data-solo-area style="display:none">
 
-              <div class="formulario-img">
-                  <img class="miniatura-formulario" src="Imagenes/miniatura-formulario-subsidios.png" alt="Vista previa del Formulario de Subsidios no Reintegrables">
-              </div>
+                <div class="formulario-img">
+                    <img class="miniatura-formulario" src="Imagenes/miniatura-formulario-subsidios.png"
+                        alt="Vista previa del Formulario de Subsidios no Reintegrables">
+                </div>
 
-              <div class="formulario-info">
-                  <h3>
-                      <a href="/formulario-Subsidio">Formulario de Subsidios no Reintegrables</a>
-                  </h3>
+                <div class="formulario-info">
+                    <h3>
+                        <a href="/formulario-Subsidio">Formulario de Subsidios no Reintegrables</a>
+                    </h3>
 
-                  <p>
-                      Complete este formulario para solicitar un subsidio no reintegrable destinado a fortalecer su emprendimiento...
-                  </p>
-              </div>
+                    <p>
+                        Complete este formulario para solicitar un subsidio no reintegrable destinado a fortalecer su
+                        emprendimiento...
+                    </p>
+                </div>
 
-          </div>
+            </div>
 
-          <!-- TARJETA 3 (solo Empleado de Área / Administrador) -->
-          <div class="formulario-card" data-solo-area style="display:none">
+            <!-- TARJETA 3 (solo Empleado de Área / Administrador) -->
+            <div class="formulario-card" data-solo-area style="display:none">
 
-              <div class="formulario-img">
-                  <img class="miniatura-formulario" src="Imagenes/miniatura-formulario-creditos.png" alt="Vista previa del Formulario de Créditos Reintegrables">
-              </div>
+                <div class="formulario-img">
+                    <img class="miniatura-formulario" src="Imagenes/miniatura-formulario-creditos.png"
+                        alt="Vista previa del Formulario de Créditos Reintegrables">
+                </div>
 
-              <div class="formulario-info">
-                  <h3>
-                      <a href="/formulario-Credito">Formulario de Créditos Reintegrables</a>
-                  </h3>
+                <div class="formulario-info">
+                    <h3>
+                        <a href="/formulario-Credito">Formulario de Créditos Reintegrables</a>
+                    </h3>
 
-                  <p>
-                      Complete este formulario para solicitar un crédito reintegrable y proponer su plan de devolución...
-                  </p>
-              </div>
+                    <p>
+                        Complete este formulario para solicitar un crédito reintegrable y proponer su plan de
+                        devolución...
+                    </p>
+                </div>
 
-          </div>
+            </div>
 
-      </section>
+        </section>
 
-</main>
+    </main>
 
- <!--FOOTER-->
- <footer>
-  <div class="footer-top">
-    <div class="footer-logo">
-        <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
-        <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
-    </div>
-<!-- LINKS -->
-    <div class="footer-links">
-      <h3>Ministerios</h3>
-      <div class="columnas">
-        <ul>
-            
-          <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
-          <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
-          <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
-        </ul>
-        <ul>
-          <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li> <!--FALTA ESTE LINK-->
-          <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
-          <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
+    <!--FOOTER-->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
+            </div>
+            <!-- LINKS -->
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
 
-  <div class="footer-bottom">
-    © 2026 Desarrollado por [nombre aquí]
-  </div>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <!--FALTA ESTE LINK-->
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-</footer>
-  <script src="js/acceso-formularios-ayuda.js"></script>
+        <div class="footer-bottom">
+            © 2026 Desarrollado por alumnos del ITSE
+        </div>
+
+    </footer>
+    <script src="js/acceso-formularios-ayuda.js"></script>
 
 
 </Body>
+
 </html>

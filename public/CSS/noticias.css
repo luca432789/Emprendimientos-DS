@@ -253,6 +253,19 @@ body {
   border: 1px solid #e0d3c0;
 }
 
+/* Cada imagen elegida con su botón "Quitar" debajo */
+.imagen-elegida {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.selector-imagen:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .acciones-formulario {
   display: flex;
   justify-content: flex-end;
@@ -302,6 +315,17 @@ body {
   max-height: 460px;
   object-fit: cover;
   background: #eef2f7;
+}
+
+/* Dos imágenes: una al lado de la otra, con la misma altura */
+.noticia-imagenes.dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.noticia-imagenes.dos .noticia-imagen {
+  height: 300px;
 }
 
 .noticia-cuerpo {
@@ -505,5 +529,9 @@ body {
 
   .vista-previa-imagen img {
     max-width: 100%;
+  }
+
+  .noticia-imagenes.dos .noticia-imagen {
+    height: 170px;
   }
 }

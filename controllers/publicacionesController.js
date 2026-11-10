@@ -15,7 +15,7 @@ import {
     modelPublicacionesPendientes,
     modelModerarPublicacion
 } from '../models/publicacionesModel.js';
-import { ErrorImagen, validarImagenes, guardarImagenes, listarFotos, borrarSubida } from '../helpers/imagenes.js';
+import { ErrorImagen, validarImagenes, guardarImagenes, copiarFotos, listarFotos, borrarSubida } from '../helpers/imagenes.js';
 import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 // Roles que pueden aprobar o rechazar publicaciones
@@ -33,6 +33,11 @@ const esModerador = (req) => ROLES_MODERADORES.includes(req.usuarioLogueado?.tip
 
 // Cada versión de fotos va a su propia carpeta: lo aprobado no se pisa mientras se revisa lo nuevo
 const carpetaNueva = (idPublicacion) => `/uploads/publicaciones/${idPublicacion}/${Date.now()}`;
+
+// Borra la carpeta de una versión que ya no usa la publicación (solo dentro de la carpeta de esa publicación)
+const borrarCarpetaSinUso = async (idPublicacion, carpeta) => {
+    if (carpeta && carpeta.startsWith(`/uploads/publicaciones/${idPublicacion}/`)) await borrarSubida(carpeta);
+};
 
 // Título y texto validados (mismos límites que las columnas de la tabla)
 const leerContenido = (body) => {
@@ -102,7 +107,8 @@ export const crearPublicacion = async (req, res) => {
 
 // PUT /api/publicaciones/:idPublicacion  (Emprendedor dueño)
 // body: { titulo?, descripcion, fotos?: [dataURL], conservarFotos?: boolean }
-// fotos nuevas reemplazan a las anteriores; sin fotos nuevas: conservarFotos mantiene las que tenía.
+// conservarFotos: las fotos actuales se mantienen y las nuevas se suman (hasta 4 en total);
+// sin conservarFotos, las nuevas reemplazan a las actuales (o la publicación queda sin fotos).
 export const editarPublicacion = async (req, res) => {
     let carpetaGuardada = null;
     try {
@@ -120,22 +126,36 @@ export const editarPublicacion = async (req, res) => {
         if (contenido.error) return res.status(400).json({ error: contenido.error });
         const imagenes = validarImagenes(req.body.fotos, MAXIMO_FOTOS);
 
-        let carpetaFotos = null;
-        if (imagenes.length) {
-            carpetaGuardada = carpetaNueva(idPublicacion);
-            await guardarImagenes(carpetaGuardada, imagenes);
-            carpetaFotos = carpetaGuardada;
-        } else if (req.body.conservarFotos === true) {
-            // Las fotos "actuales" son las de la versión en revisión si la hay; si no, las aprobadas
-            carpetaFotos = publicacion.EstadoModeracion === 0
-                ? publicacion.DirectorioFotosActual
-                : publicacion.DirectorioFotosPendiente ?? publicacion.DirectorioFotosActual;
+        // Las fotos "actuales" son las de la versión en revisión si la hay; si no, las aprobadas
+        const carpetaActual = publicacion.EstadoModeracion === 0
+            ? publicacion.DirectorioFotosActual
+            : publicacion.DirectorioFotosPendiente ?? publicacion.DirectorioFotosActual;
+        const conservar = req.body.conservarFotos === true;
+        const fotosConservadas = conservar ? await listarFotos(carpetaActual) : [];
+        if (fotosConservadas.length + imagenes.length > MAXIMO_FOTOS) {
+            return res.status(400).json({
+                error: `La publicación puede tener hasta ${MAXIMO_FOTOS} fotos: ya tiene ${fotosConservadas.length}. `
+                    + 'Elija menos fotos nuevas o desmarque "Conservar estas fotos" para reemplazarlas.'
+            });
         }
 
-        await modelEditarPublicacion(
+        let carpetaFotos = null;
+        if (imagenes.length) {
+            // Carpeta nueva con las conservadas primero y después las nuevas
+            carpetaGuardada = carpetaNueva(idPublicacion);
+            const copiadas = await copiarFotos(fotosConservadas, carpetaGuardada);
+            await guardarImagenes(carpetaGuardada, imagenes, 'foto', copiadas + 1);
+            carpetaFotos = carpetaGuardada;
+        } else if (conservar) {
+            carpetaFotos = carpetaActual;
+        }
+
+        const { carpetaSinUso } = await modelEditarPublicacion(
             idPublicacion, emprendimiento.idEmprendimiento, contenido.titulo, contenido.descripcion,
             carpetaFotos, datosAuditoriaDe(req)
         );
+        carpetaGuardada = null;
+        await borrarCarpetaSinUso(idPublicacion, carpetaSinUso);
         res.json({ mensaje: 'Cambios enviados a revisión. Lo aprobado sigue visible hasta que el Ministerio revise la nueva versión.' });
     } catch (error) {
         await borrarSubida(carpetaGuardada);
@@ -288,9 +308,11 @@ export const moderarPublicacion = async (req, res) => {
     try {
         // El moderador sale del token, no del body
         const idEmpleadoModerador = await modelEmpleadoDeUsuario(req.usuarioLogueado.idUsuario);
-        const cambiadas = await modelModerarPublicacion(
+        const { cambiadas, carpetaSinUso } = await modelModerarPublicacion(
             idPublicacion, aprobar, aprobar ? null : motivoRechazo, idEmpleadoModerador, datosAuditoriaDe(req)
         );
+        // Al aprobar, las fotos aprobadas antes ya no se usan (la nueva versión tiene su propia carpeta)
+        await borrarCarpetaSinUso(idPublicacion, carpetaSinUso);
 
         if (cambiadas === 0) {
             return res.status(404).json({ error: 'La publicación no existe o no está pendiente de revisión.' });

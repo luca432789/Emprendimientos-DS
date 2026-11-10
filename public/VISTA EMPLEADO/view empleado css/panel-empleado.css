@@ -40,7 +40,7 @@ header p {
 
 .dashboard-container {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 280px minmax(0, 1fr); /* minmax(0, ...): una tabla ancha no estira la página */
     min-height: calc(100vh - 250px);
     background-color: #f4f6f9;
 }
@@ -116,7 +116,14 @@ header p {
 
 /* Espacio Central */
 .main-content {
+    min-width: 0;
     padding: 15px;
+}
+
+/* Si una tabla tiene más columnas de las que entran, se desliza dentro de su recuadro */
+#zona-render-contenido {
+    max-width: 100%;
+    overflow-x: auto;
 }
 
 .content-header {

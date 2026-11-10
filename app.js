@@ -12,7 +12,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Importamos los enrutadores externos
-import etiquetasRouter from './routes/etiquetasRoutes.js';
 import loginRouter from './routes/loginRoutes.js';
 import solicitudesInicioRouter from './routes/solicitudesInicioRoutes.js';
 import empleadoRouter from './routes/empleadoRoutes.js';
@@ -55,7 +54,6 @@ app.use(express.static(path.resolve('./public')));  // Servirá tus HTMLs, CSS e
 app.use('/uploads', express.static('uploads'));
 
 // Configuración de las rutas API
-app.use('/api', etiquetasRouter); // Todo lo de etiquetas colgará de /api/etiquetas
 app.use('/api', loginRouter);      // Todo lo de login colgará de /api/login
 app.use('/api', solicitudesInicioRouter);
 app.use('/api', empleadoRouter);

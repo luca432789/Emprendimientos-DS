@@ -79,17 +79,16 @@ function prepararFormularioProducto(Perfil, formulario) {
     formulario.querySelector('.acciones-publicacion').before(vistaPrevia);
     inputFoto.addEventListener('change', () => {
         vistaPrevia.innerHTML = inputFoto.files[0] ? `<img src="${URL.createObjectURL(inputFoto.files[0])}" alt="Vista previa">` : '';
+        if (typeof adelantarFotos === 'function') adelantarFotos(inputFoto); // se achica mientras completa el resto
     });
 
     formulario.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const errorFoto = Perfil.validarImagenes(inputFoto.files, 1);
-        if (errorFoto) return Perfil.aviso('warning', 'Revisá la imagen', errorFoto);
-
         const boton = formulario.querySelector('button[type="submit"]');
         boton.disabled = true;
         try {
-            const [foto] = await Perfil.leerArchivos(inputFoto.files);
+            const { error: errorFoto, fotos: [foto] = [] } = await Perfil.prepararImagenes(inputFoto.files, 1);
+            if (errorFoto) return Perfil.aviso('warning', 'Revisá la imagen', errorFoto);
             const { ok, datos } = await Perfil.api('POST', '/api/productos', {
                 nombre: formulario.querySelector('#prod-nombre').value,
                 precio: precio.value,
@@ -177,9 +176,8 @@ async function editarProducto(Perfil, producto) {
             const nombre = document.getElementById('edit-prod-nombre').value.trim();
             const archivos = document.getElementById('edit-prod-foto').files;
             if (!nombre) return Swal.showValidationMessage('Escribí el nombre del producto.');
-            const errorFoto = Perfil.validarImagenes(archivos, 1);
+            const { error: errorFoto, fotos: [foto] = [] } = await Perfil.prepararImagenes(archivos, 1);
             if (errorFoto) return Swal.showValidationMessage(errorFoto);
-            const [foto] = await Perfil.leerArchivos(archivos);
             return {
                 nombre,
                 precio: document.getElementById('edit-prod-precio').value,

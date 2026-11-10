@@ -12,10 +12,12 @@
     <link rel="stylesheet" href="/CSS/noticias.css">
     <link rel="stylesheet" href="/CSS/paginador.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <!-- token para barra de nav-->
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
     <script src="/js/navbar.js" defer></script>
     <script src="/js/ampliar-imagen.js" defer></script> <!-- clic en una imagen = verla ampliada -->
     <script src="/js/paginador.js" defer></script>
+    <script src="/js/achicar-fotos.js" defer></script> <!-- las imágenes se achican antes de subirlas -->
     <script src="/js/noticias.js" defer></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -82,22 +84,21 @@
                 </div>
 
                 <div class="campo">
-                    <span>Imagen (opcional · JPG, PNG o WEBP · hasta 2 MB)</span>
+                    <span>Imágenes (opcional · hasta 2 · JPG, PNG o WEBP · se achican automáticamente)</span>
                     <label class="selector-imagen">
-                        <i class="fa-solid fa-image"></i> <span id="texto-selector-imagen">Elegir imagen</span>
-                        <input type="file" id="noticia-imagen" accept="image/jpeg,image/png,image/webp">
+                        <i class="fa-solid fa-image"></i> <span id="texto-selector-imagen">Elegir imágenes</span>
+                        <input type="file" id="noticia-imagen" accept="image/jpeg,image/png,image/webp" multiple>
                     </label>
-                    <div id="vista-previa-imagen" class="vista-previa-imagen" hidden>
-                        <img id="img-vista-previa" alt="Vista previa de la imagen de la noticia">
-                        <button type="button" id="btn-quitar-imagen" class="btn-secundario"><i class="fa-solid fa-trash"></i> Quitar imagen</button>
-                    </div>
+                    <!-- noticias.js muestra acá cada imagen elegida con su botón "Quitar" -->
+                    <div id="vista-previa-imagen" class="vista-previa-imagen" hidden></div>
                 </div>
 
                 <div class="acciones-formulario">
                     <button type="button" id="btn-cancelar-formulario" class="btn-secundario">Cancelar</button>
                     <button type="submit" id="btn-publicar-noticia" class="btn-principal"><i class="fa-solid fa-paper-plane"></i> Publicar noticia</button>
                 </div>
-                <p class="nota-edicion"><i class="fa-regular fa-clock"></i> Después de publicarla podrá editarla durante 1 hora. Pasado ese tiempo solo se puede ocultar o volver a mostrar.</p>
+                <p class="nota-edicion"><i class="fa-regular fa-clock"></i> Después de publicarla podrá editarla durante
+                    1 hora. Pasado ese tiempo solo se puede ocultar, volver a mostrar o eliminar.</p>
             </form>
         </section>
 
@@ -141,9 +142,10 @@
         </div>
 
         <div class="footer-bottom">
-            © 2026 Desarrollado por [nombre aquí]
+            © 2026 Desarrollado por alumnos del ITSE
         </div>
     </footer>
 
 </body>
+
 </html>

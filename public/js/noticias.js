@@ -9,6 +9,7 @@
 // =========================================================
 
 const TAMANIO_MAXIMO_IMAGEN = 2 * 1024 * 1024; // igual que helpers/imagenes.js
+const MAXIMO_IMAGENES = 2;
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
 
 const escaparNot = (texto) => String(texto ?? '').replace(/[&<>"']/g, (c) => ({
@@ -28,8 +29,8 @@ let noticiasColumna = [];       // título y fecha de la página actual de la co
 let noticiaActual = null;       // la que se ve completa
 let puedePublicar = false;
 let editandoId = null;          // null = noticia nueva
-let imagenNueva = null;         // dataURL elegido en el formulario
-let quitarImagenActual = false; // al editar: quitar la imagen que ya tenía
+// Imágenes del formulario: { url, actual: true } las que ya tenía la noticia, { url: dataURL } las nuevas
+let imagenesFormulario = [];
 
 // Si hay sesión se manda el token: así el servidor sabe si es noticiero
 const encabezados = (json = false) => {
@@ -209,7 +210,8 @@ function pintarNoticiaPrincipal() {
 
     contenedor.innerHTML = `
         <article class="noticia-card ${n.visible ? '' : 'oculta'}">
-            ${n.imagen ? `<a href="${escaparNot(n.imagen)}" target="_blank" rel="noopener" data-ampliar><img class="noticia-imagen" src="${escaparNot(n.imagen)}" alt="Imagen de la noticia"></a>` : ''}
+            ${n.imagenes?.length ? `<div class="noticia-imagenes${n.imagenes.length > 1 ? ' dos' : ''}">${n.imagenes.map((url, i) =>
+                `<a href="${escaparNot(url)}" target="_blank" rel="noopener" data-ampliar><img class="noticia-imagen" src="${escaparNot(url)}" alt="Imagen ${i + 1} de la noticia"></a>`).join('')}</div>` : ''}
             <div class="noticia-cuerpo">
                 <div class="noticia-meta">
                     <span><i class="fa-regular fa-calendar"></i>${formatearFecha(n.fechaCreacion)}</span>
@@ -283,10 +285,19 @@ function actualizarVistaPrevia() {
     document.getElementById('vista-previa-contenido').innerHTML = formatearContenido(contenido);
 }
 
-function mostrarVistaPreviaImagen(url) {
-    document.getElementById('vista-previa-imagen').hidden = !url;
-    document.getElementById('img-vista-previa').src = url || '';
-    document.getElementById('texto-selector-imagen').textContent = url ? 'Cambiar imagen' : 'Elegir imagen';
+// Miniaturas de las imágenes elegidas, cada una con su botón "Quitar"
+function mostrarVistaPreviaImagenes() {
+    const contenedor = document.getElementById('vista-previa-imagen');
+    contenedor.hidden = !imagenesFormulario.length;
+    contenedor.innerHTML = imagenesFormulario.map((imagen, i) => `
+        <div class="imagen-elegida">
+            <img src="${escaparNot(imagen.url)}" alt="Vista previa de la imagen ${i + 1}">
+            <button type="button" class="btn-secundario" data-quitar-imagen="${i}"><i class="fa-solid fa-trash"></i> Quitar</button>
+        </div>`).join('');
+    const lleno = imagenesFormulario.length >= MAXIMO_IMAGENES;
+    document.getElementById('noticia-imagen').disabled = lleno;
+    document.getElementById('texto-selector-imagen').textContent = lleno ? `Máximo ${MAXIMO_IMAGENES} imágenes`
+        : imagenesFormulario.length ? 'Agregar otra imagen' : 'Elegir imágenes';
 }
 
 function mostrarAvisoEdicion(noticia, texto) {
@@ -299,10 +310,9 @@ function mostrarAvisoEdicion(noticia, texto) {
 
 function limpiarFormulario() {
     editandoId = null;
-    imagenNueva = null;
-    quitarImagenActual = false;
+    imagenesFormulario = [];
     document.getElementById('form-noticia').reset();
-    mostrarVistaPreviaImagen(null);
+    mostrarVistaPreviaImagenes();
     actualizarContadores();
     actualizarVistaPrevia();
     document.getElementById('titulo-formulario-noticia').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Nueva noticia';
@@ -333,7 +343,8 @@ function empezarEdicion(noticia) {
     editandoId = noticia.idNoticia;
     document.getElementById('noticia-titulo').value = noticia.titulo;
     document.getElementById('noticia-contenido').value = noticia.contenido;
-    mostrarVistaPreviaImagen(noticia.imagen);
+    imagenesFormulario = (noticia.imagenes || []).map((url) => ({ url, actual: true }));
+    mostrarVistaPreviaImagenes();
     actualizarContadores();
     actualizarVistaPrevia();
     document.getElementById('titulo-formulario-noticia').innerHTML = '<i class="fa-solid fa-pen"></i> Editar noticia';
@@ -342,33 +353,49 @@ function empezarEdicion(noticia) {
     abrirFormulario();
 }
 
-function leerImagenElegida(evento) {
-    const archivo = evento.target.files[0];
-    if (!archivo) return;
-    if (!TIPOS_IMAGEN.includes(archivo.type)) {
-        evento.target.value = '';
-        Swal.fire({ icon: 'warning', title: 'Formato no permitido', text: 'Solo se permiten imágenes JPG, PNG o WEBP.', confirmButtonColor: '#1a3a5f' });
-        return;
-    }
-    if (archivo.size > TAMANIO_MAXIMO_IMAGEN) {
-        evento.target.value = '';
-        Swal.fire({ icon: 'warning', title: 'Imagen muy pesada', text: 'La imagen debe pesar como máximo 2 MB.', confirmButtonColor: '#1a3a5f' });
-        return;
-    }
+const leerComoDataUrl = (archivo) => new Promise((resolve, reject) => {
     const lector = new FileReader();
-    lector.onload = () => {
-        imagenNueva = lector.result;
-        mostrarVistaPreviaImagen(imagenNueva);
-    };
+    lector.onload = () => resolve(lector.result);
+    lector.onerror = () => reject(new Error('No se pudo leer la imagen.'));
     lector.readAsDataURL(archivo);
+});
+
+// Las imágenes se achican al elegirlas (achicar-fotos.js): una foto de celular o una captura de varios MB
+// queda dentro del límite de 2 MB
+async function leerImagenElegida(evento) {
+    const input = evento.target;
+    const archivos = [...input.files];
+    input.value = '';
+    if (!archivos.length) return;
+    const avisar = (title, text) => Swal.fire({ icon: 'warning', title, text, confirmButtonColor: '#1a3a5f' });
+    if (archivos.some((a) => !TIPOS_IMAGEN.includes(a.type))) return avisar('Formato no permitido', 'Solo se permiten imágenes JPG, PNG o WEBP.');
+    const lugares = MAXIMO_IMAGENES - imagenesFormulario.length;
+    if (archivos.length > lugares) {
+        return avisar('Demasiadas imágenes', `La noticia puede tener hasta ${MAXIMO_IMAGENES} imágenes`
+            + (imagenesFormulario.length ? ` y ya tiene ${imagenesFormulario.length}. Quite una para agregar otra.` : '.'));
+    }
+    const texto = document.getElementById('texto-selector-imagen');
+    texto.textContent = 'Preparando imágenes...';
+    try {
+        for (const original of archivos) {
+            const archivo = typeof fotoAchicada === 'function' ? await fotoAchicada(original) : original;
+            if (archivo.size > TAMANIO_MAXIMO_IMAGEN) {
+                avisar('Imagen muy pesada', `"${original.name}" sigue pesando más de 2 MB después de achicarla. Pruebe con otra imagen.`);
+                continue;
+            }
+            imagenesFormulario.push({ url: await leerComoDataUrl(archivo) });
+        }
+    } catch (error) {
+        avisar('No se pudo leer la imagen', error.message);
+    }
+    mostrarVistaPreviaImagenes();
 }
 
-function quitarImagen() {
-    // Si estaba editando, se avisa al servidor que quite la imagen que ya tenía (si tenía)
-    if (editandoId) quitarImagenActual = true;
-    imagenNueva = null;
-    document.getElementById('noticia-imagen').value = '';
-    mostrarVistaPreviaImagen(null);
+function quitarImagen(evento) {
+    const boton = evento.target.closest('[data-quitar-imagen]');
+    if (!boton) return;
+    imagenesFormulario.splice(Number(boton.dataset.quitarImagen), 1);
+    mostrarVistaPreviaImagenes();
 }
 
 async function enviarNoticia(evento) {
@@ -382,8 +409,9 @@ async function enviarNoticia(evento) {
 
     const editando = editandoId !== null;
     const cuerpo = { titulo, contenido };
-    if (imagenNueva) cuerpo.imagen = imagenNueva;
-    if (editando && quitarImagenActual && !imagenNueva) cuerpo.quitarImagen = true;
+    // Las nuevas van como dataURL; al editar, se avisa cuáles de las actuales quedan
+    cuerpo.imagenes = imagenesFormulario.filter((imagen) => !imagen.actual).map((imagen) => imagen.url);
+    if (editando) cuerpo.conservar = imagenesFormulario.filter((imagen) => imagen.actual).map((imagen) => imagen.url);
 
     const boton = document.getElementById('btn-publicar-noticia');
     boton.disabled = true;
@@ -442,7 +470,7 @@ async function eliminarNoticia(noticia) {
     const confirmacion = await Swal.fire({
         icon: 'warning',
         title: '¿Eliminar la noticia?',
-        text: `"${noticia.titulo}" se va a borrar junto con su imagen y no se puede recuperar. Si solo querés que no se vea, usá "Ocultar".`,
+        text: `"${noticia.titulo}" se va a borrar junto con sus imágenes y no se puede recuperar. Si solo querés que no se vea, usá "Ocultar".`,
         showCancelButton: true,
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar',
@@ -480,7 +508,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-cancelar-formulario').addEventListener('click', cerrarFormulario);
     document.getElementById('form-noticia').addEventListener('submit', enviarNoticia);
     document.getElementById('noticia-imagen').addEventListener('change', leerImagenElegida);
-    document.getElementById('btn-quitar-imagen').addEventListener('click', quitarImagen);
+    document.getElementById('vista-previa-imagen').addEventListener('click', quitarImagen);
     document.getElementById('noticia-titulo').addEventListener('input', actualizarContadores);
     document.getElementById('noticia-contenido').addEventListener('input', () => {
         actualizarContadores();

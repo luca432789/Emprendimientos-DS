@@ -9,8 +9,6 @@
 
     <link rel="stylesheet" href="CSS/index CSS.css">
     <link rel="stylesheet" href="CSS/CdE Navbar.css">
-    <script src="js/script.js" defer></script>
-    <script src="js/registro-usuario.js" defer></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
@@ -121,79 +119,38 @@
                 </div>
             </div>
         </section>
-    <!-- <div>
-        <h2>Gestión de Etiquetas</h2>
-            <div class="filtros-container">
-                <button onclick="cargarEtiquetas('todas')">Ver Todas</button>
-                <button onclick="cargarEtiquetas('activas')">Solo Activas</button>
-                <button onclick="cargarEtiquetas('inactivas')">Solo Inactivas</button>
+    </main>
+
+
+    <!--FOOTER-->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
+                <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
             </div>
-            <ul id="lista-etiquetas">
-                <li>Hacé clic en alguno de los botones para cargar las etiquetas...</li>
-            </ul>
-    </div>
+            <!-- LINKS -->
+            <div class="footer-links">
+                <h3>Ministerios</h3>
+                <div class="columnas">
+                    <ul>
+                        <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
+                        <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li> <!--FALTA ESTE LINK-->
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
+                        <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-    <div>
-        <form id="formulario-registro-usuario">
-    
-            <label>Correo Electrónico:</label>
-            <input type="email" id="reg-correo" required placeholder="Debe ser el mismo de tu legajo o ficha">
-
-            <label>Contraseña de Acceso:</label>
-            <input type="password" id="reg-password" required placeholder="Escriba su contraseña">
-
-            <label>Tipo de Rol en el Sistema:</label>
-            <select id="reg-tipo-usuario" required>
-                <option value="" disabled selected>-- Seleccione su Rol --</option>
-                <option value="Emprendedor">Emprendedor</option>
-                <option value="Empleado de Mesa">Empleado de Mesa</option>
-                <option value="Empleado de Area">Empleado de Area</option>
-                <option value="Administrador">Administrador</option>
-            </select>
-
-            <button type="submit">Crear Usuario Web</button>
-
-            <small style="color: gray; display: block; margin-top: 5px;">
-                Requisito: Mínimo 12 caracteres, incluir combinaciones de Mayúsculas, Minúsculas, Números (0-9) y símbolos (@, $, !, %, *, &, etc).
-            </small>
-        </form>
-
-    </div> -->
- </main>
-
-
- <!--FOOTER-->
- <footer>
-  <div class="footer-top">
-    <div class="footer-logo">
-        <img src="Imagenes/secretaria logo.png" alt="Secretaria de ciencia y tecnologia">
-        <img src="Imagenes/Sgo logo.png" alt="Santiago del Estero">
-    </div>
-<!-- LINKS -->
-    <div class="footer-links">
-      <h3>Ministerios</h3>
-      <div class="columnas">
-        <ul>
-            
-          <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
-          <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
-          <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
-        </ul>
-        <ul>
-          <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li> <!--FALTA ESTE LINK-->
-          <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
-          <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer-bottom">
-    © 2026 Desarrollado por [nombre aquí]
-  </div>
-
-</footer>
-  
+        <div class="footer-bottom">
+            © 2026 Desarrollado por alumnos del ITSE
+        </div>
+    </footer>
 
 </Body>
 </html>

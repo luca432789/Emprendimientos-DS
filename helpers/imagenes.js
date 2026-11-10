@@ -46,13 +46,14 @@ export const rutaFisica = (rutaWeb) => {
     return path.join(process.cwd(), ...partes);
 };
 
-// Guarda las imágenes en una carpeta web (ej: /uploads/publicaciones/3/1729000000000) y devuelve sus rutas web
-export const guardarImagenes = async (carpetaWeb, imagenes, prefijo = 'foto') => {
+// Guarda las imágenes en una carpeta web (ej: /uploads/publicaciones/3/1729000000000) y devuelve sus rutas web.
+// desde: número de la primera (si en la carpeta ya hay fotos copiadas de la versión anterior)
+export const guardarImagenes = async (carpetaWeb, imagenes, prefijo = 'foto', desde = 1) => {
     const carpeta = rutaFisica(carpetaWeb);
     await fs.mkdir(carpeta, { recursive: true });
     const rutas = [];
     for (const [i, imagen] of imagenes.entries()) {
-        const nombre = `${prefijo}-${i + 1}.${imagen.extension}`;
+        const nombre = `${prefijo}-${i + desde}.${imagen.extension}`;
         await fs.writeFile(path.join(carpeta, nombre), imagen.bytes);
         rutas.push(`${carpetaWeb}/${nombre}`);
     }
@@ -71,6 +72,16 @@ export const listarFotos = async (carpetaWeb) => {
     } catch {
         return [];
     }
+};
+
+// Copia fotos ya subidas (rutas web) a otra carpeta como <prefijo>-1, -2... y devuelve cuántas copió
+export const copiarFotos = async (rutasWeb, carpetaWeb, prefijo = 'foto') => {
+    const carpeta = rutaFisica(carpetaWeb);
+    await fs.mkdir(carpeta, { recursive: true });
+    for (const [i, rutaWeb] of rutasWeb.entries()) {
+        await fs.copyFile(rutaFisica(rutaWeb), path.join(carpeta, `${prefijo}-${i + 1}${path.extname(rutaWeb).toLowerCase()}`));
+    }
+    return rutasWeb.length;
 };
 
 // Borra una carpeta o archivo subido (se usa si la base de datos falla después de guardar)

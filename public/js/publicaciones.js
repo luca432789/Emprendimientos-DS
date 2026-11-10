@@ -56,6 +56,7 @@ function prepararVistaPrevia(inputFotos, contenedor) {
         }
         contenedor.innerHTML = [...inputFotos.files].map((archivo) =>
             `<img src="${URL.createObjectURL(archivo)}" alt="Vista previa">`).join('');
+        if (typeof adelantarFotos === 'function') adelantarFotos(inputFotos); // se achican mientras completa el resto
     });
 }
 
@@ -72,7 +73,7 @@ function prepararFormulario(Perfil, formulario) {
     if (inputFotos) {
         inputFotos.multiple = true;
         inputFotos.accept = 'image/jpeg,image/png,image/webp';
-        if (etiquetaFotos) etiquetaFotos.title = `Agregar fotos (hasta ${MAXIMO_FOTOS_PUBLICACION}, 2 MB cada una)`;
+        if (etiquetaFotos) etiquetaFotos.title = `Agregar fotos (hasta ${MAXIMO_FOTOS_PUBLICACION}; se achican automáticamente)`;
         prepararVistaPrevia(inputFotos, vistaPrevia);
     }
 
@@ -83,12 +84,10 @@ function prepararFormulario(Perfil, formulario) {
         const descripcion = formulario.querySelector('#publicacion-texto')?.value || '';
         const archivos = inputFotos?.files || [];
 
-        const errorFotos = Perfil.validarImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
-        if (errorFotos) return Perfil.aviso('warning', 'Revisá las fotos', errorFotos);
-
         boton.disabled = true;
         try {
-            const fotos = await Perfil.leerArchivos(archivos);
+            const { error: errorFotos, fotos } = await Perfil.prepararImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
+            if (errorFotos) return Perfil.aviso('warning', 'Revisá las fotos', errorFotos);
             const { ok, datos } = await Perfil.api('POST', '/api/publicaciones', { titulo, descripcion, fotos });
             if (!ok) return Perfil.aviso('error', 'No se pudo publicar', datos.error);
 
@@ -201,7 +200,7 @@ async function editarPublicacion(Perfil, publicacion) {
                 ${fotosActuales.length ? `
                     <div class="vista-previa-fotos">${fotosActuales.map((u) => `<img src="${esc(u)}" alt="Foto actual">`).join('')}</div>
                     <label class="check-fotos"><input type="checkbox" id="edit-conservar" checked> Conservar estas fotos</label>` : ''}
-                <label>Fotos nuevas (reemplazan a las anteriores, hasta ${MAXIMO_FOTOS_PUBLICACION})
+                <label>Fotos nuevas (hasta ${MAXIMO_FOTOS_PUBLICACION} en total: si conserva las actuales, se agregan a ellas; si no, las reemplazan)
                     <input type="file" id="edit-fotos" accept="image/jpeg,image/png,image/webp" multiple>
                 </label>
                 <div class="vista-previa-fotos" id="edit-vista-previa"></div>
@@ -216,13 +215,19 @@ async function editarPublicacion(Perfil, publicacion) {
             const descripcion = document.getElementById('edit-texto').value.trim();
             const archivos = document.getElementById('edit-fotos').files;
             if (!descripcion) return Swal.showValidationMessage('Escribí el texto de la publicación.');
-            const errorFotos = Perfil.validarImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
+            const conservarFotos = Boolean(document.getElementById('edit-conservar')?.checked);
+            const conservadas = conservarFotos ? fotosActuales.length : 0;
+            if (archivos.length && conservadas + archivos.length > MAXIMO_FOTOS_PUBLICACION) {
+                return Swal.showValidationMessage(`La publicación puede tener hasta ${MAXIMO_FOTOS_PUBLICACION} fotos y ya tiene ${conservadas}. `
+                    + 'Elija menos fotos nuevas o desmarque "Conservar estas fotos" para reemplazarlas.');
+            }
+            const { error: errorFotos, fotos } = await Perfil.prepararImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
             if (errorFotos) return Swal.showValidationMessage(errorFotos);
             return {
                 titulo: document.getElementById('edit-titulo').value,
                 descripcion,
-                fotos: await Perfil.leerArchivos(archivos),
-                conservarFotos: Boolean(document.getElementById('edit-conservar')?.checked)
+                fotos,
+                conservarFotos
             };
         }
     });

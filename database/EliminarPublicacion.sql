@@ -26,7 +26,7 @@ END;
 //
 DELIMITER ;
 
--- 2. Permiso del usuario de la API para borrar publicaciones (las etiquetas se borran solas: on delete cascade)
+-- 2. Permiso del usuario de la API para borrar publicaciones
 GRANT DELETE ON ProyectoEmprendimientos2026.Publicacion TO 'ministerio_api'@'localhost';
 FLUSH PRIVILEGES;
 

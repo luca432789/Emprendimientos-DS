@@ -85,8 +85,13 @@ export const modelPublicacionPropia = async (idPublicacion, idEmprendimiento) =>
 
 // 1b. EMPRENDEDOR: edita una de sus publicaciones -> vuelve a Revisión Pendiente.
 // Lo aprobado sigue visible hasta que el Ministerio apruebe la nueva versión.
+// Devuelve { cambiadas, carpetaSinUso }: la carpeta de la versión en revisión anterior, si ya no la usa nadie.
 export const modelEditarPublicacion = async (idPublicacion, idEmprendimiento, titulo, descripcion, carpetaFotos, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [[previa]] = await conexion.query(
+            'SELECT DirectorioFotosActual, DirectorioFotosPendiente FROM Publicacion WHERE idPublicacion = ? AND idEmprendimiento = ? FOR UPDATE;',
+            [idPublicacion, idEmprendimiento]
+        );
         const [resultado] = await conexion.query(
             `UPDATE Publicacion
              SET TituloPendiente = ?, DescripcionPendiente = ?, DirectorioFotosPendiente = ?,
@@ -94,7 +99,9 @@ export const modelEditarPublicacion = async (idPublicacion, idEmprendimiento, ti
              WHERE idPublicacion = ? AND idEmprendimiento = ?;`,
             [titulo, descripcion, carpetaFotos, idPublicacion, idEmprendimiento]
         );
-        return resultado.affectedRows;
+        const anterior = previa?.DirectorioFotosPendiente;
+        const carpetaSinUso = anterior && anterior !== previa.DirectorioFotosActual && anterior !== carpetaFotos ? anterior : null;
+        return { cambiadas: resultado.affectedRows, carpetaSinUso };
     });
 };
 
@@ -254,8 +261,13 @@ export const modelPublicacionesPendientes = async () => {
 
 // 4. EMPLEADO: aprobar (pendiente -> actual, estado 0) o rechazar (estado 2, con motivo).
 // Solo afecta publicaciones en revisión: aprobar dos veces no borra el contenido aprobado.
+// Devuelve { cambiadas, carpetaSinUso }: al aprobar, la carpeta de las fotos aprobadas antes (si la nueva versión no la usa).
 export const modelModerarPublicacion = async (idPublicacion, aprobar, motivoRechazo, idEmpleadoModerador, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [[previa]] = await conexion.query(
+            'SELECT DirectorioFotosActual, DirectorioFotosPendiente FROM Publicacion WHERE idPublicacion = ? FOR UPDATE;',
+            [idPublicacion]
+        );
         const [resultado] = aprobar
             ? await conexion.query(
                 `UPDATE Publicacion
@@ -274,6 +286,8 @@ export const modelModerarPublicacion = async (idPublicacion, aprobar, motivoRech
                  WHERE idPublicacion = ? AND EstadoModeracion = 1;`,
                 [motivoRechazo, idEmpleadoModerador, idPublicacion]
             );
-        return resultado.affectedRows;
+        const anterior = previa?.DirectorioFotosActual;
+        const carpetaSinUso = aprobar && resultado.affectedRows && anterior && anterior !== previa.DirectorioFotosPendiente ? anterior : null;
+        return { cambiadas: resultado.affectedRows, carpetaSinUso };
     });
 };

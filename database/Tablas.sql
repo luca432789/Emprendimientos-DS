@@ -22,10 +22,6 @@ use ProyectoEmprendimientos2026;
 
 -- Publicacion (idPublicacion (PK), idEmprendimiento (FK), TituloActual, DescripcionActual, DirectorioFotosActual, TituloPendiente, DescripcionPendiente, DirectorioFotosPendiente, EstadoModeracion, FechaSolicitud, FechaRevision, MotivoRechazo, idEmpleadoModerador (FK)) -- SERAN 2 POR EMPRENDIMIENTO (MANEJAR POR NODE)
 
--- Etiqueta (idEtiqueta, Nombre, Activa)
-
--- Publicacion_Etiqueta (idPublicacion, idEtiqueta (pk-fk))
-
 -- Producto (idProducto (PK), idEmprendimiento (FK), Nombre, Precio, Descripcion, PathFoto, Activo (Si-No), FechaAlta)
 
 -- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaEntregaFacturas, FechaFacturasValidadas, MotivoObservacionFacturas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK), idEmpleadoFacturas (FK), idEmpleadoPuestaMarcha (FK))
@@ -219,22 +215,6 @@ constraint fk_Publicacion_Emprendimiento
 	foreign key (idEmprendimiento) references Emprendimiento(idEmprendimiento),
 constraint fk_Publicacion_Empleado 
 	foreign key (idEmpleadoModerador) references Empleado(idEmpleado)
-);
-
--- Etiqueta (idEtiqueta, Nombre, Activa)
-create table Etiqueta (
-idEtiqueta int auto_increment primary key,
-Nombre varchar(40) not null unique,
-Activa boolean not null default True -- 1: Visible/Usable, 0: Oculta
-);
-
--- Publicacion_Etiqueta (idPublicacion, idEtiqueta (pk-fk))
-create table Publicacion_Etiqueta (
-idPublicacion int not null,
-idEtiqueta int not null,
-primary key (idPublicacion, idEtiqueta), -- Clave primaria compuesta para evitar duplicados
-constraint fk_PE_Publicacion foreign key (idPublicacion) references Publicacion(idPublicacion) on delete cascade,
-constraint fk_PE_Etiqueta foreign key (idEtiqueta) references Etiqueta(idEtiqueta) on delete cascade
 );
 
 -- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaEntregaFacturas, FechaFacturasValidadas, MotivoObservacionFacturas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK), idEmpleadoFacturas (FK), idEmpleadoPuestaMarcha (FK))
