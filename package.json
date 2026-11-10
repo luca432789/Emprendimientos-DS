@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node --watch app.js",
+    "crear-admin": "node scripts/crear-administrador.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

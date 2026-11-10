@@ -1,9 +1,12 @@
 use ProyectoEmprendimientos2026;
+SET NAMES utf8mb4;
 
 -- DROP USER 'ministerio_api'@'localhost';
 
 -- Crear un usuario exclusivo para el Backend de Node.js
-CREATE USER IF NOT EXISTS 'ministerio_api'@'localhost' IDENTIFIED BY 'nodejs123!';
+-- La contraseña es la misma de DB_PASS en el .env. Reemplazar CAMBIAR_CLAVE antes de ejecutar a mano
+-- (con Docker no hace falta: docker/mysql/03-usuario-app.sh la reemplaza sola y usa '%' en lugar de 'localhost').
+CREATE USER IF NOT EXISTS 'ministerio_api'@'localhost' IDENTIFIED BY 'CAMBIAR_CLAVE';
 
 -- Show grants for ministerio_api@localhost; -- muestra los permisos que posee el usuario
 

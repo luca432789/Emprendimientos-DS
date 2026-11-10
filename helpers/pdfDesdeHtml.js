@@ -11,9 +11,12 @@ let paginaLista = null;
 // Si llegan varios pedidos mientras Chrome se está abriendo, todos esperan la misma apertura
 let abriendo = null;
 
+// En Docker (CHROME_SIN_SANDBOX=1) Chrome no puede usar su sandbox y /dev/shm es chico: se desactivan los dos
+const argumentosChrome = process.env.CHROME_SIN_SANDBOX === '1' ? ['--no-sandbox', '--disable-dev-shm-usage'] : [];
+
 const obtenerNavegador = async () => {
   if (navegador?.connected) return navegador;
-  abriendo ??= puppeteer.launch({ headless: true })
+  abriendo ??= puppeteer.launch({ headless: true, args: argumentosChrome })
     .then((nuevo) => {
       navegador = nuevo;
       nuevo.on('disconnected', () => { navegador = null; paginaLista = null; });

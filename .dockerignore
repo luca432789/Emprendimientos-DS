@@ -1,0 +1,18 @@
+# Lo que no entra a la imagen de la app
+node_modules
+npm-debug.log
+.git
+.gitignore
+.vscode
+.venv
+.env
+.env.*
+tmp
+*.log
+Dockerfile
+docker-compose.yml
+
+# Archivos que suben los usuarios: van en el volumen, no en la imagen. Solo entran los iconos iniciales de los rubros.
+uploads/*
+!uploads/IconoMapa/
+uploads/IconoMapa/rubro-*

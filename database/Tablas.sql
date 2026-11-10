@@ -1,5 +1,7 @@
-Create database ProyectoEmprendimientos2026;
+-- utf8mb4 + utf8mb4_0900_ai_ci: tildes y ñ, y comparaciones sin distinguir mayúsculas ni tildes (ej: rubros repetidos)
+Create database ProyectoEmprendimientos2026 CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 use ProyectoEmprendimientos2026;
+SET NAMES utf8mb4;
 -- drop database ProyectoEmprendimientos2026;
 
 -- -----------------------------------------------------------------------------------------------------------

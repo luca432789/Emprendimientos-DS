@@ -1,0 +1,80 @@
+# El Camino de los Emprendedores: la app y su base de datos MySQL. Instrucciones en DOCKER.md
+#   docker compose up -d --build                 -> construye y levanta todo
+#   docker compose exec app npm run crear-admin  -> crea el primer Administrador (una sola vez)
+name: emprendedores
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Falta MYSQL_ROOT_PASSWORD en el .env}
+      APP_DB_PASS: ${DB_PASS:?Falta DB_PASS en el .env}
+      TZ: America/Argentina/Buenos_Aires
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=-03:00
+    volumes:
+      - datos-mysql:/var/lib/mysql
+      # Se ejecutan una sola vez, en orden, cuando la base todavía no existe (volumen vacío)
+      - type: bind
+        source: ./database/Tablas.sql
+        target: /docker-entrypoint-initdb.d/01-tablas.sql
+        read_only: true
+      - type: bind
+        source: ./database/Triggers.sql
+        target: /docker-entrypoint-initdb.d/02-triggers.sql
+        read_only: true
+      - type: bind
+        source: ./docker/mysql/03-usuario-app.sh
+        target: /docker-entrypoint-initdb.d/03-usuario-app.sh
+        read_only: true
+      - type: bind
+        source: ./database/Usuario Conexion.sql
+        target: /docker-entrypoint-initdb.d/sql/usuario-conexion.sql
+        read_only: true
+      - type: bind
+        source: ./database/Datos iniciales.sql
+        target: /docker-entrypoint-initdb.d/04-datos-iniciales.sql
+        read_only: true
+    # Sin "ports": MySQL solo es accesible para la app, dentro de la red de Docker
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysqladmin ping -h 127.0.0.1 -uroot --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  app:
+    build: .
+    restart: unless-stopped
+    # Solo las variables que usa la app (la contraseña de root de MySQL no le llega)
+    environment:
+      DB_HOST: db                # dentro de Docker la base es el servicio "db"
+      DB_USER: ministerio_api
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ProyectoEmprendimientos2026
+      PORT: 3000
+      NODE_ENV: production
+      TZ: America/Argentina/Buenos_Aires
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en el .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-10m}
+      APP_URL: ${APP_URL:?Falta APP_URL en el .env (dirección pública del sitio, para los enlaces de los correos)}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      CORREO_REMITENTE: ${CORREO_REMITENTE:-}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+    ports:
+      - "${PUERTO_PUBLICO:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - archivos-subidos:/app/uploads
+
+volumes:
+  datos-mysql:        # la base de datos
+  archivos-subidos:   # fotos, PDF de los formularios, facturas e iconos de rubros

@@ -1,4 +1,9 @@
 use ProyectoEmprendimientos2026;
+SET NAMES utf8mb4;
+
+-- DATOS DE PRUEBA / DEMOSTRACIÓN (empleados, solicitudes, emprendimientos y usuarios inventados).
+-- Ejecutar después de "Datos iniciales.sql" (los rubros 1 a 4 están ahí). NO usar en el servidor de la institución:
+-- son personas y correos inventados y el sistema podría enviarles correos reales.
 
 -- PARA REALIZAR PRUEBA DE AUDITORIA EJECUTAR AMBAS LINEAS DE ABAJO
 SET @usuario_id = 1000; -- El ID del empleado que está logueado en ese momento
@@ -65,15 +70,7 @@ values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los p
 ('Emprendedor5', 'Tauros', '46000004', 'Choya', 'Choya', 'Choya, B. los choya entre y x y', '3856000004', 'Emprendedor5prueba@gmail.com',
 'Bombos Tauros', 'San bombo', '306', 'Los bombo', 'Choya', 'Los Choyas', 'Fabricacion de Bombos de cuero de vaca', true, 'Bombos Artesanal', 'Subsidio', '-28.49195760', '-64.85416639', 5); -- 1
 
--- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
--- RUBRO ------------------------------------------------------------------------------------------------------------------------------------------------------
--- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Rubro (idRubro (PK), Nombre, IconoMapa)
-insert into Rubro (Nombre, IconoMapa)
-values ('Bombos artesanal', '/uploads/IconoMapa/Bombo.png'), -- 1
-('Telares artesanal', '/uploads/IconoMapa/Telares.png'), -- 2
-('Muebles', '/uploads/IconoMapa/Muebles.png'), -- 3
-('Carpinteria General', '/uploads/IconoMapa/Carpinteria - General.png'); -- 4
+-- RUBRO: los rubros 1 a 4 (Bombos artesanal, Telares artesanal, Muebles, Carpinteria General) están en "Datos iniciales.sql"
 
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- EMPRENDIMIENTO ------------------------------------------------------------------------------------------------------------------------------------------------------
