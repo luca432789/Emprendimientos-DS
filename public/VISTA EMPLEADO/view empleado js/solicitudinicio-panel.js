@@ -758,7 +758,7 @@ async function pedirDatosProyectoAprobado(solicitud) {
         return null;
     }
     if (rubros.length === 0) {
-        Swal.fire('Sin rubros', 'No hay rubros cargados. Registre al menos un rubro antes de aprobar.', 'warning');
+        Swal.fire('Sin rubros', 'No hay rubros cargados. Agregue al menos uno en Administración de Rubros antes de aprobar.', 'warning');
         return null;
     }
 
@@ -768,6 +768,17 @@ async function pedirDatosProyectoAprobado(solicitud) {
         <option value="${escaparDatoRevision(rubro.idRubro)}" ${rubroCoincidente?.idRubro === rubro.idRubro ? 'selected' : ''}>
             ${escaparDatoRevision(rubro.Nombre)}
         </option>`).join('');
+    // Recordatorio: el rubro que escribió el emprendedor puede ser válido y no estar todavía en el sistema
+    const recordatorioRubro = rubroCoincidente
+        ? `<p style="margin:10px 0 0; text-align:left; font-size:.85rem; color:#475569;">
+               Si ningún rubro de la lista corresponde, revise <b>Administración de Rubros</b> antes de aprobar.
+           </p>`
+        : `<div style="margin:12px 0 0; padding:10px 12px; text-align:left; background:#fff7ed; border-left:4px solid #f59e0b; border-radius:4px; font-size:.9rem;">
+               <b>El rubro indicado por el emprendedor no está en el sistema.</b> Si es un rubro válido, agréguelo primero en
+               <b>Administración de Rubros</b> (con su icono para el mapa, si lo tiene) y después registre la aprobación.
+               <div style="margin-top:8px;"><button type="button" class="btn-filtro" id="aprobacion-ir-rubros">
+                   <i class="fa-solid fa-tags" style="margin-right:6px;"></i>Ir a Administración de Rubros</button></div>
+           </div>`;
 
     const formulario = await Swal.fire({
         title: `Aprobación del Ministro · Solicitud #${solicitud.id}`,
@@ -785,8 +796,15 @@ async function pedirDatosProyectoAprobado(solicitud) {
                 ${rubroCoincidente ? '' : '<option value="">-- Seleccione un rubro --</option>'}
                 ${opcionesRubro}
             </select>
+            ${recordatorioRubro}
         `,
         focusConfirm: false,
+        didOpen: () => {
+            document.getElementById('aprobacion-ir-rubros')?.addEventListener('click', () => {
+                Swal.close();
+                cargarSección('administrar-rubros', 'Administración de Rubros');
+            });
+        },
         preConfirm: () => {
             const nroProyecto = document.getElementById('aprobacion-nro-proyecto').value.trim();
             const selectRubro = document.getElementById('aprobacion-rubro');

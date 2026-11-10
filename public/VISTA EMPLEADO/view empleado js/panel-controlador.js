@@ -79,6 +79,11 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-store" style="margin-right: 8px;"></i> Administración de Emprendimientos
                 </a>
             </li>
+            <li class="item-simple" id="item-administrar-rubros">
+                <a href="#" onclick="cargarSección('administrar-rubros', 'Administración de Rubros')">
+                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Administración de Rubros
+                </a>
+            </li>
             <li class="item-simple" id="item-publicaciones-espera">
                 <a href="#" onclick="cargarSección('publicaciones-espera', 'Publicaciones en Espera')">
                     <i class="fa-solid fa-hourglass-half" style="margin-right: 8px;"></i> Publicaciones en Espera
@@ -119,6 +124,11 @@ function inicializarPanelPorRol(rol) {
             <li class="item-simple" id="item-administrar-emprendimientos">
                 <a href="#" onclick="cargarSección('administrar-emprendimientos', 'Administración de Emprendimientos')">
                     <i class="fa-solid fa-store" style="margin-right: 8px;"></i> Administración de Emprendimientos
+                </a>
+            </li>
+            <li class="item-simple" id="item-administrar-rubros">
+                <a href="#" onclick="cargarSección('administrar-rubros', 'Administración de Rubros')">
+                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Administración de Rubros
                 </a>
             </li>
             <li class="item-simple" id="item-publicaciones-espera">
@@ -178,7 +188,8 @@ function inicializarPanelPorRol(rol) {
         'subsidio-en-revision': 'En Revisión - Subsidio',
         'creditos-en-revision': 'En Revisión - Créditos',
         'estadisticas': 'Estadísticas',
-        'administrar-emprendimientos': 'Administración de Emprendimientos'
+        'administrar-emprendimientos': 'Administración de Emprendimientos',
+        'administrar-rubros': 'Administración de Rubros'
     };
     const seccionPedida = window.location.hash.slice(1);
     if (seccionesPorEnlace[seccionPedida] && document.getElementById(`item-${seccionPedida}`)) {
@@ -764,6 +775,13 @@ function cargarSección(codigoSeccion, tituloSeccion) {
     else if (codigoSeccion === 'administrar-emprendimientos') {
         filtrosTabla.style.display = 'none';
         inicializarAdministracionEmprendimientos(zonaRender);
+    }
+    // ======================================================================
+    // ADMINISTRACIÓN DE RUBROS (Área / Admin): nombres e iconos del mapa
+    // ======================================================================
+    else if (codigoSeccion === 'administrar-rubros') {
+        filtrosTabla.style.display = 'none';
+        inicializarAdministracionRubros(zonaRender);
     }
     // ======================================================================
     // ESTADÍSTICAS (SOLO ADMINISTRADORES): gráfico por mes y tabla por departamento

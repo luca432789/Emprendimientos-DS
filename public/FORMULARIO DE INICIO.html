@@ -208,7 +208,9 @@
                     Elevamos al Sr. Ministro esta solicitud con el propósito de dar impulso económico a la actividad productiva de
                     microemprendimiento en el rubro de:
                 </p>
-                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Rubro">
+                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Rubro" list="lista-rubros" autocomplete="off">
+                <datalist id="lista-rubros"></datalist>
+                <small>Al escribir se sugieren los rubros ya registrados; si el suyo no está, escríbalo igual.</small>
 
                 <label class="etiqueta">Actividad principal que realiza el emprendimiento</label>
                 <textarea name="actividadPrincipal" class="linea renglones" rows="3" maxlength="400" required aria-label="Actividad principal del emprendimiento" placeholder="Describa brevemente qué produce o qué servicio brinda"></textarea>

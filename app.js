@@ -29,6 +29,7 @@ import estadisticasRouter from './routes/estadisticasRoutes.js';
 import facturasRouter from './routes/facturasRoutes.js';
 import emprendimientosAdminRouter from './routes/emprendimientosAdminRoutes.js';
 import documentosRouter from './routes/documentosRoutes.js';
+import rubrosRouter from './routes/rubrosRoutes.js';
 import { prepararNavegador } from './helpers/pdfDesdeHtml.js';
 
 // Inicializamos la app express
@@ -71,6 +72,7 @@ app.use('/api', estadisticasRouter); // Estadísticas anuales para el Administra
 app.use('/api', facturasRouter);   // Facturas de Ley que rinde el emprendedor de su Subsidio o Crédito (/api/facturas)
 app.use('/api', documentosRouter);   // "Mis Documentos" del emprendedor (/api/documentos)
 app.use('/api', emprendimientosAdminRouter); // Administración de Emprendimientos del Área: facturas, puesta en marcha y antecedentes (/api/emprendimientos-admin)
+app.use('/api', rubrosRouter);     // Rubros: sugerencias del Formulario de Inicio y Administración de Rubros con su icono del mapa (/api/rubros)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)

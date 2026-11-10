@@ -120,6 +120,7 @@ CONSTRAINT chk_EleccionAyuda
 );
 
 -- Rubro (idRubro (PK), Nombre, IconoMapa)
+-- IconoMapa vacío ('') = rubro sin icono: el mapa muestra el pin básico de ubicación (se administra en Administración de Rubros)
 create table Rubro (
 idRubro int auto_increment primary key,
 Nombre varchar(50) not null unique, 

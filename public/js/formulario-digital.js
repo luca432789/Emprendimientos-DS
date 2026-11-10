@@ -317,6 +317,15 @@ if (form) {
     campoTelefono.value = campoTelefono.value.replace(/\D/g, '').slice(0, 10);
     campoTelefono.setCustomValidity('');
   });
+  // Formulario de Inicio: sugerencias del rubro con los rubros registrados (se puede escribir otro igual)
+  const listaRubros = form.querySelector('#lista-rubros');
+  if (listaRubros) {
+    fetch(`${apiBaseUrl}/api/rubros`)
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : []))
+      .then((rubros) => rubros.forEach(({ Nombre }) => listaRubros.append(new Option(Nombre))))
+      .catch(() => {}); // sin sugerencias el campo sigue funcionando como texto libre
+  }
+
   // El número de calle del emprendimiento solo admite números (con "Sin número" queda S/N y el campo bloqueado)
   numeroEmprendimiento?.addEventListener('input', () => { numeroEmprendimiento.value = numeroEmprendimiento.value.replace(/\D/g, ''); });
   form.querySelectorAll('input[name="dniGarante"], input[name="dniFirmaGarante"], input[name="cuilGarante"], input[name="telefonoGarante"]').forEach((input) => {
