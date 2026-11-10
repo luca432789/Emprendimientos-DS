@@ -9,10 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-        // 🚀 ADAPTACIÓN PARA LA VERSIÓN 4 EN NAVEGADOR:
-        // Intentamos grabarlo desde el objeto global que genera la v4 en cjs/umd
-        const deodificar = window.jwtDecode || jwt_decode; 
-        const payload = deodificar(token);
+        // jwtDecode viene de /js/jwt-decode.js (cargado en el HTML)
+        const payload = window.jwtDecode(token);
         
         const rolReal = payload.tipoUsuario; // "Empleado de Area", etc.
         
