@@ -85,14 +85,33 @@ export const modelPublicacionPropia = async (idPublicacion, idEmprendimiento) =>
 
 // 1b. EMPRENDEDOR: edita una de sus publicaciones -> vuelve a Revisión Pendiente.
 // Lo aprobado sigue visible hasta que el Ministerio apruebe la nueva versión.
+// Devuelve { cambiadas, carpetaSinUso }: la carpeta de la versión en revisión anterior, si ya no la usa nadie.
 export const modelEditarPublicacion = async (idPublicacion, idEmprendimiento, titulo, descripcion, carpetaFotos, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [[previa]] = await conexion.query(
+            'SELECT DirectorioFotosActual, DirectorioFotosPendiente FROM Publicacion WHERE idPublicacion = ? AND idEmprendimiento = ? FOR UPDATE;',
+            [idPublicacion, idEmprendimiento]
+        );
         const [resultado] = await conexion.query(
             `UPDATE Publicacion
              SET TituloPendiente = ?, DescripcionPendiente = ?, DirectorioFotosPendiente = ?,
                  EstadoModeracion = 1, FechaSolicitud = CURDATE(), MotivoRechazo = NULL
              WHERE idPublicacion = ? AND idEmprendimiento = ?;`,
             [titulo, descripcion, carpetaFotos, idPublicacion, idEmprendimiento]
+        );
+        const anterior = previa?.DirectorioFotosPendiente;
+        const carpetaSinUso = anterior && anterior !== previa.DirectorioFotosActual && anterior !== carpetaFotos ? anterior : null;
+        return { cambiadas: resultado.affectedRows, carpetaSinUso };
+    });
+};
+
+// 1c. EMPRENDEDOR: elimina una de sus publicaciones (la aprobada y la versión en revisión).
+// Libera el lugar para crear otra. El trigger de DELETE deja en Auditoria qué se borró.
+export const modelEliminarPublicacion = async (idPublicacion, idEmprendimiento, datosAuditoria) => {
+    return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [resultado] = await conexion.query(
+            'DELETE FROM Publicacion WHERE idPublicacion = ? AND idEmprendimiento = ?;',
+            [idPublicacion, idEmprendimiento]
         );
         return resultado.affectedRows;
     });
@@ -126,6 +145,8 @@ export const modelPublicacionesAprobadas = async (idEmprendimiento) => {
 
 // 2b. WEB PÚBLICA: publicaciones aprobadas de todos los emprendimientos (página "Publicaciones" del menú)
 // filtros: { buscar, idRubro }. La búsqueda no distingue mayúsculas ni tildes (collation utf8mb4_0900_ai_ci).
+const patronBusqueda = (buscar) => `%${buscar.replace(/[\\%_]/g, '\\$&')}%`;
+
 const filtrosPublicacionesAprobadas = ({ buscar, idRubro } = {}) => {
     const condiciones = ['p.TituloActual IS NOT NULL'];
     const parametros = [];
@@ -135,7 +156,7 @@ const filtrosPublicacionesAprobadas = ({ buscar, idRubro } = {}) => {
     }
     if (buscar) {
         condiciones.push("CONCAT_WS(' ', e.Nombre, p.TituloActual, p.DescripcionActual, r.Nombre) LIKE ?");
-        parametros.push(`%${buscar.replace(/[\\%_]/g, '\\$&')}%`);
+        parametros.push(patronBusqueda(buscar));
     }
     return { sql: `WHERE ${condiciones.join(' AND ')}`, parametros };
 };
@@ -167,15 +188,61 @@ export const modelTodasLasPublicacionesAprobadas = async (filtros, limite, offse
     return filas;
 };
 
-// Rubros que tienen al menos una publicación aprobada (para el filtro de la página)
-export const modelRubrosConPublicaciones = async () => {
+// Rubros que tienen al menos un emprendimiento (para el filtro de la página).
+// Incluye rubros sin publicaciones: la columna de emprendimientos también se filtra por rubro.
+export const modelRubrosConEmprendimientos = async () => {
     const [filas] = await pool.query(
         `SELECT DISTINCT r.idRubro, r.Nombre AS rubro
-         ${DESDE_PUBLICACIONES_APROBADAS}
-         WHERE p.TituloActual IS NOT NULL AND r.idRubro IS NOT NULL
+         FROM Emprendimiento e
+         INNER JOIN Rubro r ON r.idRubro = e.idRubro
          ORDER BY r.Nombre;`
     );
     return filas;
+};
+
+// 2c. WEB PÚBLICA: emprendimientos, tengan o no publicaciones (columna de la página "Publicaciones").
+// Mismo filtro que las publicaciones: el rubro y la búsqueda en sus datos o en sus publicaciones aprobadas.
+const filtrosEmprendimientos = ({ buscar, idRubro } = {}) => {
+    const condiciones = [];
+    const parametros = [];
+    if (idRubro) {
+        condiciones.push('e.idRubro = ?');
+        parametros.push(idRubro);
+    }
+    if (buscar) {
+        condiciones.push(`(CONCAT_WS(' ', e.Nombre, e.ActividadPrincipal, r.Nombre, e.Localidad, e.Departamento) LIKE ?
+            OR EXISTS (SELECT 1 FROM Publicacion p
+                       WHERE p.idEmprendimiento = e.idEmprendimiento AND p.TituloActual IS NOT NULL
+                         AND CONCAT_WS(' ', p.TituloActual, p.DescripcionActual) LIKE ?))`);
+        parametros.push(patronBusqueda(buscar), patronBusqueda(buscar));
+    }
+    return { sql: condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '', parametros };
+};
+
+const DESDE_EMPRENDIMIENTOS = `
+    FROM Emprendimiento e
+    LEFT JOIN Rubro r ON r.idRubro = e.idRubro`;
+
+export const modelContarEmprendimientos = async (filtros) => {
+    const { sql, parametros } = filtrosEmprendimientos(filtros);
+    const [filas] = await pool.query(`SELECT COUNT(*) AS total ${DESDE_EMPRENDIMIENTOS} ${sql};`, parametros);
+    return Number(filas[0].total);
+};
+
+export const modelEmprendimientosPublicos = async (filtros, limite, offset) => {
+    const { sql, parametros } = filtrosEmprendimientos(filtros);
+    const [filas] = await pool.query(
+        `SELECT e.idEmprendimiento, e.Nombre AS emprendimiento, e.Localidad, e.Departamento,
+                r.Nombre AS rubro, r.IconoMapa,
+                (SELECT COUNT(*) FROM Publicacion p
+                 WHERE p.idEmprendimiento = e.idEmprendimiento AND p.TituloActual IS NOT NULL) AS publicaciones
+         ${DESDE_EMPRENDIMIENTOS}
+         ${sql}
+         ORDER BY e.Nombre, e.idEmprendimiento
+         LIMIT ? OFFSET ?;`,
+        [...parametros, limite, offset]
+    );
+    return filas.map((f) => ({ ...f, publicaciones: Number(f.publicaciones) }));
 };
 
 // 3. EMPLEADO: publicaciones pendientes de moderación (estado 1)
@@ -194,8 +261,13 @@ export const modelPublicacionesPendientes = async () => {
 
 // 4. EMPLEADO: aprobar (pendiente -> actual, estado 0) o rechazar (estado 2, con motivo).
 // Solo afecta publicaciones en revisión: aprobar dos veces no borra el contenido aprobado.
+// Devuelve { cambiadas, carpetaSinUso }: al aprobar, la carpeta de las fotos aprobadas antes (si la nueva versión no la usa).
 export const modelModerarPublicacion = async (idPublicacion, aprobar, motivoRechazo, idEmpleadoModerador, datosAuditoria) => {
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
+        const [[previa]] = await conexion.query(
+            'SELECT DirectorioFotosActual, DirectorioFotosPendiente FROM Publicacion WHERE idPublicacion = ? FOR UPDATE;',
+            [idPublicacion]
+        );
         const [resultado] = aprobar
             ? await conexion.query(
                 `UPDATE Publicacion
@@ -214,6 +286,8 @@ export const modelModerarPublicacion = async (idPublicacion, aprobar, motivoRech
                  WHERE idPublicacion = ? AND EstadoModeracion = 1;`,
                 [motivoRechazo, idEmpleadoModerador, idPublicacion]
             );
-        return resultado.affectedRows;
+        const anterior = previa?.DirectorioFotosActual;
+        const carpetaSinUso = aprobar && resultado.affectedRows && anterior && anterior !== previa.DirectorioFotosPendiente ? anterior : null;
+        return { cambiadas: resultado.affectedRows, carpetaSinUso };
     });
 };

@@ -6,6 +6,8 @@ import {
 	iniciarRevisionArea,
 	obtenerRevisionesAsignadas,
 	resolverRevisionArea,
+	reenviarCorreoSolicitud,
+	rechazarPorFaltaFormulario,
 	registrarEnvioMinistro,
 	registrarResolucionMinistro,
 	obtenerRubros,
@@ -25,6 +27,8 @@ router.get('/solicitudes/area/sin-revisar', verificarToken, obtenerSolicitudesAr
 router.put('/solicitudes/:id/iniciar-revision', verificarToken, iniciarRevisionArea);
 router.get('/solicitudes/area/asignadas', verificarToken, obtenerRevisionesAsignadas);
 router.put('/solicitudes/:id/resolver-area', verificarToken, resolverRevisionArea);
+router.post('/solicitudes/:id/reenviar-correo', verificarToken, reenviarCorreoSolicitud);
+router.put('/solicitudes/:id/rechazo-falta-formulario', verificarToken, rechazarPorFaltaFormulario);
 router.put('/solicitudes/:id/enviar-ministro', verificarToken, registrarEnvioMinistro);
 router.put('/solicitudes/:id/resolucion-ministro', verificarToken, registrarResolucionMinistro);
 router.get('/solicitudes/rubros', verificarToken, obtenerRubros);

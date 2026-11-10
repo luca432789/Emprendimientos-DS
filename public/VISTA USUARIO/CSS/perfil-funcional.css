@@ -91,6 +91,23 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.botones-publicacion {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Eliminar: mismo botón que Editar pero en el rojo institucional */
+.btn-publicar.btn-eliminar-publicacion {
+  background-color: #a65454;
+}
+
+.btn-publicar.btn-eliminar-publicacion:hover {
+  background-color: #8a3f3f;
 }
 
 .estado-pub {

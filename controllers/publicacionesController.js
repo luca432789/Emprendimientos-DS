@@ -5,14 +5,17 @@ import {
     modelCrearPublicacion,
     modelPublicacionPropia,
     modelEditarPublicacion,
+    modelEliminarPublicacion,
     modelTodasLasPublicacionesAprobadas,
     modelContarPublicacionesAprobadas,
-    modelRubrosConPublicaciones,
+    modelRubrosConEmprendimientos,
+    modelContarEmprendimientos,
+    modelEmprendimientosPublicos,
     modelPublicacionesAprobadas,
     modelPublicacionesPendientes,
     modelModerarPublicacion
 } from '../models/publicacionesModel.js';
-import { ErrorImagen, validarImagenes, guardarImagenes, listarFotos, borrarSubida } from '../helpers/imagenes.js';
+import { ErrorImagen, validarImagenes, guardarImagenes, copiarFotos, listarFotos, borrarSubida } from '../helpers/imagenes.js';
 import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 // Roles que pueden aprobar o rechazar publicaciones
@@ -20,6 +23,7 @@ const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
 const MAXIMO_FOTOS = 4;
 const TITULO_POR_DEFECTO = 'Novedades del Emprendimiento';
 const PUBLICACIONES_POR_PAGINA = 10; // página pública "Publicaciones"
+const EMPRENDIMIENTOS_POR_PAGINA = 8; // columna "Emprendimientos" de esa misma página
 
 const datosAuditoriaDe = (req) => ({
     idUsuario: req.usuarioLogueado.idUsuario,
@@ -29,6 +33,11 @@ const esModerador = (req) => ROLES_MODERADORES.includes(req.usuarioLogueado?.tip
 
 // Cada versión de fotos va a su propia carpeta: lo aprobado no se pisa mientras se revisa lo nuevo
 const carpetaNueva = (idPublicacion) => `/uploads/publicaciones/${idPublicacion}/${Date.now()}`;
+
+// Borra la carpeta de una versión que ya no usa la publicación (solo dentro de la carpeta de esa publicación)
+const borrarCarpetaSinUso = async (idPublicacion, carpeta) => {
+    if (carpeta && carpeta.startsWith(`/uploads/publicaciones/${idPublicacion}/`)) await borrarSubida(carpeta);
+};
 
 // Título y texto validados (mismos límites que las columnas de la tabla)
 const leerContenido = (body) => {
@@ -84,7 +93,7 @@ export const crearPublicacion = async (req, res) => {
 
         if (!idPublicacion) {
             return res.status(409).json({
-                error: `Ya tiene ${MAXIMO_PUBLICACIONES} publicaciones. Edite una de ellas para cambiar su contenido.`
+                error: `Ya tiene ${MAXIMO_PUBLICACIONES} publicaciones. Edite o elimine una de ellas para publicar algo nuevo.`
             });
         }
         res.status(201).json({ mensaje: 'Publicación enviada a revisión correctamente.', idPublicacion });
@@ -98,7 +107,8 @@ export const crearPublicacion = async (req, res) => {
 
 // PUT /api/publicaciones/:idPublicacion  (Emprendedor dueño)
 // body: { titulo?, descripcion, fotos?: [dataURL], conservarFotos?: boolean }
-// fotos nuevas reemplazan a las anteriores; sin fotos nuevas: conservarFotos mantiene las que tenía.
+// conservarFotos: las fotos actuales se mantienen y las nuevas se suman (hasta 4 en total);
+// sin conservarFotos, las nuevas reemplazan a las actuales (o la publicación queda sin fotos).
 export const editarPublicacion = async (req, res) => {
     let carpetaGuardada = null;
     try {
@@ -116,22 +126,36 @@ export const editarPublicacion = async (req, res) => {
         if (contenido.error) return res.status(400).json({ error: contenido.error });
         const imagenes = validarImagenes(req.body.fotos, MAXIMO_FOTOS);
 
-        let carpetaFotos = null;
-        if (imagenes.length) {
-            carpetaGuardada = carpetaNueva(idPublicacion);
-            await guardarImagenes(carpetaGuardada, imagenes);
-            carpetaFotos = carpetaGuardada;
-        } else if (req.body.conservarFotos === true) {
-            // Las fotos "actuales" son las de la versión en revisión si la hay; si no, las aprobadas
-            carpetaFotos = publicacion.EstadoModeracion === 0
-                ? publicacion.DirectorioFotosActual
-                : publicacion.DirectorioFotosPendiente ?? publicacion.DirectorioFotosActual;
+        // Las fotos "actuales" son las de la versión en revisión si la hay; si no, las aprobadas
+        const carpetaActual = publicacion.EstadoModeracion === 0
+            ? publicacion.DirectorioFotosActual
+            : publicacion.DirectorioFotosPendiente ?? publicacion.DirectorioFotosActual;
+        const conservar = req.body.conservarFotos === true;
+        const fotosConservadas = conservar ? await listarFotos(carpetaActual) : [];
+        if (fotosConservadas.length + imagenes.length > MAXIMO_FOTOS) {
+            return res.status(400).json({
+                error: `La publicación puede tener hasta ${MAXIMO_FOTOS} fotos: ya tiene ${fotosConservadas.length}. `
+                    + 'Elija menos fotos nuevas o desmarque "Conservar estas fotos" para reemplazarlas.'
+            });
         }
 
-        await modelEditarPublicacion(
+        let carpetaFotos = null;
+        if (imagenes.length) {
+            // Carpeta nueva con las conservadas primero y después las nuevas
+            carpetaGuardada = carpetaNueva(idPublicacion);
+            const copiadas = await copiarFotos(fotosConservadas, carpetaGuardada);
+            await guardarImagenes(carpetaGuardada, imagenes, 'foto', copiadas + 1);
+            carpetaFotos = carpetaGuardada;
+        } else if (conservar) {
+            carpetaFotos = carpetaActual;
+        }
+
+        const { carpetaSinUso } = await modelEditarPublicacion(
             idPublicacion, emprendimiento.idEmprendimiento, contenido.titulo, contenido.descripcion,
             carpetaFotos, datosAuditoriaDe(req)
         );
+        carpetaGuardada = null;
+        await borrarCarpetaSinUso(idPublicacion, carpetaSinUso);
         res.json({ mensaje: 'Cambios enviados a revisión. Lo aprobado sigue visible hasta que el Ministerio revise la nueva versión.' });
     } catch (error) {
         await borrarSubida(carpetaGuardada);
@@ -141,34 +165,88 @@ export const editarPublicacion = async (req, res) => {
     }
 };
 
-// GET /api/publicaciones?page=1&buscar=texto&rubro=idRubro  (público): de a 10, la más reciente primero
-export const obtenerTodasLasAprobadas = async (req, res) => {
-    const paginaSolicitada = req.query.page === undefined ? 1 : Number(req.query.page);
-    const buscar = typeof req.query.buscar === 'string' ? req.query.buscar.trim() : '';
-    const idRubro = req.query.rubro ? Number(req.query.rubro) : null;
+// DELETE /api/publicaciones/:idPublicacion  (Emprendedor dueño)
+// Se borra la fila (versión aprobada y en revisión) y después la carpeta con todas sus fotos.
+export const eliminarPublicacion = async (req, res) => {
+    try {
+        const emprendimiento = await emprendimientoDelEmprendedor(req, res);
+        if (!emprendimiento) return;
+
+        const idPublicacion = Number(req.params.idPublicacion);
+        if (!Number.isInteger(idPublicacion) || idPublicacion <= 0) {
+            return res.status(400).json({ error: 'Publicación inválida.' });
+        }
+
+        const eliminadas = await modelEliminarPublicacion(idPublicacion, emprendimiento.idEmprendimiento, datosAuditoriaDe(req));
+        if (eliminadas === 0) return res.status(404).json({ error: 'La publicación no existe o no le pertenece.' });
+
+        // Las fotos se borran solo cuando la base ya confirmó: si falla el DELETE no se pierde nada
+        await borrarSubida(`/uploads/publicaciones/${idPublicacion}`);
+        res.json({ mensaje: 'Publicación eliminada correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar la publicación:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+// Página y filtros (?page, ?buscar, ?rubro) de la página pública "Publicaciones": { paginaSolicitada, filtros } o { error }
+const leerFiltrosPublicos = (query) => {
+    const paginaSolicitada = query.page === undefined ? 1 : Number(query.page);
+    const buscar = typeof query.buscar === 'string' ? query.buscar.trim() : '';
+    const idRubro = query.rubro ? Number(query.rubro) : null;
 
     if (!Number.isInteger(paginaSolicitada) || paginaSolicitada < 1) {
-        return res.status(400).json({ error: 'El número de página debe ser un entero positivo.' });
+        return { error: 'El número de página debe ser un entero positivo.' };
     }
-    if (buscar.length > 100) return res.status(400).json({ error: 'La búsqueda no puede superar los 100 caracteres.' });
+    if (buscar.length > 100) return { error: 'La búsqueda no puede superar los 100 caracteres.' };
     if (idRubro !== null && (!Number.isInteger(idRubro) || idRubro < 1)) {
-        return res.status(400).json({ error: 'El rubro seleccionado no es válido.' });
+        return { error: 'El rubro seleccionado no es válido.' };
     }
+    return { paginaSolicitada, filtros: { buscar: buscar || null, idRubro } };
+};
+
+// Total de páginas y página a mostrar (si pidió una que ya no existe, la última)
+const paginar = (totalRegistros, porPagina, paginaSolicitada) => {
+    const totalPaginas = Math.ceil(totalRegistros / porPagina);
+    return { totalPaginas, pagina: Math.min(paginaSolicitada, Math.max(1, totalPaginas)) };
+};
+
+// GET /api/publicaciones?page=1&buscar=texto&rubro=idRubro  (público): de a 10, la más reciente primero
+export const obtenerTodasLasAprobadas = async (req, res) => {
+    const { error, paginaSolicitada, filtros } = leerFiltrosPublicos(req.query);
+    if (error) return res.status(400).json({ error });
 
     try {
-        const filtros = { buscar: buscar || null, idRubro };
         const totalRegistros = await modelContarPublicacionesAprobadas(filtros);
-        const totalPaginas = Math.ceil(totalRegistros / PUBLICACIONES_POR_PAGINA);
-        const pagina = Math.min(paginaSolicitada, Math.max(1, totalPaginas));
+        const { totalPaginas, pagina } = paginar(totalRegistros, PUBLICACIONES_POR_PAGINA, paginaSolicitada);
         const [publicaciones, rubros] = await Promise.all([
             modelTodasLasPublicacionesAprobadas(filtros, PUBLICACIONES_POR_PAGINA, (pagina - 1) * PUBLICACIONES_POR_PAGINA)
                 .then(conFotos),
-            modelRubrosConPublicaciones()
+            modelRubrosConEmprendimientos()
         ]);
         res.json({ publicaciones, pagina, totalPaginas, totalRegistros, rubros });
     } catch (error) {
         console.error('Error al consultar las publicaciones:', error);
         res.status(500).json({ error: 'Error al consultar las publicaciones.' });
+    }
+};
+
+// GET /api/emprendimientos?page=1&buscar=texto&rubro=idRubro  (público): de a 8, por nombre.
+// Columna "Emprendimientos" de la página Publicaciones: incluye los que todavía no tienen publicaciones.
+export const obtenerEmprendimientosPublicos = async (req, res) => {
+    const { error, paginaSolicitada, filtros } = leerFiltrosPublicos(req.query);
+    if (error) return res.status(400).json({ error });
+
+    try {
+        const totalRegistros = await modelContarEmprendimientos(filtros);
+        const { totalPaginas, pagina } = paginar(totalRegistros, EMPRENDIMIENTOS_POR_PAGINA, paginaSolicitada);
+        const emprendimientos = await modelEmprendimientosPublicos(
+            filtros, EMPRENDIMIENTOS_POR_PAGINA, (pagina - 1) * EMPRENDIMIENTOS_POR_PAGINA
+        );
+        res.json({ emprendimientos, pagina, totalPaginas, totalRegistros });
+    } catch (error) {
+        console.error('Error al consultar los emprendimientos:', error);
+        res.status(500).json({ error: 'Error al consultar los emprendimientos.' });
     }
 };
 
@@ -230,9 +308,11 @@ export const moderarPublicacion = async (req, res) => {
     try {
         // El moderador sale del token, no del body
         const idEmpleadoModerador = await modelEmpleadoDeUsuario(req.usuarioLogueado.idUsuario);
-        const cambiadas = await modelModerarPublicacion(
+        const { cambiadas, carpetaSinUso } = await modelModerarPublicacion(
             idPublicacion, aprobar, aprobar ? null : motivoRechazo, idEmpleadoModerador, datosAuditoriaDe(req)
         );
+        // Al aprobar, las fotos aprobadas antes ya no se usan (la nueva versión tiene su propia carpeta)
+        await borrarCarpetaSinUso(idPublicacion, carpetaSinUso);
 
         if (cambiadas === 0) {
             return res.status(404).json({ error: 'La publicación no existe o no está pendiente de revisión.' });

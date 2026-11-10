@@ -9,10 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-        // 🚀 ADAPTACIÓN PARA LA VERSIÓN 4 EN NAVEGADOR:
-        // Intentamos grabarlo desde el objeto global que genera la v4 en cjs/umd
-        const deodificar = window.jwtDecode || jwt_decode; 
-        const payload = deodificar(token);
+        // jwtDecode viene de /js/jwt-decode.js (cargado en el HTML)
+        const payload = window.jwtDecode(token);
         
         const rolReal = payload.tipoUsuario; // "Empleado de Area", etc.
         
@@ -74,6 +72,16 @@ function inicializarPanelPorRol(rol) {
                     <li id="item-creditos-en-revision"><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
             </li>
+            <li class="item-simple" id="item-administrar-emprendimientos">
+                <a href="#" onclick="cargarSección('administrar-emprendimientos', 'Administración de Emprendimientos')">
+                    <i class="fa-solid fa-store" style="margin-right: 8px;"></i> Administración de Emprendimientos
+                </a>
+            </li>
+            <li class="item-simple" id="item-administrar-rubros">
+                <a href="#" onclick="cargarSección('administrar-rubros', 'Administración de Rubros')">
+                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Administración de Rubros
+                </a>
+            </li>
             <li class="item-simple" id="item-publicaciones-espera">
                 <a href="#" onclick="cargarSección('publicaciones-espera', 'Publicaciones en Espera')">
                     <i class="fa-solid fa-hourglass-half" style="margin-right: 8px;"></i> Publicaciones en Espera
@@ -82,11 +90,6 @@ function inicializarPanelPorRol(rol) {
             <li class="item-simple" id="item-registrar-emprendimiento">
                 <a href="#" onclick="cargarSección('registrar-emprendimiento', 'Registrar Emprendimiento')">
                     <i class="fa-solid fa-folder-plus" style="margin-right: 8px;"></i> Registrar Emprendimiento
-                </a>
-            </li>
-            <li class="item-simple" id="item-etiquetas-publicaciones">
-                <a href="#" onclick="cargarSección('etiquetas-publicaciones', 'Gestión de Etiquetas')">
-                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Etiquetas de Publicaciones
                 </a>
             </li>
         `;
@@ -116,6 +119,16 @@ function inicializarPanelPorRol(rol) {
                     <li id="item-creditos-en-revision"><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
             </li>
+            <li class="item-simple" id="item-administrar-emprendimientos">
+                <a href="#" onclick="cargarSección('administrar-emprendimientos', 'Administración de Emprendimientos')">
+                    <i class="fa-solid fa-store" style="margin-right: 8px;"></i> Administración de Emprendimientos
+                </a>
+            </li>
+            <li class="item-simple" id="item-administrar-rubros">
+                <a href="#" onclick="cargarSección('administrar-rubros', 'Administración de Rubros')">
+                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Administración de Rubros
+                </a>
+            </li>
             <li class="item-simple" id="item-publicaciones-espera">
                 <a href="#" onclick="cargarSección('publicaciones-espera', 'Publicaciones en Espera')">
                     <i class="fa-solid fa-hourglass-half" style="margin-right: 8px;"></i> Publicaciones en Espera
@@ -124,11 +137,6 @@ function inicializarPanelPorRol(rol) {
             <li class="item-simple" id="item-registrar-emprendimiento">
                 <a href="#" onclick="cargarSección('registrar-emprendimiento', 'Registrar Emprendimiento')">
                     <i class="fa-solid fa-folder-plus" style="margin-right: 8px;"></i> Registrar Emprendimiento
-                </a>
-            </li>
-            <li class="item-simple" id="item-etiquetas-publicaciones">
-                <a href="#" onclick="cargarSección('etiquetas-publicaciones', 'Gestión de Etiquetas')">
-                    <i class="fa-solid fa-tags" style="margin-right: 8px;"></i> Etiquetas de Publicaciones
                 </a>
             </li>
             <li class="item-simple" id="item-registrar-empleado">
@@ -146,14 +154,19 @@ function inicializarPanelPorRol(rol) {
                     <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Registrar Usuario
                 </a>
             </li>
+            <li class="item-simple" id="item-administrar-usuarios">
+                <a href="#" onclick="cargarSección('administrar-usuarios', 'Administración de Usuarios del Sistema')">
+                    <i class="fa-solid fa-users-gear" style="margin-right: 8px;"></i> Administrar Usuarios
+                </a>
+            </li>
             <li class="item-simple" id="item-revisar-historial">
                 <a href="#" onclick="cargarSección('revisar-historial', 'Historial de Auditoría')">
                     <i class="fa-solid fa-history" style="margin-right: 8px;"></i> Revisar Historial
                 </a>
             </li>
-            <li class="item-simple" id="item-administrar-usuarios">
-                <a href="#" onclick="cargarSección('administrar-usuarios', 'Administración de Usuarios del Sistema')">
-                    <i class="fa-solid fa-users-gear" style="margin-right: 8px;"></i> Administrar Usuarios
+            <li class="item-simple" id="item-estadisticas">
+                <a href="#" onclick="cargarSección('estadisticas', 'Estadísticas')">
+                    <i class="fa-solid fa-chart-column" style="margin-right: 8px;"></i> Estadísticas
                 </a>
             </li>
         `;
@@ -169,7 +182,12 @@ function inicializarPanelPorRol(rol) {
         'inicio-sin-revisar': 'Solicitudes de Inicio',
         'subsidio-sin-revisar': 'Solicitudes de Subsidio',
         'creditos-sin-revisar': 'Solicitudes de Créditos',
-        'inicio-en-revision': 'En Revisión - Inicio'
+        'inicio-en-revision': 'En Revisión - Inicio',
+        'subsidio-en-revision': 'En Revisión - Subsidio',
+        'creditos-en-revision': 'En Revisión - Créditos',
+        'estadisticas': 'Estadísticas',
+        'administrar-emprendimientos': 'Administración de Emprendimientos',
+        'administrar-rubros': 'Administración de Rubros'
     };
     const seccionPedida = window.location.hash.slice(1);
     if (seccionesPorEnlace[seccionPedida] && document.getElementById(`item-${seccionPedida}`)) {
@@ -218,38 +236,9 @@ function cargarSección(codigoSeccion, tituloSeccion) {
     const zonaRender = document.getElementById('zona-render-contenido');
     
     // ======================================================================
-    // CASO 1: GESTIÓN DE ETIQUETAS (Cambia la estructura por sus propios botones)
+    // CASO 1: ADMINISTRAR USUARIOS
     // ======================================================================
-    if (codigoSeccion === 'etiquetas-publicaciones') {
-        // Ocultamos los filtros por defecto de usuarios para pintar los filtros de etiquetas
-        filtrosTabla.style.display = 'none'; 
-        
-        // Inyectamos los botones de tu HTML original adaptados estéticamente al diseño del panel
-        zonaRender.innerHTML = `
-            <div class="tabla-filtros" style="justify-content: flex-start; margin-bottom: 20px;">
-                <button class="btn-filtro" style="background-color: #2f4e78;" onclick="fetchEtiquetasParaPanel('todas')"><i class="fa-solid fa-tags"></i> Ver Todas</button>
-                <button class="btn-filtro" style="background-color: #2ecc71;" onclick="fetchEtiquetasParaPanel('activas')"><i class="fa-solid fa-eye"></i> Solo Activas</button>
-                <button class="btn-filtro" style="background-color: #e74c3c;" onclick="fetchEtiquetasParaPanel('inactivas')"><i class="fa-solid fa-eye-slash"></i> Solo Inactivas</button>
-            </div>
-            <table class="tabla-datos">
-                <thead>
-                    <tr>
-                        <th>ID Etiqueta</th>
-                        <th>Nombre de la Etiqueta</th>
-                        <th style="text-align: center;">Estado Visible</th>
-                        <th style="text-align: center;">Editar</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-cuerpo-etiquetas">
-                    <tr><td colspan="4" style="text-align:center; color:gray; padding:20px;">Hacé clic en alguno de los botones superiores para cargar los datos...</td></tr>
-                </tbody>
-            </table>
-        `;
-    }
-    // ======================================================================
-    // CASO 2: ADMINISTRAR USUARIOS
-    // ======================================================================
-    else if (codigoSeccion === 'administrar-usuarios') {
+    if (codigoSeccion === 'administrar-usuarios') {
         filtrosTabla.style.display = 'none';
         
         zonaRender.innerHTML = `
@@ -632,6 +621,8 @@ function cargarSección(codigoSeccion, tituloSeccion) {
     // ======================================================================
     else if (codigoSeccion === 'subsidio-sin-revisar' || codigoSeccion === 'creditos-sin-revisar') {
         filtrosTabla.style.display = 'none';
+        // Además del PDF, el botón "Comenzar revisión" (y en el crédito, el PDF del garante)
+        const esSubsidio = codigoSeccion === 'subsidio-sin-revisar';
 
         zonaRender.innerHTML = `
             <table class="tabla-datos">
@@ -641,7 +632,7 @@ function cargarSección(codigoSeccion, tituloSeccion) {
                         <th>Emprendimiento / Solicitante</th>
                         <th>Monto</th>
                         <th>Recibido</th>
-                        <th style="text-align:center;">Formulario</th>
+                        <th style="text-align:center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo-ayudas">
@@ -649,7 +640,34 @@ function cargarSección(codigoSeccion, tituloSeccion) {
                 </tbody>
             </table>
         `;
-        fetchAyudasSinRevisar(codigoSeccion === 'subsidio-sin-revisar' ? 'subsidio' : 'credito');
+        fetchAyudasSinRevisar(esSubsidio ? 'subsidio' : 'credito');
+    }
+    // ======================================================================
+    // SUBSIDIOS Y CRÉDITOS EN REVISIÓN (compartida por todo el Área)
+    // ======================================================================
+    else if (codigoSeccion === 'subsidio-en-revision' || codigoSeccion === 'creditos-en-revision') {
+        const tipoAyuda = codigoSeccion === 'subsidio-en-revision' ? 'subsidio' : 'credito';
+        filtrosTabla.style.display = 'none';
+
+        zonaRender.innerHTML = `
+            <table class="tabla-datos">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Emprendimiento / Solicitante</th>
+                        <th>Monto</th>
+                        <th>Monto anterior</th>
+                        <th>Recibido</th>
+                        <th>Estado</th>
+                        <th style="text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo-ayudas-revision">
+                    <tr><td colspan="7" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando ${tipoAyuda === 'subsidio' ? 'subsidios' : 'créditos'} en revisión...</td></tr>
+                </tbody>
+            </table>
+        `;
+        cargarAyudasEnRevision(tipoAyuda);
     }
     // ======================================================================
     // CASO 7: HISTORIAL DE AUDITORÍA (SOLO ADMINISTRADORES)
@@ -748,6 +766,27 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         `;
 
         inicializarControlesAuditoria();
+    }
+    // ======================================================================
+    // ADMINISTRACIÓN DE EMPRENDIMIENTOS (Área / Admin): facturas, puesta en marcha y antecedentes
+    // ======================================================================
+    else if (codigoSeccion === 'administrar-emprendimientos') {
+        filtrosTabla.style.display = 'none';
+        inicializarAdministracionEmprendimientos(zonaRender);
+    }
+    // ======================================================================
+    // ADMINISTRACIÓN DE RUBROS (Área / Admin): nombres e iconos del mapa
+    // ======================================================================
+    else if (codigoSeccion === 'administrar-rubros') {
+        filtrosTabla.style.display = 'none';
+        inicializarAdministracionRubros(zonaRender);
+    }
+    // ======================================================================
+    // ESTADÍSTICAS (SOLO ADMINISTRADORES): gráfico por mes y tabla por departamento
+    // ======================================================================
+    else if (codigoSeccion === 'estadisticas') {
+        filtrosTabla.style.display = 'none';
+        inicializarEstadisticas(zonaRender);
     }
     // ======================================================================
     // CASO GENERAL: CUALQUIER OTRA SECCIÓN (Mockup genérico para futuros sprints)

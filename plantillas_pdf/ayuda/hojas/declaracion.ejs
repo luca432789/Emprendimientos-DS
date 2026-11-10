@@ -1,0 +1,44 @@
+<p class="titulo-declaracion<%= esCredito ? ' credito' : '' %>">DECLARACION JURADA DE USO<br>Y RENDICIÓN DE FONDOS</p>
+
+<div class="datos-declaracion<%= esCredito ? ' credito' : '' %>">
+    <p class="campo">LUGAR Y FECHA<span class="relleno"><%= fecha %></span></p>
+    <p class="campo">El que suscribe<span class="relleno"><%= datos.nombreApellido %></span></p>
+    <p>D.N.I. Nº <span class="relleno corto"><%= datos.dniCuit %></span>, con domicilio en <span class="relleno"><%= datos.domicilio %></span>
+        Dpto. <span class="relleno"><%= datos.departamentoTitular %></span></p>
+    <p>Provincia de Santiago del Estero, <strong>DECLARA EN CARÁCTER DE DECLARACIÓN JURADA conocer y dar cumplimiento a las siguientes normas:</strong></p>
+</div>
+
+<%# El crédito agrega la norma 2 (artículo 17): las siguientes se corren un número %>
+<% let norma = 0; const siguiente = () => `${++norma})`; %>
+<div class="normas-declaracion<%= esCredito ? ' credito' : '' %>">
+    <p><%= siguiente() %> Una vez concluido el trámite de pago y recibidos los valores para la financiación de Proyecto, se deberá
+        presentar dentro de los <strong>30 (treinta) días</strong> de la recepción de los mismos, <strong>FACTURA de LEY</strong>
+        de manera que acredite la compra de los materiales y/o equipamiento e insumo necesario para llevar a cabo el mismo.</p>
+    <% if (esCredito) { %>
+    <p><%= siguiente() %> De acuerdo al <strong>artículo 17</strong> de la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS del Plan
+        Provincial Santiago Productivo, <strong>no podrán:</strong></p>
+    <ul class="lista-articulo">
+        <li>a- Cambiar el destino de bienes.</li>
+        <li>b- Comprar otros productos que no sean los estipulados y/o solicitados en formulario de solicitud.</li>
+        <li>c- Financiar la adquisición de los bienes solicitados mediante créditos personales y/o tarjetas de crédito, etc.</li>
+        <li>d- <strong>Es obligatoria la compra de todos los bienes aprobados</strong> para el microemprendimiento.</li>
+    </ul>
+    <% } %>
+    <p><%= siguiente() %> Ante la falta de cumplimiento en la entrega de la documentación requerida, la Subsecretaría de Desarrollo Social
+        a través del organismo que corresponda podrá iniciar las acciones tendientes al reintegro de los fondos, que podrán
+        consistir en la devolución del dinero y/o equipamiento comprado y/o multa. Asimismo el incumplimiento de las
+        causales previstas dará lugar al inicio de acciones legales pertinentes.</p>
+    <p><%= siguiente() %> Transcurrido los <strong>90 (noventa)</strong> días de recibidos los valores <strong>se deberá acreditar la puesta
+        en marcha del proyecto</strong> conforme a las metas y objetivos planteados en el proyecto para respaldar de esta
+        forma la continuidad del mismo y la generación del beneficio económico y social esperado.</p>
+    <p><%= siguiente() %> Por los incumplimientos de cualquier tipo detectados y probados por el área ejecutora de los programas, y una vez
+        que se hayan agotado todas las instancias administrativas, intervendrá la Justicia Provincial y /o Federal sito en
+        la Jurisdicción de Santiago del Estero.</p>
+</div>
+
+<div class="firma-responsable<%= esCredito ? ' credito' : '' %>">
+    <span class="linea-firma"><%- include('../firma.ejs') %></span>
+    <p>Responsable del Proyecto</p>
+    <p>Aclaración <span class="linea-firma"><%= datos.aclaracionProyecto %></span></p>
+    <p>D.N.I. N <span class="linea-firma"><%= datos.dniProyecto %></span></p>
+</div>

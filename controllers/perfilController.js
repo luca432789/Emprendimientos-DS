@@ -8,7 +8,7 @@ import { MAXIMO_PRODUCTOS, modelProductosDeEmprendimiento } from '../models/prod
 import { conFotos } from './publicacionesController.js';
 import { listarFotos } from '../helpers/imagenes.js';
 
-// Si todavía no se ejecutó database/Productos.sql, el perfil funciona igual sin productos
+// Si la base no tiene la tabla Producto (base sin actualizar), el perfil funciona igual sin productos
 const productosSeguros = async (idEmprendimiento, soloActivos) => {
     try {
         return { productos: await modelProductosDeEmprendimiento(idEmprendimiento, soloActivos), productosDisponibles: true };

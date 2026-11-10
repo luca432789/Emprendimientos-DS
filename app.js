@@ -12,7 +12,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Importamos los enrutadores externos
-import etiquetasRouter from './routes/etiquetasRoutes.js';
 import loginRouter from './routes/loginRoutes.js';
 import solicitudesInicioRouter from './routes/solicitudesInicioRoutes.js';
 import empleadoRouter from './routes/empleadoRoutes.js';
@@ -26,6 +25,12 @@ import perfilRouter from './routes/perfilRoutes.js';
 import ayudasRouter from './routes/ayudasRoutes.js';
 import cuentaRouter from './routes/cuentaRoutes.js';
 import noticiasRouter from './routes/noticiasRoutes.js';
+import estadisticasRouter from './routes/estadisticasRoutes.js';
+import facturasRouter from './routes/facturasRoutes.js';
+import emprendimientosAdminRouter from './routes/emprendimientosAdminRoutes.js';
+import documentosRouter from './routes/documentosRoutes.js';
+import rubrosRouter from './routes/rubrosRoutes.js';
+import { prepararNavegador } from './helpers/pdfDesdeHtml.js';
 
 // Inicializamos la app express
 const app = express();
@@ -42,7 +47,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Middlewares de control (CORS y procesamiento de JSON)
 app.use(cors()); 
-app.use(express.json({ limit: '25mb' })); // los formularios digitales envían adjuntos en base64 (hasta 16 MB)
+app.use(express.json({ limit: '45mb' })); // los formularios digitales envían adjuntos en base64 (hasta 30 MB en el de crédito)
 
 app.use(express.static(path.resolve('./public')));  // Servirá tus HTMLs, CSS e Imágenes automáticos
 
@@ -50,7 +55,6 @@ app.use(express.static(path.resolve('./public')));  // Servirá tus HTMLs, CSS e
 app.use('/uploads', express.static('uploads'));
 
 // Configuración de las rutas API
-app.use('/api', etiquetasRouter); // Todo lo de etiquetas colgará de /api/etiquetas
 app.use('/api', loginRouter);      // Todo lo de login colgará de /api/login
 app.use('/api', solicitudesInicioRouter);
 app.use('/api', empleadoRouter);
@@ -64,6 +68,11 @@ app.use('/api', perfilRouter);    // Perfil del emprendimiento: público y del d
 app.use('/api', ayudasRouter);     // Subsidios y créditos sin revisar para el área (/api/ayudas)
 app.use('/api', cuentaRouter);     // Enlace por correo para que el emprendedor aprobado cree su contraseña (/api/cuenta)
 app.use('/api', noticiasRouter);   // Noticias del Ministerio: públicas, las cargan los usuarios Noticiero (/api/noticias)
+app.use('/api', estadisticasRouter); // Estadísticas anuales para el Administrador (/api/estadisticas)
+app.use('/api', facturasRouter);   // Facturas de Ley que rinde el emprendedor de su Subsidio o Crédito (/api/facturas)
+app.use('/api', documentosRouter);   // "Mis Documentos" del emprendedor (/api/documentos)
+app.use('/api', emprendimientosAdminRouter); // Administración de Emprendimientos del Área: facturas, puesta en marcha y antecedentes (/api/emprendimientos-admin)
+app.use('/api', rubrosRouter);     // Rubros: sugerencias del Formulario de Inicio y Administración de Rubros con su icono del mapa (/api/rubros)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)
@@ -157,6 +166,13 @@ app.get('/Emprendedor-Contacto', (req, res) => {
 app.get('/Emprendedor-Fotos', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Fotos.html'));
 });
+// 14. Ruta para que el emprendedor envíe las Facturas de Ley de su Subsidio o Crédito
+app.get('/Emprendedor-Facturas', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Facturas.html'));
+});
+app.get('/Emprendedor-Documentos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Documentos.html'));
+});
 
 // ==========================================
 
@@ -164,4 +180,6 @@ app.get('/Emprendedor-Fotos', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor API corriendo en http://localhost:${PORT}`);
+    // Abre Chrome de una vez para que el primer formulario de subsidio no tarde de más
+    prepararNavegador();
 });

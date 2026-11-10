@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitud de Inicio de Microemprendimiento</title>
+    <style><%- include('inicio.css') %></style>
+</head>
+<body>
+<%# Hoja 1 del Formulario de Inicio (hoja oficio, como la nota oficial) y una hoja por cada adjunto con el logo y el título:
+    el controlador dibuja la imagen (o la página del PDF) debajo con pdf-lib %>
+<% const cantidadAdjuntos = locals.paginasAdjuntos || 0; %>
+<section class="hoja">
+    <img class="logo" src="<%= logo %>" alt="Ministerio de Desarrollo Social">
+
+    <p class="fecha"><%= fecha %></p>
+
+    <p class="destinatario">
+        Al Sr.<br>
+        Ministro de Desarrollo Social, Promoción Humana<br>
+        y Relaciones Institucionales con la Comunidad.<br>
+        Dr. Ángel Hugo Niccolai<br>
+        S<span class="raya"></span>/<span class="raya"></span>D
+    </p>
+
+    <p class="parrafo sangria">
+        Nos dirigimos a Ud. en carácter de iniciadores de la solicitud de Microemprendimiento Productivo, que permite la
+        adquisición de <strong>MAQUINARIAS, HERRAMIENTAS DE TRABAJO Y MATERIA PRIMA</strong>, es por ello que le solicitamos
+        ser beneficiarios del <strong>Plan Provincial Santiago Productivo</strong>, el mismo es en virtud de poder generar
+        puestos de trabajo y mejorar la calidad de vida.
+    </p>
+
+    <p class="titulo-campos">COMPLETE TODOS LOS CAMPOS SOLICITADOS</p>
+
+    <p class="subtitulo">Datos del solicitante</p>
+    <div class="campo"><span>(Nombre y apellido)</span><span class="relleno"><%= datos.nombreApellido %></span></div>
+    <div class="campo"><span>(DNI)</span><span class="relleno"><%= datos.dniCuit %></span></div>
+    <div class="campo"><span>Domicilio</span><span class="relleno"><%= datos.domicilio %></span></div>
+    <div class="campo-doble">
+        <div class="campo"><span>Localidad</span><span class="relleno"><%= datos.localidad %></span></div>
+        <div class="campo"><span>Dpto.</span><span class="relleno"><%= datos.departamentoPersona %></span></div>
+    </div>
+    <div class="campo-doble">
+        <div class="campo angosto"><span>Tel.</span><span class="relleno"><%= datos.telefono %></span></div>
+        <div class="campo"><span>Correo</span><span class="relleno"><%= datos.correo %></span></div>
+    </div>
+
+    <p class="subtitulo">Datos del emprendimiento</p>
+    <div class="campo"><span>Nombre del emprendimiento</span><span class="relleno"><%= datos.nombreEmprendimiento %></span></div>
+    <div class="campo-doble">
+        <div class="campo"><span>Domicilio del emprendimiento: Calle</span><span class="relleno"><%= datos.calleEmprendimiento %></span></div>
+        <div class="campo angosto"><span>Nº</span><span class="relleno"><%= datos.numeroEmprendimiento %></span></div>
+    </div>
+    <div class="campo"><span>Barrio</span><span class="relleno"><%= datos.barrio %></span></div>
+    <div class="campo-doble">
+        <div class="campo"><span>Localidad</span><span class="relleno"><%= datos.localidadEmprendimiento %></span></div>
+        <div class="campo"><span>Dpto.</span><span class="relleno"><%= datos.departamento %></span></div>
+    </div>
+    <div class="campo"><span>Actividad principal</span><span class="relleno"><%= datos.actividadPrincipal %></span></div>
+    <p class="en-marcha">
+        ¿El emprendimiento está en marcha actualmente?
+        <span class="opcion">SI <span class="casilla"><%= datos.enMarcha === 'Sí' ? 'X' : '' %></span></span>
+        <span class="opcion">NO <span class="casilla"><%= datos.enMarcha === 'No' ? 'X' : '' %></span></span>
+        (Indicar lo que corresponda)
+    </p>
+
+    <p class="parrafo">
+        Elevamos al Sr. Ministro esta solicitud con el propósito de dar impulso económico a la actividad productiva de
+        microemprendimiento en el rubro de <span class="relleno"><%= datos.rubro %></span>, mediante un
+        <strong>(Subsidio o Crédito)</strong> <span class="relleno"><%= { Subsidio: 'Subsidio', Credito: 'Crédito' }[datos.tipoFinanciamiento] || '' %></span>
+        en el marco del Plan Provincial Santiago Productivo, para tal fin necesitamos comprar lo siguiente:
+    </p>
+    <ol class="bienes">
+        <% [datos.bien1, datos.bien2, datos.bien3].forEach((bien) => { %>
+        <li><span class="relleno"><%= bien || '' %></span></li>
+        <% }) %>
+    </ol>
+
+    <p class="saludo">Sin otro motivo, y esperando una respuesta a lo solicitado, lo saludamos atentamente.</p>
+
+    <%# Firma dibujada o, si no tiene firma, su nombre completo escrito (igual que en subsidio y crédito) %>
+    <div class="firmas">
+        <div>
+            <span class="valor-firma">
+                <% if (datos.firma.tipo === 'dibujo') { %><img class="firma-imagen" src="<%= datos.firma.imagen %>" alt="Firma"><% } else { %><span class="firma-texto"><%= datos.firma.texto %></span><% } %>
+            </span>
+            <span>FIRMA</span>
+        </div>
+        <div><span class="valor-firma relleno"><%= datos.aclaracionProyecto %></span><span>ACLARACIÓN</span></div>
+        <div><span class="valor-firma relleno"><%= datos.dniProyecto %></span><span>DNI Nº</span></div>
+    </div>
+
+    <div class="nota-importante">
+        <p class="nota-destacada">NOTA IMPORTANTE: ADJUNTAR FOTOCOPIAS DE DNI AUTENTICADAS POR POLICIA, CERTIFICADOS DE RESIDENCIA
+            ADJUNTAR FOTOGRAFIAS DEL EMPRENDIMIENTO. SI TUVIESE CAPACITACION SOBRE EL RUBRO A INICIAR, DEBE PRESENTAR UNA
+            FOTOCOPIA AUTENTICADA POR POLICIA DE LA MISMA.</p>
+        <p>LA PRESENTACION DE LA NOTA Y LA DOCUMENTACION NO IMPLICA LA ACEPTACION DE LA MISMA, SINO QUE QUEDA SUJETA A
+            VERIFICACION TECNICA Y SOCIAL PARA ANALIZAR LA VIABILIDAD DEL PROYECTO. TODO LO INFORMADO POR ESTE MEDIO REVISTE
+            EL CARÁCTER DE DECLARACION JURADA DE MODO QUE NO FALSEE NI OMITA LA INFORMACION.</p>
+    </div>
+</section>
+
+<% for (let numero = 1; numero <= cantidadAdjuntos; numero++) { %>
+<section class="hoja-adjunto">
+    <img class="logo" src="<%= logo %>" alt="Ministerio de Desarrollo Social">
+    <p class="titulo-adjunto">Imágenes del emprendimiento<%= cantidadAdjuntos > 1 ? ` (${numero} de ${cantidadAdjuntos})` : '' %></p>
+</section>
+<% } %>
+<script>
+    // Con textos muy largos (domicilio, actividad, rubro...) la hoja se achica un poco hasta entrar en una sola página
+    // (se mide el alto natural del contenido, sin el alto mínimo de la hoja, y se deja un pequeño margen para la impresión)
+    const hoja = document.querySelector('.hoja');
+    const altoPagina = 14 * 96;
+    const altoNatural = () => {
+        const minimo = hoja.style.minHeight;
+        hoja.style.minHeight = '0';
+        const alto = hoja.getBoundingClientRect().height;
+        hoja.style.minHeight = minimo;
+        return alto;
+    };
+    for (let escala = 1; altoNatural() > altoPagina - 8 && escala > 0.6; ) {
+        escala -= 0.02;
+        hoja.style.zoom = escala;
+        hoja.style.width = `calc(8.5in / ${escala})`;
+        hoja.style.minHeight = `calc(14in / ${escala})`;
+    }
+</script>
+</body>
+</html>

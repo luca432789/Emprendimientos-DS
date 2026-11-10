@@ -1,6 +1,11 @@
 /* Página "Noticias" del menú (noticias del Ministerio; las cargan los usuarios con permiso de Noticiero)
    A la izquierda la noticia elegida y a la derecha la columna con todas, de a 5 por página. */
 
+/* Fondo de toda la página (el contenido va centrado): sin franjas blancas a los costados */
+body {
+  background: #eeeae3;
+}
+
 .noticias {
   max-width: 1150px;
   margin: 0 auto;
@@ -248,6 +253,19 @@
   border: 1px solid #e0d3c0;
 }
 
+/* Cada imagen elegida con su botón "Quitar" debajo */
+.imagen-elegida {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.selector-imagen:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .acciones-formulario {
   display: flex;
   justify-content: flex-end;
@@ -297,6 +315,17 @@
   max-height: 460px;
   object-fit: cover;
   background: #eef2f7;
+}
+
+/* Dos imágenes: una al lado de la otra, con la misma altura */
+.noticia-imagenes.dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.noticia-imagenes.dos .noticia-imagen {
+  height: 300px;
 }
 
 .noticia-cuerpo {
@@ -364,6 +393,17 @@
 
 .btn-noticia.editar {
   border-color: #2f4e78;
+}
+
+/* Eliminar va al final y en rojo: es la única acción que no se puede deshacer */
+.btn-noticia.eliminar {
+  margin-left: auto;
+  border-color: #e3b9b9;
+  color: #a65454;
+}
+
+.btn-noticia.eliminar:hover {
+  background: #fbeeee;
 }
 
 /* ---------- Columna de la derecha ---------- */
@@ -489,5 +529,9 @@
 
   .vista-previa-imagen img {
     max-width: 100%;
+  }
+
+  .noticia-imagenes.dos .noticia-imagen {
+    height: 170px;
   }
 }

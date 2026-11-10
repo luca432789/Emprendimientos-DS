@@ -1,0 +1,13 @@
+<%# Cuadro de bienes solicitados (activo fijo en la hoja 2, bienes de uso en la hoja 3) %>
+<table class="tabla tabla-solicitados">
+    <colgroup><col style="width: 40%"><col style="width: 17%"><col style="width: 21.5%"><col style="width: 21.5%"></colgroup>
+    <tr><th>Bienes</th><th>Cantidad</th><th>Precio Unitario</th><th>Subtotal</th></tr>
+    <% filas.forEach((fila) => { %>
+    <tr>
+        <td><%= fila.bien %></td>
+        <td class="numero"><%= fila.cantidad || '' %></td>
+        <td class="numero"><%= moneda(fila.precioUnitario) %></td>
+        <td class="numero"><%= moneda(fila.subtotal) %></td>
+    </tr>
+    <% }) %>
+</table>

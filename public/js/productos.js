@@ -15,7 +15,7 @@ document.addEventListener('perfil-listo', ({ detail: Perfil }) => {
     if (!Perfil.datos.productosDisponibles) {
         if (tarjetaFormulario) tarjetaFormulario.style.display = 'none';
         document.getElementById('productos-grid').innerHTML = Perfil.esDueno
-            ? '<p class="sin-datos">La sección de productos todavía no está habilitada en la base de datos (falta ejecutar <code>database/Productos.sql</code>).</p>'
+            ? '<p class="sin-datos">La sección de productos todavía no está habilitada en la base de datos (hay que actualizar la base de datos).</p>'
             : '<p class="sin-datos">Este emprendimiento todavía no cargó productos.</p>';
         return;
     }
@@ -26,7 +26,22 @@ document.addEventListener('perfil-listo', ({ detail: Perfil }) => {
         actualizarCupoProductos(Perfil, formulario);
     }
     pintarProductos(Perfil);
+    if (Perfil.esDueno) irAlFormularioProducto();
 });
+
+// "+" > "Añadir Productos" (/Emprendedor-Productos#nuevo-producto): baja hasta el formulario (o al aviso del cupo)
+function irAlFormularioProducto() {
+    if (window.location.hash !== '#nuevo-producto') return;
+    const formulario = document.getElementById('form-producto');
+    const destino = formulario && formulario.style.display !== 'none'
+        ? formulario.closest('section') || formulario
+        : document.getElementById('aviso-cupo-productos');
+    if (!destino) return;
+    destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (formulario && formulario.style.display !== 'none') formulario.querySelector('input, textarea')?.focus({ preventScroll: true });
+}
+// Ya estando en Productos, el "+" solo cambia el #
+window.addEventListener('hashchange', irAlFormularioProducto);
 
 // Cuántos productos le quedan; si no le quedan, el formulario se reemplaza por un aviso
 function actualizarCupoProductos(Perfil, formulario) {
@@ -64,17 +79,16 @@ function prepararFormularioProducto(Perfil, formulario) {
     formulario.querySelector('.acciones-publicacion').before(vistaPrevia);
     inputFoto.addEventListener('change', () => {
         vistaPrevia.innerHTML = inputFoto.files[0] ? `<img src="${URL.createObjectURL(inputFoto.files[0])}" alt="Vista previa">` : '';
+        if (typeof adelantarFotos === 'function') adelantarFotos(inputFoto); // se achica mientras completa el resto
     });
 
     formulario.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const errorFoto = Perfil.validarImagenes(inputFoto.files, 1);
-        if (errorFoto) return Perfil.aviso('warning', 'Revisá la imagen', errorFoto);
-
         const boton = formulario.querySelector('button[type="submit"]');
         boton.disabled = true;
         try {
-            const [foto] = await Perfil.leerArchivos(inputFoto.files);
+            const { error: errorFoto, fotos: [foto] = [] } = await Perfil.prepararImagenes(inputFoto.files, 1);
+            if (errorFoto) return Perfil.aviso('warning', 'Revisá la imagen', errorFoto);
             const { ok, datos } = await Perfil.api('POST', '/api/productos', {
                 nombre: formulario.querySelector('#prod-nombre').value,
                 precio: precio.value,
@@ -162,9 +176,8 @@ async function editarProducto(Perfil, producto) {
             const nombre = document.getElementById('edit-prod-nombre').value.trim();
             const archivos = document.getElementById('edit-prod-foto').files;
             if (!nombre) return Swal.showValidationMessage('Escribí el nombre del producto.');
-            const errorFoto = Perfil.validarImagenes(archivos, 1);
+            const { error: errorFoto, fotos: [foto] = [] } = await Perfil.prepararImagenes(archivos, 1);
             if (errorFoto) return Swal.showValidationMessage(errorFoto);
-            const [foto] = await Perfil.leerArchivos(archivos);
             return {
                 nombre,
                 precio: document.getElementById('edit-prod-precio').value,

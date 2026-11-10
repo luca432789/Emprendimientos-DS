@@ -54,13 +54,18 @@ const Perfil = {
         })));
     },
 
-    // Valida imágenes antes de enviarlas (el servidor vuelve a validar)
-    validarImagenes(archivos, maximo) {
+    // Prepara las imágenes para enviarlas (el servidor vuelve a validar): primero las achica (achicar-fotos.js),
+    // así una foto de celular o una captura de varios MB entra en el límite de 2 MB.
+    // Devuelve { error } o { fotos: [dataURL, ...] }
+    async prepararImagenes(archivos, maximo) {
         const lista = [...archivos];
-        if (lista.length > maximo) return `Puede elegir hasta ${maximo} ${maximo === 1 ? 'imagen' : 'imágenes'}.`;
-        if (lista.some((a) => !['image/jpeg', 'image/png', 'image/webp'].includes(a.type))) return 'Solo se permiten imágenes JPG, PNG o WEBP.';
-        if (lista.some((a) => a.size > 2 * 1024 * 1024)) return 'Cada imagen debe pesar como máximo 2 MB.';
-        return null;
+        if (lista.length > maximo) return { error: `Puede elegir hasta ${maximo} ${maximo === 1 ? 'imagen' : 'imágenes'}.` };
+        if (lista.some((a) => !['image/jpeg', 'image/png', 'image/webp'].includes(a.type))) return { error: 'Solo se permiten imágenes JPG, PNG o WEBP.' };
+        const listas = await Promise.all(lista.map((a) => (typeof fotoAchicada === 'function' ? fotoAchicada(a) : a)));
+        if (listas.some((a) => a.size > 2 * 1024 * 1024)) {
+            return { error: 'Una de las imágenes sigue pesando más de 2 MB después de achicarla. Pruebe con otra imagen.' };
+        }
+        return { fotos: await Perfil.leerArchivos(listas) };
     },
 
     // fetch a la API con el token; devuelve { ok, status, datos }

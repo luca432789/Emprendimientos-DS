@@ -40,7 +40,7 @@ header p {
 
 .dashboard-container {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 280px minmax(0, 1fr); /* minmax(0, ...): una tabla ancha no estira la página */
     min-height: calc(100vh - 250px);
     background-color: #f4f6f9;
 }
@@ -116,7 +116,14 @@ header p {
 
 /* Espacio Central */
 .main-content {
+    min-width: 0;
     padding: 15px;
+}
+
+/* Si una tabla tiene más columnas de las que entran, se desliza dentro de su recuadro */
+#zona-render-contenido {
+    max-width: 100%;
+    overflow-x: auto;
 }
 
 .content-header {
@@ -355,4 +362,274 @@ footer {
         padding: 10px 8px;
         white-space: nowrap;
     }
+}
+
+/* ======================================================================
+   ESTADÍSTICAS (solo Administrador)
+   ====================================================================== */
+.estadisticas {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Botones para elegir la estadística, agrupados */
+.est-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+}
+
+.est-grupo-titulo {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.est-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.est-boton {
+    background: white;
+    color: #2c3e50;
+    border: 1px solid #cbd5e1;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.est-boton:hover {
+    border-color: #2f4e78;
+}
+
+.est-boton.activo {
+    background: #2f4e78;
+    border-color: #2f4e78;
+    color: white;
+}
+
+/* Año y tipo de ayuda */
+.est-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    padding: 12px 14px;
+    background: #f8fafb;
+    border: 1px solid #d9e2e7;
+    border-radius: 6px;
+}
+
+.est-filtros label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    color: #334155;
+}
+
+.est-filtros select {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: white;
+    font-size: 14px;
+}
+
+.est-ayuda {
+    display: inline-flex;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.est-ayuda[hidden] {
+    display: none;
+}
+
+.est-segmento {
+    background: white;
+    border: none;
+    border-right: 1px solid #cbd5e1;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #334155;
+}
+
+.est-segmento:last-child {
+    border-right: none;
+}
+
+.est-segmento.activo {
+    background: #34495e;
+    color: white;
+}
+
+/* Totales del año */
+.est-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.est-tarjeta {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.est-tarjeta-total {
+    border-left: 4px solid #2f4e78;
+}
+
+.est-tarjeta-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.est-tarjeta-valor {
+    display: block;
+    font-size: 32px;
+    line-height: 1.2;
+    color: #1e293b;
+    margin-top: 4px;
+}
+
+.est-muestra {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* Gráfico y tabla */
+.est-panel {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.est-panel-titulo {
+    font-size: 15px;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.est-grafico {
+    position: relative;
+    height: 300px;
+}
+
+.est-tabla-contenedor {
+    overflow-x: auto;
+}
+
+.est-tabla {
+    box-shadow: none;
+}
+
+.est-tabla .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.est-tabla tfoot td {
+    font-weight: bold;
+    background: #f1f5f9;
+    border-top: 2px solid #cbd8e6;
+}
+
+.est-cargando,
+.est-vacio {
+    color: #64748b;
+    text-align: center;
+    padding: 20px;
+}
+
+.est-error {
+    color: #b91c1c;
+    text-align: center;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .est-tarjetas {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+
+    .est-tarjeta {
+        padding: 10px 12px;
+    }
+
+    .est-tarjeta-valor {
+        font-size: 26px;
+    }
+
+    .est-grafico {
+        height: 240px;
+    }
+}
+
+/* ======================================================================
+   ADMINISTRACIÓN DE EMPRENDIMIENTOS
+   ====================================================================== */
+.emp-sub { display: block; color: #64748b; font-size: 0.82rem; margin-top: 2px; }
+.emp-vencido { color: #b42318; font-weight: bold; }
+.emp-etiqueta { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: bold; white-space: nowrap; vertical-align: middle; }
+.emp-gris { background: #eef2f6; color: #64748b; }
+.emp-amarillo { background: #fff4d6; color: #8a5a00; }
+.emp-naranja { background: #ffe8d9; color: #b54708; }
+.emp-azul { background: #e0ecff; color: #1d4f91; }
+.emp-verde { background: #dcfce7; color: #166534; }
+.emp-admin-numero-pagina, .rub-numero-pagina { border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; padding: 2px 8px; cursor: pointer; font: inherit; }
+a.btn-acciones-tabla { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: inherit; }
+a.btn-filtro { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+
+.emp-detalle-cabecera { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.emp-detalle-titulo { color: #1a3a5f; margin: 6px 0 16px; }
+.emp-detalle-titulo small { color: #64748b; font-weight: normal; font-size: 0.85rem; margin-left: 6px; }
+.emp-tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.emp-tarjeta { background: #fff; border: 1px solid #d9e2e7; border-radius: 6px; padding: 16px; }
+.emp-tarjeta-ancha { grid-column: 1 / -1; }
+.emp-tarjeta h4 { margin: 0 0 12px; color: #1a3a5f; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.emp-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 16px; margin-bottom: 12px; }
+.emp-dato span { display: block; color: #64748b; font-size: 0.8rem; }
+.emp-dato strong { font-weight: 600; color: #1f2933; word-break: break-word; }
+.emp-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.emp-boton-verde { background-color: #27ae60 !important; }
+.emp-boton-naranja { background-color: #d35400 !important; }
+.emp-boton-rojo { background-color: #c0392b !important; }
+.emp-aviso { border-left: 4px solid; padding: 10px 12px; border-radius: 4px; margin-bottom: 12px; }
+.emp-aviso.azul { background: #eef5ff; border-color: #2f4e78; }
+.emp-aviso.verde { background: #effaf3; border-color: #27ae60; }
+.emp-aviso.naranja { background: #fff4e5; border-color: #d35400; }
+.emp-aviso.rojo { background: #fdecec; border-color: #c0392b; }
+.emp-facturas-lista { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.emp-facturas-lista li { border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; font-size: 0.85rem; }
+.emp-facturas-lista img { width: 100%; height: 110px; object-fit: contain; background: #f1f5f9; border-radius: 4px; cursor: zoom-in; }
+.emp-facturas-lista a { word-break: break-all; color: #1a3a5f; }
+.emp-facturas-lista small { color: #64748b; }
+.emp-icono-pdf { font-size: 3.2rem; color: #c0392b; height: 110px; display: flex; align-items: center; }
+@media (max-width: 768px) {
+    .emp-detalle-cabecera { flex-direction: column; }
+    .emp-admin-tabla td, .emp-admin-tabla th { font-size: 0.85rem; }
 }

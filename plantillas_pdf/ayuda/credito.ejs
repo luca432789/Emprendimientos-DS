@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulario de Créditos Reintegrables</title>
+    <style><%- include('formulario.css') %></style>
+</head>
+<body>
+<%
+// Hojas 1 a 6 del crédito (las mismas del subsidio, con sus diferencias según esCredito).
+// La hoja 7 (datos del garante) se arma aparte con garante.ejs: va después de los presupuestos, junto a los
+// documentos del garante, y también forma sola el PDF del garante.
+['portada', 'bienes', 'costos', 'acta', 'notificacion', 'declaracion'].forEach((nombreHoja, indice) => { %>
+    <%- include('hoja.ejs', { numero: indice + 1, contenido: include(`hojas/${nombreHoja}.ejs`) }) %>
+<% }) %>
+</body>
+</html>

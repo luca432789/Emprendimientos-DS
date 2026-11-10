@@ -32,6 +32,10 @@ header p {
 /* FIN DE PARTE DE ARRIBA */
 
 /* INICIO DE PARTE PRINCIPAL */
+main {
+  background: #eeeae3; /* mismo tono en que termina el degradado: sin franja blanca antes del footer */
+}
+
 
 /* SECCION CONTACTO */
 .contacto {

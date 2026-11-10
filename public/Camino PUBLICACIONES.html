@@ -12,7 +12,9 @@
     <link rel="stylesheet" href="/CSS/publicaciones-publicas.css">
     <link rel="stylesheet" href="/CSS/paginador.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    
+    <!-- token para barra de nav-->
+    <script src="/js/jwt-decode.js"></script> <!-- lee el token de sesión para la barra de navegación -->
     <script src="/js/navbar.js" defer></script>
     <script src="/js/ampliar-imagen.js" defer></script> <!-- clic en una imagen = verla ampliada -->
     <script src="/js/paginador.js" defer></script>
@@ -43,7 +45,9 @@
 
     <main class="publicaciones-publicas">
         <h2>Publicaciones</h2>
-        <p class="bajada">Novedades de los emprendimientos del Plan Provincial Santiago Productivo, revisadas por el Ministerio.</p>
+        <p class="bajada">
+            Novedades de los emprendimientos del Plan Provincial Santiago Productivo, revisadas por el Ministerio.
+        </p>
 
         <form id="filtros-publicaciones" class="filtros-publicaciones" role="search">
             <label>
@@ -58,14 +62,28 @@
             </label>
         </form>
 
-        <p id="contador-publicaciones" class="contador" role="status" aria-live="polite"></p>
+        <div class="publicaciones-layout">
+            <div class="publicaciones-columna-principal">
+                <p id="contador-publicaciones" class="contador" role="status" aria-live="polite"></p>
 
-        <section id="lista-publicaciones" class="lista-publicaciones">
-            <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando publicaciones...</p>
-        </section>
+                <section id="lista-publicaciones" class="lista-publicaciones">
+                    <p class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando publicaciones...</p>
+                </section>
 
-        <!-- Flechas y número de página: de a 10 publicaciones, solo al final de la lista -->
-        <div id="paginador-publicaciones" hidden></div>
+                <!-- Flechas y número de página: de a 10 publicaciones, solo al final de la lista -->
+                <div id="paginador-publicaciones" hidden></div>
+            </div>
+
+            <!-- Todos los emprendimientos (tengan o no publicaciones), con el mismo filtro, de a 8 por página -->
+            <aside class="emprendimientos-columna" aria-labelledby="titulo-columna-emprendimientos">
+                <h3 id="titulo-columna-emprendimientos"><i class="fa-solid fa-store"></i> Emprendimientos</h3>
+                <p id="contador-emprendimientos" class="contador-columna" role="status" aria-live="polite"></p>
+                <ul id="lista-emprendimientos" class="lista-emprendimientos">
+                    <li class="sin-datos"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</li>
+                </ul>
+                <div id="paginador-emprendimientos" class="compacto" hidden></div>
+            </aside>
+        </div>
     </main>
 
     <!--FOOTER-->
@@ -79,12 +97,12 @@
                 <h3>Ministerios</h3>
                 <div class="columnas">
                     <ul>
+                        <li><a href="https://mindes-sde.infinityfree.me/">Ministerio de Desarrollo Social</a></li>
                         <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
                         <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
-                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
                     </ul>
                     <ul>
-                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
                         <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
                         <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
                     </ul>
@@ -93,9 +111,10 @@
         </div>
 
         <div class="footer-bottom">
-            © 2026 Desarrollado por [nombre aquí]
+            © 2026 Desarrollado por alumnos del ITSE
         </div>
     </footer>
 
 </body>
+
 </html>

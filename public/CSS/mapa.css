@@ -1,7 +1,12 @@
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #f5ece1 !important;
+    background-color: #eeeae3 !important; /* mismo fondo que la página de Noticias */
+}
+
+/* index CSS.css le da a main un gris (el de Inicio): en el mapa va el mismo fondo que Noticias */
+main {
+    background-color: #eeeae3;
 }
 
 /* MAPA PRINCIPAL */

@@ -7,12 +7,15 @@ node_modules/
 .vscode/
 tmp/
 *.log
-# Fotos que suben los emprendedores (contenido, no codigo)
+# Fotos que suben los emprendedores
 uploads/publicaciones/
 uploads/productos/
 uploads/NoticiasImagen/
-# PDFs de pedidos de subsidio y credito que generan los formularios (contenido, no codigo)
+uploads/facturas/
+# Iconos del mapa que suben los empleados en Administración de Rubros (los iniciales, como Bombo.png, sí van al repositorio)
+uploads/IconoMapa/rubro-*
+# PDFs de pedidos de subsidio y credito que generan los formularios
 uploads/subsidios/
 uploads/creditos/
+uploads/garantes/
 uploads/solicitudesinicio/
-database/Usuario Conexion.sql

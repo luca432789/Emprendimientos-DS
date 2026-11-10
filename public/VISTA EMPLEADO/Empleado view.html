@@ -10,20 +10,23 @@
     <link rel="stylesheet" href="/VISTA EMPLEADO/view empleado css/panel-empleado.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script>
+    <script src="/js/jwt-decode.js"></script> <!-- lee el token de sesión para la barra de navegación -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script src="/js/navbar.js" defer></script>
     <script src="/js/ampliar-imagen.js" defer></script> <!-- clic en una imagen = verla ampliada -->
     <script src="/VISTA EMPLEADO/view empleado js/panel-controlador.js" defer></script>
     <script src="/VISTA EMPLEADO/view empleado js/registro-empleado.js" defer></script>
-    <script src="/VISTA EMPLEADO/view empleado js/etiquetas-panel.js" defer></script>
     <script src="/VISTA EMPLEADO/view empleado js/administracion-panel.js" defer></script>
     <script src="/VISTA EMPLEADO/view empleado js/usuarios-panel.js" defer></script>
     <script src="/VISTA EMPLEADO/view empleado js/solicitudinicio-panel.js" defer></script>
     <script src="/VISTA EMPLEADO/view empleado js/registro-emprendimiento.js" defer></script>
     <script src="/VISTA EMPLEADO/view empleado js/publicaciones-panel.js" defer></script>
     <script src="/VISTA EMPLEADO/view empleado js/ayudas-panel.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/emprendimientos-panel.js" defer></script>
+    <script src="/VISTA EMPLEADO/view empleado js/rubros-panel.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script> <!-- gráficos de Estadísticas -->
+    <script src="/VISTA EMPLEADO/view empleado js/estadisticas-panel.js" defer></script>
 </head>
 <body>
 
@@ -90,20 +93,20 @@
                 <h3>Ministerios</h3>
                 <div class="columnas">
                     <ul>
+                        <li><a href="https://mindes-sde.infinityfree.me/">Ministerio de Desarrollo Social</a></li>
                         <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
                         <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
-                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
                     </ul>
                     <ul>
-                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li>
-                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la...</a></li>
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
+                        <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
                         <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
                     </ul>
                 </div>
             </div>
         </div>
         <div class="footer-bottom">
-            © 2026 Desarrollado por el Equipo de Desarrollo
+            © 2026 Desarrollado por alumnos del ITSE
         </div>
     </footer>
 </body>

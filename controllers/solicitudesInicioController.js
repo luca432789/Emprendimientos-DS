@@ -8,13 +8,183 @@ import {
     ModelRegistrarResolucionMinistro,
     ModelObtenerDepartamentosSinRevisar,
     ModelObtenerRubros,
-    ModelRegistrarEmprendimientoHistorico
+    ModelRegistrarEmprendimientoHistorico,
+    ModelDatosCorreoSolicitud,
+    ModelRechazarPorFaltaFormulario
 } from '../models/solicitudesInicioModel.js';
 import fs from 'fs/promises';
 import { guardarPdfEnUploads } from '../helpers/archivosPdf.js';
 import { obtenerIpCliente } from '../helpers/ipCliente.js';
 import { enviarCorreoActivacion, textoResultadoCorreo } from './cuentaController.js';
 import { departamentosSantiago, coordenadasEnSantiago, mensajeFueraDeSantiago } from '../helpers/departamentos.js';
+import {
+    enviarCorreo, escaparHtml, urlDelSitio, plantillaCorreo, cuadroTexto, avisoNuevaSolicitud, avisoNuevaSolicitudHtml, intentarCorreo, textoResultadoIntento
+} from '../helpers/correo.js';
+
+// ---------- Correos de la decisión del Área ----------
+const ASUNTO_INICIO_APROBADO = 'Solicitud de Inicio de Emprendimiento - Aprobado';
+const ASUNTO_INICIO_RECHAZO = 'Solicitud de Inicio de Emprendimiento - Rechazo';
+const ASUNTO_RECHAZO_INACTIVIDAD = 'Solicitud de Inicio de Emprendimiento - Rechazo por inactividad';
+const ASUNTO_ENVIO_MINISTRO = 'Solicitud de Emprendimiento - Última etapa de revisión';
+const MENSAJE_RECHAZO_MINISTRO = 'Emprendimiento Rechazado por ministro';
+
+// Día del rechazo, desde el que se cuentan los días para presentar una nueva solicitud
+const fechaDelRechazo = (datos) => datos.FechaResolucionFinal || datos.FechaFinRev || new Date();
+
+// Aprobada: el emprendedor sigue con el formulario de la ayuda que eligió (subsidio o crédito)
+const enviarCorreoInicioAprobado = (req, datos) => {
+    const esSubsidio = datos.EleccionAyuda === 'Subsidio';
+    const formulario = esSubsidio ? 'Formulario de Subsidio' : 'Formulario de Crédito';
+    const enlace = `${urlDelSitio(req)}/${esSubsidio ? 'formulario-Subsidio' : 'formulario-Credito'}`
+        + `?expediente=${encodeURIComponent(datos.NroExpediente || '')}`;
+    const recomendacion = 'Antes de completarlo, le recomendamos pedir presupuestos de los bienes que necesita para su proyecto '
+        + '(maquinarias, herramientas, materia prima e insumos), ya que deberá cargarlos en el formulario y adjuntarlos.'
+        // El crédito lleva la firma y la documentación del garante
+        + (esSubsidio ? '' : ' Complételo junto a su garante: se necesita la firma de ambos y la documentación del garante '
+            + '(fotocopia de DNI autenticada, constancia de CUIL, certificado de residencia, boleta de impuesto y su último recibo de sueldo).');
+    const ingreso = 'Para ingresar use su Nº de expediente, su correo electrónico y su DNI, los mismos de su solicitud de inicio.';
+    return enviarCorreo({
+        para: datos.Correo,
+        asunto: ASUNTO_INICIO_APROBADO,
+        texto: [
+            `Hola ${datos.Solicitante}:`,
+            '',
+            `Le informamos que la Solicitud de Inicio de su emprendimiento "${datos.Emprendimiento}" fue aprobada por el Área de Economía Social.`,
+            `El siguiente paso es completar y enviar el ${formulario}.`,
+            recomendacion,
+            '',
+            `Nº de expediente: ${datos.NroExpediente}`,
+            `${formulario}: ${enlace}`,
+            ingreso
+        ].filter((linea, i, lineas) => linea !== '' || lineas[i - 1] !== '').join('\n'),
+        html: plantillaCorreo('¡Su Solicitud de Inicio fue aprobada!', `
+            <p>Hola ${escaparHtml(datos.Solicitante)}:</p>
+            <p>Le informamos que la Solicitud de Inicio de su emprendimiento <strong>"${escaparHtml(datos.Emprendimiento)}"</strong>
+               fue aprobada por el Área de Economía Social. El siguiente paso es completar y enviar el <strong>${formulario}</strong>.</p>
+            <p>${escaparHtml(recomendacion)}</p>
+            <p>Nº de expediente: <strong>${escaparHtml(datos.NroExpediente)}</strong></p>
+            <p style="text-align:center; margin:28px 0;">
+                <a href="${escaparHtml(enlace)}" style="background:#2f4e78; color:#fff; padding:12px 26px; border-radius:30px; text-decoration:none; font-weight:bold;">Completar ${formulario}</a>
+            </p>
+            <p style="font-size:13px; color:#555;">${escaparHtml(ingreso)} Si el botón no funciona, copie esta dirección en el navegador:<br>
+               <span style="word-break:break-all;">${escaparHtml(enlace)}</span></p>`)
+    });
+};
+
+const enviarCorreoInicioRechazo = (datos) => enviarCorreo({
+    para: datos.Correo,
+    asunto: ASUNTO_INICIO_RECHAZO,
+    texto: [
+        `Hola ${datos.Solicitante}:`,
+        '',
+        `Le informamos que la Solicitud de Inicio de su emprendimiento "${datos.Emprendimiento}" fue rechazada por el siguiente motivo:`,
+        '',
+        datos.MotivoRechazo,
+        '',
+        `Nº de expediente: ${datos.NroExpediente}`,
+        '',
+        avisoNuevaSolicitud(fechaDelRechazo(datos))
+    ].join('\n'),
+    html: plantillaCorreo('Solicitud de Inicio rechazada', `
+        <p>Hola ${escaparHtml(datos.Solicitante)}:</p>
+        <p>Le informamos que la Solicitud de Inicio de su emprendimiento <strong>"${escaparHtml(datos.Emprendimiento)}"</strong>
+           fue rechazada por el siguiente motivo:</p>
+        ${cuadroTexto(datos.MotivoRechazo)}
+        <p>Nº de expediente: <strong>${escaparHtml(datos.NroExpediente)}</strong></p>
+        ${avisoNuevaSolicitudHtml(fechaDelRechazo(datos))}`)
+});
+
+// El emprendedor nunca envió el formulario de subsidio / crédito: el texto lo escribió el empleado
+const enviarCorreoRechazoFaltaFormulario = (datos) => enviarCorreo({
+    para: datos.Correo,
+    asunto: ASUNTO_RECHAZO_INACTIVIDAD,
+    texto: [
+        `Hola ${datos.Solicitante}:`,
+        '',
+        `Le informamos que la Solicitud de Inicio de su emprendimiento "${datos.Emprendimiento}" fue rechazada por inactividad:`,
+        '',
+        datos.MensajeResolucionFinal,
+        '',
+        `Nº de expediente: ${datos.NroExpediente}`,
+        '',
+        avisoNuevaSolicitud(fechaDelRechazo(datos))
+    ].join('\n'),
+    html: plantillaCorreo('Solicitud de Inicio rechazada por inactividad', `
+        <p>Hola ${escaparHtml(datos.Solicitante)}:</p>
+        <p>Le informamos que la Solicitud de Inicio de su emprendimiento <strong>"${escaparHtml(datos.Emprendimiento)}"</strong>
+           fue rechazada por inactividad:</p>
+        ${cuadroTexto(datos.MensajeResolucionFinal)}
+        <p>Nº de expediente: <strong>${escaparHtml(datos.NroExpediente)}</strong></p>
+        ${avisoNuevaSolicitudHtml(fechaDelRechazo(datos))}`)
+});
+
+// Rechazo del Ministro: el texto lo escribió el empleado al registrar la resolución
+const enviarCorreoRechazoMinistro = (datos) => enviarCorreo({
+    para: datos.Correo,
+    asunto: `Su emprendimiento "${datos.Emprendimiento}" fue rechazado`,
+    texto: [
+        `Hola ${datos.Solicitante}:`,
+        '',
+        datos.MotivoRechazo,
+        '',
+        `Nº de expediente: ${datos.NroExpediente}`,
+        '',
+        avisoNuevaSolicitud(fechaDelRechazo(datos))
+    ].join('\n'),
+    html: plantillaCorreo('Su emprendimiento fue rechazado', `
+        <p>Hola ${escaparHtml(datos.Solicitante)}:</p>
+        <p>Emprendimiento: <strong>"${escaparHtml(datos.Emprendimiento)}"</strong></p>
+        ${cuadroTexto(datos.MotivoRechazo)}
+        <p>Nº de expediente: <strong>${escaparHtml(datos.NroExpediente)}</strong></p>
+        ${avisoNuevaSolicitudHtml(fechaDelRechazo(datos))}`)
+});
+
+// Enviada al Ministro: el emprendedor queda avisado de que solo falta la decisión final
+const enviarCorreoEnvioMinistro = (datos) => {
+    const ayuda = datos.EleccionAyuda === 'Credito' ? 'Crédito' : 'Subsidio';
+    return enviarCorreo({
+        para: datos.Correo,
+        asunto: ASUNTO_ENVIO_MINISTRO,
+        texto: [
+            `Hola ${datos.Solicitante}:`,
+            '',
+            `Le informamos que la solicitud de su emprendimiento "${datos.Emprendimiento}" del PLAN PROVINCIAL SANTIAGO PRODUCTIVO `
+                + 'se encuentra en la última etapa de revisión para su decisión final.',
+            `El Área de Economía Social aprobó su Solicitud de Inicio y su Formulario de ${ayuda}, y el expediente fue enviado a su revisión final.`,
+            'Le avisaremos por este medio cuando se registre la resolución. No es necesario que realice ningún trámite mientras tanto.',
+            '',
+            `Nº de expediente: ${datos.NroExpediente}`
+        ].join('\n'),
+        html: plantillaCorreo('Su solicitud está en la última etapa de revisión', `
+            <p>Hola ${escaparHtml(datos.Solicitante)}:</p>
+            <p>Le informamos que la solicitud de su emprendimiento <strong>"${escaparHtml(datos.Emprendimiento)}"</strong> del
+               <strong>PLAN PROVINCIAL SANTIAGO PRODUCTIVO</strong> se encuentra en la <strong>última etapa de revisión</strong> para su decisión final.</p>
+            <p>El Área de Economía Social aprobó su Solicitud de Inicio y su Formulario de ${ayuda}, y el expediente fue enviado a su revisión final.</p>
+            <p>Le avisaremos por este medio cuando se registre la resolución. No es necesario que realice ningún trámite mientras tanto.</p>
+            <p>Nº de expediente: <strong>${escaparHtml(datos.NroExpediente)}</strong></p>`)
+    });
+};
+
+// Correo que corresponde al estado ya guardado de la solicitud (null si no corresponde ninguno).
+// La aprobación del Ministro tiene su propio correo (crear la contraseña), con su propio reenvío.
+const correoDeLaSolicitud = (req, datos) => {
+    if (!datos) return null;
+    if (datos.MensajeResolucionFinal === MENSAJE_RECHAZO_MINISTRO) return () => enviarCorreoRechazoMinistro(datos);
+    if (Number(datos.EnvioMinistro) === 2 && datos.MensajeResolucionFinal) return () => enviarCorreoRechazoFaltaFormulario(datos);
+    if (Number(datos.EnvioMinistro) === 1 && datos.AprobacionMinistro === null) return () => enviarCorreoEnvioMinistro(datos);
+    if (Number(datos.EstadoRevisionArea) !== 2 || datos.AprobacionArea === null) return null;
+    if (Number(datos.AprobacionArea) === 0) return () => enviarCorreoInicioRechazo(datos);
+    if (Number(datos.EnvioMinistro) === 0 && !datos.MensajeResolucionFinal) return () => enviarCorreoInicioAprobado(req, datos);
+    return null;
+};
+
+const FALTA_MIGRACION_RESOLUCION = 'La base de datos no está actualizada para la resolución final: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).';
+
+// Motivo escrito por el empleado: sin espacios de más, de 10 a 512 caracteres
+const motivoEmpleado = (valor) => {
+    const texto = typeof valor === 'string' ? valor.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim() : '';
+    return texto.length >= 10 && texto.length <= 512 ? texto : null;
+};
 
 const responderErrorEtapaMinistro = (res, error, mensajeGenerico) => {
     if (['REVIEWER_NOT_ACTIVE', 'REVIEWER_ROLE_INVALID', 'REVIEW_NOT_ASSIGNED'].includes(error.code)) {
@@ -27,13 +197,16 @@ const responderErrorEtapaMinistro = (res, error, mensajeGenerico) => {
         return res.status(400).json({ error: error.message });
     }
     if ([
-        'MINISTER_STAGE_INVALID', 'MINISTER_ALREADY_SENT', 'MINISTER_NOT_SENT', 'MINISTER_ALREADY_RESOLVED',
-        'REVIEW_DATA_NOT_FOUND', 'EMPRENDIMIENTO_DUPLICADO', 'EMPRENDEDOR_DUPLICADO', 'EXPEDIENTE_DUPLICADO'
+        'MINISTER_STAGE_INVALID', 'MINISTER_ALREADY_SENT', 'AYUDA_NOT_APPROVED', 'MINISTER_NOT_SENT', 'MINISTER_ALREADY_RESOLVED',
+        'REVIEW_DATA_NOT_FOUND', 'AYUDA_FORM_EXISTS', 'EMPRENDIMIENTO_DUPLICADO', 'EMPRENDEDOR_DUPLICADO', 'EXPEDIENTE_DUPLICADO'
     ].includes(error.code)) {
         return res.status(409).json({ error: error.message });
     }
     if (error.code === 'ER_DUP_ENTRY') {
         return res.status(409).json({ error: 'Ya existe un registro con esos datos (Nro de Proyecto, DNI o correo).' });
+    }
+    if (error.code === 'ER_BAD_FIELD_ERROR') {
+        return res.status(500).json({ error: FALTA_MIGRACION_RESOLUCION });
     }
 
     console.error(mensajeGenerico, error);
@@ -53,9 +226,42 @@ export const registrarEnvioMinistro = async (req, res) => {
 
     try {
         await ModelRegistrarEnvioMinistro(idSolicitud, idUsuario, obtenerIpCliente(req));
-        return res.status(200).json({ mensaje: 'Se registró el envío de la solicitud al Ministro.' });
+        // El envío ya quedó registrado aunque falle el correo (se puede reintentar desde el panel)
+        const datos = await ModelDatosCorreoSolicitud(idSolicitud);
+        const correo = await intentarCorreo(() => enviarCorreoEnvioMinistro(datos), datos.Correo);
+        return res.status(200).json({ mensaje: 'Se registró el envío de la solicitud al Ministro.' + textoResultadoIntento(correo), ...correo });
     } catch (error) {
         return responderErrorEtapaMinistro(res, error, 'No se pudo registrar el envío al Ministro.');
+    }
+};
+
+// PUT /api/solicitudes/:id/rechazo-falta-formulario -> el emprendedor nunca envió el formulario de subsidio / crédito
+export const rechazarPorFaltaFormulario = async (req, res) => {
+    const idUsuario = req.usuarioLogueado?.idUsuario;
+    if (!idUsuario) {
+        return res.status(401).json({ error: 'No se encontró el usuario autenticado.' });
+    }
+
+    const idSolicitud = Number(req.params.id);
+    if (!Number.isInteger(idSolicitud) || idSolicitud < 1) {
+        return res.status(400).json({ error: 'El identificador de solicitud no es válido.' });
+    }
+
+    const mensaje = motivoEmpleado(req.body.mensaje);
+    if (!mensaje) {
+        return res.status(400).json({ error: 'Escriba el mensaje del rechazo (de 10 a 512 caracteres): se le enviará al emprendedor.' });
+    }
+
+    try {
+        await ModelRechazarPorFaltaFormulario(idSolicitud, idUsuario, obtenerIpCliente(req), mensaje);
+        const datos = await ModelDatosCorreoSolicitud(idSolicitud);
+        const correo = await intentarCorreo(() => enviarCorreoRechazoFaltaFormulario(datos), datos.Correo);
+        return res.status(200).json({
+            mensaje: 'La solicitud fue rechazada por falta de formulario y quedó finalizada.' + textoResultadoIntento(correo),
+            ...correo
+        });
+    } catch (error) {
+        return responderErrorEtapaMinistro(res, error, 'No se pudo registrar el rechazo por falta de formulario.');
     }
 };
 
@@ -73,6 +279,12 @@ export const registrarResolucionMinistro = async (req, res) => {
     const aprobacionMinistro = req.body.aprobacionMinistro;
     if (aprobacionMinistro !== 0 && aprobacionMinistro !== 1) {
         return res.status(400).json({ error: 'Selecciona si el Ministro aprobó o rechazó la solicitud.' });
+    }
+
+    // Rechazo: el texto que escribió el empleado se le envía al emprendedor
+    const motivoRechazo = aprobacionMinistro === 0 ? motivoEmpleado(req.body.motivoRechazo) : null;
+    if (aprobacionMinistro === 0 && !motivoRechazo) {
+        return res.status(400).json({ error: 'Escriba el mensaje del rechazo (de 10 a 512 caracteres): se le enviará al emprendedor.' });
     }
 
     let nroProyecto = null;
@@ -95,10 +307,13 @@ export const registrarResolucionMinistro = async (req, res) => {
             aprobacionMinistro,
             obtenerIpCliente(req),
             nroProyecto,
-            idRubro
+            idRubro,
+            motivoRechazo
         );
         if (aprobacionMinistro !== 1) {
-            return res.status(200).json({ mensaje: 'Se registró el rechazo del Ministro.' });
+            const datos = await ModelDatosCorreoSolicitud(idSolicitud);
+            const correo = await intentarCorreo(() => enviarCorreoRechazoMinistro(datos), datos.Correo);
+            return res.status(200).json({ mensaje: 'Se registró el rechazo del Ministro.' + textoResultadoIntento(correo), ...correo });
         }
 
         // Aprobado: se le envía al emprendedor el correo con el enlace para crear su contraseña
@@ -153,6 +368,11 @@ export const resolverRevisionArea = async (req, res) => {
         return res.status(400).json({ error: 'Selecciona aprobar o rechazar la solicitud.' });
     }
 
+    const motivoRechazo = aprobacionArea === 0 ? motivoEmpleado(req.body.motivoRechazo) : null;
+    if (aprobacionArea === 0 && !motivoRechazo) {
+        return res.status(400).json({ error: 'Escriba el motivo del rechazo (de 10 a 512 caracteres): se le enviará al emprendedor.' });
+    }
+
     let latitud = null;
     let longitud = null;
     if (aprobacionArea === 1) {
@@ -176,13 +396,19 @@ export const resolverRevisionArea = async (req, res) => {
             aprobacionArea,
             latitud,
             longitud,
-            obtenerIpCliente(req)
+            obtenerIpCliente(req),
+            motivoRechazo
         );
 
+        // Correo al emprendedor: aprobada -> completar el formulario de subsidio / crédito; rechazada -> motivo
+        const datos = await ModelDatosCorreoSolicitud(idSolicitud);
+        const correo = await intentarCorreo(correoDeLaSolicitud(req, datos), datos.Correo);
+        const ayuda = datos.EleccionAyuda === 'Subsidio' ? 'subsidio' : 'crédito';
         return res.status(200).json({
-            mensaje: aprobacionArea === 1
-                ? 'El Área aprobó la solicitud y guardó sus coordenadas. Quedó pendiente la etapa del Ministro.'
-                : 'El Área rechazó la solicitud y la revisión quedó finalizada.'
+            mensaje: (aprobacionArea === 1
+                ? `El Área aprobó la solicitud y guardó sus coordenadas. Ahora el emprendedor debe enviar el formulario de ${ayuda}.`
+                : 'El Área rechazó la solicitud y la revisión quedó finalizada.') + textoResultadoIntento(correo),
+            ...correo
         });
     } catch (error) {
         if (error.code === 'REVIEWER_NOT_ACTIVE' || error.code === 'REVIEWER_ROLE_INVALID' || error.code === 'REVIEW_NOT_ASSIGNED') {
@@ -197,19 +423,50 @@ export const resolverRevisionArea = async (req, res) => {
         if (error.code === 'REVIEW_DATA_NOT_FOUND') {
             return res.status(409).json({ error: error.message });
         }
+        if (error.code === 'ER_BAD_FIELD_ERROR') {
+            return res.status(500).json({ error: FALTA_MIGRACION_RESOLUCION });
+        }
         if (error.code === 'ER_SIGNAL_EXCEPTION') {
             return res.status(409).json({
-                error: 'La base de datos todavía bloquea los cambios de coordenadas. Ejecuta la migración de coordenadas de revisión del Área.'
+                error: 'La base de datos todavía bloquea los cambios de coordenadas: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).'
             });
         }
         if (error.code === 'ER_SIGNAL_EXCEPTION') {
             return res.status(409).json({
-                error: 'La base de datos aún no permite la actualización controlada de coordenadas. Ejecute la migración de revisión del Área.'
+                error: 'La base de datos aún no permite la actualización controlada de coordenadas: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).'
             });
         }
 
         console.error('Error al resolver revisión del Área:', error);
         return res.status(500).json({ error: 'No se pudo guardar la decisión del Área.' });
+    }
+};
+
+// POST /api/solicitudes/:id/reenviar-correo -> vuelve a mandar el último correo de la solicitud
+// (decisión del Área, envío al Ministro, rechazo por falta de formulario o rechazo del Ministro)
+export const reenviarCorreoSolicitud = async (req, res) => {
+    if (!['Empleado de Area', 'Administrador'].includes(req.usuarioLogueado?.tipoUsuario)) {
+        return res.status(403).json({ error: 'Solo empleados del Área y administradores pueden reenviar este correo.' });
+    }
+    const idSolicitud = Number(req.params.id);
+    if (!Number.isInteger(idSolicitud) || idSolicitud < 1) {
+        return res.status(400).json({ error: 'El identificador de solicitud no es válido.' });
+    }
+
+    try {
+        const datos = await ModelDatosCorreoSolicitud(idSolicitud);
+        if (!datos) return res.status(404).json({ error: 'No se encontró la solicitud.' });
+        const enviar = correoDeLaSolicitud(req, datos);
+        if (!enviar) {
+            return res.status(409).json({ error: 'No hay un correo para reenviar en el estado actual de la solicitud.' });
+        }
+
+        const correo = await intentarCorreo(enviar, datos.Correo);
+        const texto = correo.correoEnviado ? `Se envió el correo a ${correo.correo}.` : `No se pudo enviar el correo: ${correo.motivoCorreo}`;
+        return res.status(correo.correoEnviado ? 200 : 502).json({ ...correo, mensaje: texto, error: correo.correoEnviado ? undefined : texto });
+    } catch (error) {
+        console.error('Error al reenviar el correo de la solicitud:', error);
+        return res.status(500).json({ error: 'No se pudo reenviar el correo.' });
     }
 };
 
@@ -292,6 +549,9 @@ export const asignarExpedienteGED = async (req, res) => {
         res.json({ mensaje: "Expediente asignado y registrado en auditoría con éxito." });
     } catch (error) {
         console.error("Error en asignarExpedienteGED:", error.message);
+        if (error.code === 'ER_BAD_FIELD_ERROR') {
+            return res.status(500).json({ error: 'La base de datos no está actualizada para asignar expedientes: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
+        }
         res.status(500).json({ error: "Error interno al actualizar el expediente." });
     }
 };
@@ -456,7 +716,6 @@ const validarCargaHistorica = (cuerpo) => {
             monto: Math.round(monto * 100) / 100,
             fechaRecibido: fechaRecibidoAyuda,
             fechaResolucion: fechaResolucionAyuda,
-            mensajeResolucion: textoCarga(a.mensajeResolucion, 'Mensaje de resolución', 512, false),
             bytesPdf: pdfCarga(a.pdf, a.tipo === 'Subsidio' ? 'Formulario de Subsidio' : 'Formulario de Crédito')
         }
     };
@@ -514,7 +773,7 @@ export const registrarEmprendimientoHistorico = async (req, res) => {
     } catch (error) {
         await Promise.all(archivosGuardados.map(ruta => fs.unlink(ruta).catch(() => {})));
         if (error.code === 'ER_BAD_FIELD_ERROR' && /CargaHistorica/.test(error.sqlMessage || '')) {
-            return res.status(500).json({ error: 'Falta ejecutar la migración "Migracion Carga Historica.sql" en la base de datos.' });
+            return res.status(500).json({ error: 'La base de datos no está actualizada para la carga histórica: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
         }
         return responderErrorEtapaMinistro(res, error, 'No se pudo registrar el emprendimiento.');
     }

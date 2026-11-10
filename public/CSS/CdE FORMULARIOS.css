@@ -32,6 +32,10 @@ header p {
 /* FIN DE PARTE DE ARRIBA */
 
 /* INICIO DE PARTE PRINCIPAL */
+main {
+  background: #eeeae3; /* mismo tono en que termina el degradado: sin franja blanca antes del footer */
+}
+
   
 .formularios {
   background: linear-gradient(to bottom, #e6d2b5, #eeeae3);
@@ -43,6 +47,81 @@ header p {
   color: #a65454;
   margin-bottom: 20px;
   font-size: 35px;
+}
+
+/* CRITERIOS DE ELEGIBILIDAD (mismo diseño que la sección de Inicio, solo dentro de .criterios-elegibilidad) */
+.criterios-elegibilidad {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 30px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+.criterios-elegibilidad .titulo-seccion {
+  color: #2f4e78;
+  font-size: 24px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #2f4e78;
+  padding-bottom: 8px;
+}
+
+.criterios-elegibilidad .introduccion-actividades {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.criterios-elegibilidad .contenedor-columnas-actividades {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.criterios-elegibilidad .columna-actividad {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.criterios-elegibilidad .columna-actividad h4 {
+  font-size: 18px;
+  color: #2f4e78;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.criterios-elegibilidad .columna-actividad.excluidas h4 {
+  color: #c62828;
+}
+
+.criterios-elegibilidad .lista-estilizada {
+  list-style: none;
+  padding: 0;
+}
+
+.criterios-elegibilidad .lista-estilizada li {
+  margin-bottom: 12px;
+  font-size: 17px;
+  color: #444;
+  line-height: 1.6;
+  position: relative;
+  padding-left: 20px;
+}
+
+.criterios-elegibilidad .lista-estilizada li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #2f4e78;
+  font-weight: bold;
+}
+
+@media (max-width: 600px) {
+  .criterios-elegibilidad { padding: 18px; }
 }
 
 /* TARJETA */

@@ -7,21 +7,14 @@ import {
     modelBuscarEnlaceVigente,
     modelUsarEnlaceContrasena
 } from '../models/cuentaModel.js';
-import { enviarCorreo } from '../helpers/correo.js';
+import { enviarCorreo, escaparHtml, urlDelSitio } from '../helpers/correo.js';
 import { obtenerIpCliente } from '../helpers/ipCliente.js';
 
 // Mismas reglas que el registro de usuarios: 12 caracteres, mayúscula, minúscula, número y especial
 const REGEX_CONTRASEÑA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-])[A-Za-z\d@$!%*?&-]{12,}$/;
 const ROLES_REENVIO = ['Empleado de Area', 'Administrador'];
-const FALTA_TABLA = 'Falta ejecutar database/Activacion de cuenta.sql en la base de datos.';
+const FALTA_TABLA = 'La base de datos no tiene la tabla de enlaces para crear contraseña: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).';
 const faltaTabla = (error) => error?.code === 'ER_NO_SUCH_TABLE' || error?.code === 'ER_TABLEACCESS_DENIED_ERROR';
-
-const escaparHtml = (texto) => String(texto ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-}[c]));
-
-// Dirección del sitio para el enlace: APP_URL del .env (ej. la de Render) o la del pedido actual
-const urlDelSitio = (req) => (process.env.APP_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
 
 // Crea el enlace y envía el correo "su emprendimiento fue aprobado, cree su contraseña".
 // Nunca lanza error: la aprobación ya quedó guardada aunque el correo falle. Devuelve
@@ -38,6 +31,12 @@ export const enviarCorreoActivacion = async (req, idUsuarioEmprendedor) => {
         });
         const enlace = `${urlDelSitio(req)}/crear-contrasena?codigo=${encodeURIComponent(codigo)}`;
         const nombre = `${datos.Nombre} ${datos.Apellido}`.trim();
+        // Aprobado por el Ministro (no en la carga histórica): debe rendir las facturas de la compra en 30 días
+        const ayuda = datos.EleccionAyuda === 'Credito' ? 'Crédito' : 'Subsidio';
+        const avisoFacturas = Number(datos.CargaHistorica) === 1 ? '' :
+            `Dentro de los 30 (treinta) días de recibidos los fondos del ${ayuda}, deberá presentar a través de su cuenta, `
+            + 'desde la opción "Enviar Facturas de Ley" del botón "+", la FACTURA de LEY que acredite la compra de los materiales y/o equipamiento e insumos '
+            + 'necesarios para llevar a cabo su emprendimiento.';
 
         await enviarCorreo({
             para: datos.Correo,
@@ -51,6 +50,7 @@ export const enviarCorreoActivacion = async (req, idUsuarioEmprendedor) => {
                 enlace,
                 '',
                 'El enlace vence en 72 horas y sirve una sola vez. Su usuario es este correo electrónico.',
+                ...(avisoFacturas ? ['', avisoFacturas, ''] : []),
                 'Si usted no presentó un Formulario de Inicio, ignore este mensaje.'
             ].join('\n'),
             html: `
@@ -66,6 +66,8 @@ export const enviarCorreoActivacion = async (req, idUsuarioEmprendedor) => {
                     <p style="font-size:13px; color:#555;">Su usuario es este correo: <strong>${escaparHtml(datos.Correo)}</strong>.<br>
                        El enlace vence en 72 horas y sirve una sola vez. Si el botón no funciona, copie esta dirección en el navegador:<br>
                        <span style="word-break:break-all;">${escaparHtml(enlace)}</span></p>
+                    ${avisoFacturas ? `<p style="background:#fff4e5; border-left:4px solid #d35400; padding:12px 14px;">${escaparHtml(avisoFacturas)
+                        .replace('30 (treinta) días', '<strong>30 (treinta) días</strong>').replace('FACTURA de LEY', '<strong>FACTURA de LEY</strong>')}</p>` : ''}
                     <p style="font-size:12px; color:#888;">Si usted no presentó un Formulario de Inicio, ignore este mensaje.</p>
                 </div>`
         });

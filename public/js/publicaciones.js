@@ -40,7 +40,7 @@ function actualizarCupo(Perfil, formulario) {
     const lleno = usadas >= maximo;
     formulario.style.display = lleno ? 'none' : '';
     aviso.innerHTML = lleno
-        ? `Ya usaste tus ${maximo} publicaciones. Para publicar algo nuevo, <a href="/Emprendedor-Publicaciones">editá una de ellas</a>.`
+        ? `Ya usaste tus ${maximo} publicaciones. Para publicar algo nuevo, <a href="/Emprendedor-Publicaciones">editá o eliminá una de ellas</a>.`
         : `Podés tener hasta ${maximo} publicaciones (te ${maximo - usadas === 1 ? 'queda 1' : `quedan ${maximo - usadas}`}). Cada una la revisa el Ministerio antes de mostrarse.`;
 }
 
@@ -56,6 +56,7 @@ function prepararVistaPrevia(inputFotos, contenedor) {
         }
         contenedor.innerHTML = [...inputFotos.files].map((archivo) =>
             `<img src="${URL.createObjectURL(archivo)}" alt="Vista previa">`).join('');
+        if (typeof adelantarFotos === 'function') adelantarFotos(inputFotos); // se achican mientras completa el resto
     });
 }
 
@@ -72,7 +73,7 @@ function prepararFormulario(Perfil, formulario) {
     if (inputFotos) {
         inputFotos.multiple = true;
         inputFotos.accept = 'image/jpeg,image/png,image/webp';
-        if (etiquetaFotos) etiquetaFotos.title = `Agregar fotos (hasta ${MAXIMO_FOTOS_PUBLICACION}, 2 MB cada una)`;
+        if (etiquetaFotos) etiquetaFotos.title = `Agregar fotos (hasta ${MAXIMO_FOTOS_PUBLICACION}; se achican automáticamente)`;
         prepararVistaPrevia(inputFotos, vistaPrevia);
     }
 
@@ -83,12 +84,10 @@ function prepararFormulario(Perfil, formulario) {
         const descripcion = formulario.querySelector('#publicacion-texto')?.value || '';
         const archivos = inputFotos?.files || [];
 
-        const errorFotos = Perfil.validarImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
-        if (errorFotos) return Perfil.aviso('warning', 'Revisá las fotos', errorFotos);
-
         boton.disabled = true;
         try {
-            const fotos = await Perfil.leerArchivos(archivos);
+            const { error: errorFotos, fotos } = await Perfil.prepararImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
+            if (errorFotos) return Perfil.aviso('warning', 'Revisá las fotos', errorFotos);
             const { ok, datos } = await Perfil.api('POST', '/api/publicaciones', { titulo, descripcion, fotos });
             if (!ok) return Perfil.aviso('error', 'No se pudo publicar', datos.error);
 
@@ -146,15 +145,23 @@ function pintarPestanaPublicaciones(Perfil) {
                     ${p.estado !== 0 && p.aprobada ? '<p class="nota-version">Mientras tanto, se sigue mostrando la versión aprobada anterior.</p>' : ''}
                     <div class="acciones-publicacion">
                         <span class="post-fecha">Enviada el ${Perfil.fecha(p.fechaSolicitud)}</span>
-                        <button type="button" class="btn-publicar btn-editar-publicacion" data-indice="${i}">
-                            <i class="fa-solid fa-pen"></i> Editar
-                        </button>
+                        <div class="botones-publicacion">
+                            <button type="button" class="btn-publicar btn-editar-publicacion" data-indice="${i}">
+                                <i class="fa-solid fa-pen"></i> Editar
+                            </button>
+                            <button type="button" class="btn-publicar btn-eliminar-publicacion" data-indice="${i}">
+                                <i class="fa-solid fa-trash"></i> Eliminar
+                            </button>
+                        </div>
                     </div>
                 </article>`;
         }).join('');
 
     feed.querySelectorAll('.btn-editar-publicacion').forEach((boton) => {
         boton.addEventListener('click', () => editarPublicacion(Perfil, misPublicaciones[Number(boton.dataset.indice)]));
+    });
+    feed.querySelectorAll('.btn-eliminar-publicacion').forEach((boton) => {
+        boton.addEventListener('click', () => eliminarPublicacion(Perfil, misPublicaciones[Number(boton.dataset.indice)]));
     });
     resaltarPublicacionDelEnlace();
 }
@@ -193,7 +200,7 @@ async function editarPublicacion(Perfil, publicacion) {
                 ${fotosActuales.length ? `
                     <div class="vista-previa-fotos">${fotosActuales.map((u) => `<img src="${esc(u)}" alt="Foto actual">`).join('')}</div>
                     <label class="check-fotos"><input type="checkbox" id="edit-conservar" checked> Conservar estas fotos</label>` : ''}
-                <label>Fotos nuevas (reemplazan a las anteriores, hasta ${MAXIMO_FOTOS_PUBLICACION})
+                <label>Fotos nuevas (hasta ${MAXIMO_FOTOS_PUBLICACION} en total: si conserva las actuales, se agregan a ellas; si no, las reemplazan)
                     <input type="file" id="edit-fotos" accept="image/jpeg,image/png,image/webp" multiple>
                 </label>
                 <div class="vista-previa-fotos" id="edit-vista-previa"></div>
@@ -208,13 +215,19 @@ async function editarPublicacion(Perfil, publicacion) {
             const descripcion = document.getElementById('edit-texto').value.trim();
             const archivos = document.getElementById('edit-fotos').files;
             if (!descripcion) return Swal.showValidationMessage('Escribí el texto de la publicación.');
-            const errorFotos = Perfil.validarImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
+            const conservarFotos = Boolean(document.getElementById('edit-conservar')?.checked);
+            const conservadas = conservarFotos ? fotosActuales.length : 0;
+            if (archivos.length && conservadas + archivos.length > MAXIMO_FOTOS_PUBLICACION) {
+                return Swal.showValidationMessage(`La publicación puede tener hasta ${MAXIMO_FOTOS_PUBLICACION} fotos y ya tiene ${conservadas}. `
+                    + 'Elija menos fotos nuevas o desmarque "Conservar estas fotos" para reemplazarlas.');
+            }
+            const { error: errorFotos, fotos } = await Perfil.prepararImagenes(archivos, MAXIMO_FOTOS_PUBLICACION);
             if (errorFotos) return Swal.showValidationMessage(errorFotos);
             return {
                 titulo: document.getElementById('edit-titulo').value,
                 descripcion,
-                fotos: await Perfil.leerArchivos(archivos),
-                conservarFotos: Boolean(document.getElementById('edit-conservar')?.checked)
+                fotos,
+                conservarFotos
             };
         }
     });
@@ -224,4 +237,31 @@ async function editarPublicacion(Perfil, publicacion) {
     if (!ok) return Perfil.aviso('error', 'No se pudo guardar', datos.error);
     await Perfil.aviso('info', 'Enviado a revisión', datos.mensaje);
     await Perfil.recargar();
+}
+
+// Elimina la publicación entera (lo aprobado y lo que esté en revisión) después de confirmar
+async function eliminarPublicacion(Perfil, publicacion) {
+    const version = publicacion.estado !== 0 && publicacion.pendiente ? publicacion.pendiente : publicacion.aprobada;
+
+    const { isConfirmed } = await Swal.fire({
+        icon: 'warning',
+        title: '¿Eliminar publicación?',
+        html: `Se va a borrar <strong>"${Perfil.escapar(version?.titulo)}"</strong> con sus fotos` +
+            `${publicacion.aprobada ? ' y dejará de verse en la página pública' : ''}. Esta acción no se puede deshacer.`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#a65454',
+        focusCancel: true
+    });
+    if (!isConfirmed) return;
+
+    try {
+        const { ok, datos } = await Perfil.api('DELETE', `/api/publicaciones/${publicacion.idPublicacion}`);
+        if (!ok) return Perfil.aviso('error', 'No se pudo eliminar', datos.error);
+        await Perfil.aviso('success', 'Publicación eliminada', datos.mensaje);
+        await Perfil.recargar();
+    } catch (error) {
+        Perfil.aviso('error', 'Error de red', error.message || 'No se pudo conectar con el servidor.');
+    }
 }

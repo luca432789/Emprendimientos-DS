@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="CSS/CdE Navbar.css">
     <link rel="stylesheet" href="CSS/formulario-inicio.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.js"></script> <!-- token para barra de nav-->
+    <script src="/js/jwt-decode.js"></script> <!-- lee el token de sesión para la barra de navegación -->
     <script src="js/navbar.js" defer></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -146,7 +146,7 @@
                     </div>
                     <div class="columna">
                         <label class="etiqueta">Nº</label>
-                        <input type="text" name="numeroEmprendimiento" class="linea" maxlength="6" required aria-label="Número de calle del emprendimiento">
+                        <input type="text" name="numeroEmprendimiento" class="linea" inputmode="numeric" maxlength="6" pattern="[0-9]{1,6}" title="Ingrese solo números, o marque Sin número (S/N)" required aria-label="Número de calle del emprendimiento">
                         <label class="extranjero-control"><input type="checkbox" name="calleSinNumero" value="true"><span>Sin número (S/N)</span></label>
                     </div>
                 </div>
@@ -208,7 +208,9 @@
                     Elevamos al Sr. Ministro esta solicitud con el propósito de dar impulso económico a la actividad productiva de
                     microemprendimiento en el rubro de:
                 </p>
-                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Rubro">
+                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Rubro" list="lista-rubros" autocomplete="off">
+                <datalist id="lista-rubros"></datalist>
+                <small>Al escribir se sugieren los rubros ya registrados; si el suyo no está, escríbalo igual.</small>
 
                 <label class="etiqueta">Actividad principal que realiza el emprendimiento</label>
                 <textarea name="actividadPrincipal" class="linea renglones" rows="3" maxlength="400" required aria-label="Actividad principal del emprendimiento" placeholder="Describa brevemente qué produce o qué servicio brinda"></textarea>
@@ -231,8 +233,25 @@
 
                 <p class="saludo">Sin otro motivo, y esperando una respuesta a lo solicitado, lo saludamos atentamente.</p>
 
-                <label class="etiqueta">FIRMA</label>
-                <input type="text" name="firma" class="linea firma" maxlength="80" required aria-label="Firma (nombre completo)" placeholder="Escriba su nombre completo">
+                <!-- Misma firma que en subsidio y crédito -->
+                <div class="firma-digital" data-firma>
+                    <p class="etiqueta">FIRMA</p>
+                    <div class="firma-zona-dibujo">
+                        <canvas class="firma-lienzo" aria-label="Recuadro para dibujar la firma"></canvas>
+                        <div class="firma-acciones">
+                            <small>Firme dentro del recuadro con el mouse o con el dedo.</small>
+                            <button type="button" class="btn firma-borrar" data-firma-borrar>Borrar firma</button>
+                        </div>
+                    </div>
+                    <label class="extranjero-control"><input type="checkbox" data-firma-sin-firma><span>No tengo firma</span></label>
+                    <div class="firma-zona-nombre" hidden>
+                        <label class="etiqueta" for="firma-nombre">Escriba su nombre completo en lugar de la firma</label>
+                        <input type="text" id="firma-nombre" class="linea" maxlength="80" data-firma-nombre autocomplete="off">
+                    </div>
+                </div>
+                <label class="campo-firma">Aclaración:<input type="text" name="aclaracionProyecto" class="linea" maxlength="80" required aria-label="Aclaración de la firma"></label>
+                <label class="campo-firma">D.N.I. Nº:<input type="text" name="dniProyecto" class="linea" maxlength="20" required aria-label="DNI junto a la firma" autocomplete="off"></label>
+                <small>Debe ser el mismo DNI (o documento) ingresado arriba.</small>
 
                 <div class="nota-importante">
                     <p><strong>NOTA IMPORTANTE: ADJUNTAR FOTOCOPIAS DE DNI AUTENTICADAS POR POLICIA, CERTIFICADOS DE RESIDENCIA ADJUNTAR FOTOGRAFIAS DEL EMPRENDIMIENTO. SI TUVIESE CAPACITACION SOBRE EL RUBRO A INICIAR, DEBE PRESENTAR UNA FOTOCOPIA AUTENTICADA POR POLICIA DE LA MISMA.</strong></p>
@@ -242,14 +261,19 @@
 
             <!-- HOJA 2 -->
             <section class="hoja">
-                <h3 class="titulo-imagenes">Imágenes del emprendimiento</h3>
-                <p class="parrafo">Adjunte fotografías del emprendimiento en reemplazo del croquis de localización. Puede seleccionar varias imágenes.</p>
+                <h3 class="titulo-imagenes">Imágenes y documentación del emprendimiento</h3>
+                <!-- Lo que se pide adjuntar: se destaca para que el emprendedor sepa qué imágenes o documentos enviar -->
+                <div class="documentacion-solicitada">
+                    <p>Croquis de localización del emprendimiento (indique calles, avenidas, vías de acceso, distancias a rutas, caminos u otros puntos de referencia lo más claro posible)</p>
+                    <p><strong>NOTA IMPORTANTE: ADJUNTAR FOTOCOPIAS DE DNI AUTENTICADAS POR POLICIA, CERTIFICADOS DE RESIDENCIA ADJUNTAR FOTOGRAFIAS DEL EMPRENDIMIENTO. SI TUVIESE CAPACITACION SOBRE EL RUBRO A INICIAR, DEBE PRESENTAR UNA FOTOCOPIA AUTENTICADA POR POLICIA DE LA MISMA.</strong></p>
+                </div>
+                <p class="parrafo">Puede seleccionar varios archivos: cada imagen (y cada página de un PDF) ocupa una hoja propia del documento.</p>
 
-                <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar imágenes</label>
+                <label class="etiqueta" for="imagenes-emprendimiento">Seleccionar imágenes o archivos</label>
                 <div class="zona-archivos">
                     <input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple required>
                 </div>
-                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos, 8 páginas adjuntas y 16 MB en total.</small>
+                <small>Fotos JPG/PNG (se achican automáticamente al enviar) o PDF de hasta 8 MB cada uno; máximo 8 archivos, 8 páginas adjuntas y 16 MB en total.</small>
 
                 <p class="parrafo revision">Antes de culminar el llenado de la presente nota, revise si todos los campos fueron completados de acuerdo a lo solicitado.</p>
 
@@ -273,13 +297,12 @@
                 <h3>Ministerios</h3>
                 <div class="columnas">
                     <ul>
-            
+                        <li><a href="https://mindes-sde.infinityfree.me/">Ministerio de Desarrollo Social</a></li>
                         <li><a href="http://meconse.gob.ar/">Ministerio de Economía</a></li>
                         <li><a href="https://www.meducacionsantiago.gob.ar/">Ministerio de Educación, Ciencia y Tecnología</a></li>
-                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
                     </ul>
                     <ul>
-                        <li><a href="#">Ministerio de Obras Públicas, Agua y Medio Ambiente</a></li> <!--FALTA ESTE LINK-->
+                        <li><a href="https://mjusticia.sde.gob.ar/">Ministerio de Justicia y Derechos Humanos</a></li>
                         <li><a href="https://mproduccion.datacentersgo.gob.ar/">Ministerio de la Producción</a></li>
                         <li><a href="https://msaludsgo.gov.ar/">Ministerio de Salud</a></li>
                     </ul>
@@ -288,12 +311,14 @@
         </div>
 
         <div class="footer-bottom">
-            © 2026 Desarrollado por [nombre aquí]
+            © 2026 Desarrollado por alumnos del ITSE
         </div>
 
     </footer>
   
 
+    <script src="js/achicar-fotos.js"></script>
+    <script src="js/firma-digital.js"></script>
     <script src="js/formulario-digital.js"></script>
 </Body>
 </html>

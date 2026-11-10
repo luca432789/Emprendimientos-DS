@@ -6,7 +6,9 @@ import {
     modelMarcarVistas
 } from '../models/notificacionesModel.js';
 import { ModelObtenerSolicitudesParaArea, ModelListarRevisionesAsignadas } from '../models/solicitudesInicioModel.js';
-import { modelAyudasSinRevisar } from '../models/ayudasModel.js';
+import { modelAyudasSinRevisar, modelAyudasEnRevision } from '../models/ayudasModel.js';
+import { modelAyudaDelEmprendedor } from '../models/facturasModel.js';
+import { modelFacturasParaValidar } from '../models/emprendimientosAdminModel.js';
 
 // Roles que moderan publicaciones (mismos que en publicacionesController)
 const ROLES_MODERADORES = ['Empleado de Area', 'Administrador'];
@@ -52,18 +54,35 @@ const revisionesAsignadas = async (idUsuario) => {
     }
 };
 
+// Facturas de Ley enviadas que esperan la validación (sin la actualización de la base, ninguna)
+const facturasParaValidar = async () => {
+    try {
+        return await modelFacturasParaValidar();
+    } catch (error) {
+        if (error.code === 'ER_BAD_FIELD_ERROR') return [];
+        throw error;
+    }
+};
+
 // Empleado de Área / Administrador: una notificación por cada cosa que espera revisión
 // (solicitudes de inicio, subsidios, créditos, publicaciones y las solicitudes en revisión
 // que tiene asignadas), con su contador.
 // "pendientes" trae una clave por elemento para avisar cuando llega uno nuevo.
 const notificacionesModerador = async (idUsuario) => {
-    const [inicios, subsidios, creditos, publicaciones, enRevision] = await Promise.all([
+    const [inicios, subsidios, creditos, publicaciones, enRevision, subsidiosEnRevision, creditosEnRevision, facturas] = await Promise.all([
         ModelObtenerSolicitudesParaArea(),
         modelAyudasSinRevisar('subsidio'),
         modelAyudasSinRevisar('credito'),
         modelPublicacionesEnEspera(),
-        revisionesAsignadas(idUsuario)
+        revisionesAsignadas(idUsuario),
+        modelAyudasEnRevision('subsidio'),
+        modelAyudasEnRevision('credito'),
+        facturasParaValidar()
     ]);
+    // Subsidios y créditos en revisión que esperan al Área (no los que esperan el reenvío del emprendedor).
+    // La clave cambia con cada formulario recibido: un reenvío llega como novedad.
+    const subsidiosParaRevisar = subsidiosEnRevision.filter((s) => !Number(s.ReenvioSolicitado));
+    const creditosParaRevisar = creditosEnRevision.filter((c) => !Number(c.ReenvioSolicitado));
 
     const categorias = [
         { seccion: 'inicio-sin-revisar', nombre: 'Solicitudes de Inicio', singular: 'solicitud de inicio sin revisar', plural: 'solicitudes de inicio sin revisar',
@@ -74,8 +93,15 @@ const notificacionesModerador = async (idUsuario) => {
           claves: creditos.map((c) => `cre-${c.id}`) },
         { seccion: 'inicio-en-revision', nombre: 'En Revisión - Inicio', singular: 'solicitud de inicio en revisión', plural: 'solicitudes de inicio en revisión',
           claves: enRevision.map((s) => `rev-${s.idSolicitudInicio}`) },
+        { seccion: 'subsidio-en-revision', nombre: 'En Revisión - Subsidio', singular: 'subsidio en revisión para continuar', plural: 'subsidios en revisión para continuar',
+          claves: subsidiosParaRevisar.map((s) => `subr-${s.id}-${huella(s.DireccionPDF || '')}`) },
+        { seccion: 'creditos-en-revision', nombre: 'En Revisión - Créditos', singular: 'crédito en revisión para continuar', plural: 'créditos en revisión para continuar',
+          claves: creditosParaRevisar.map((c) => `crer-${c.id}-${huella(c.DireccionPDF || '')}`) },
         { seccion: 'publicaciones-espera', nombre: 'Publicaciones en Espera', singular: 'publicación para revisar', plural: 'publicaciones para revisar',
-          claves: publicaciones.map((p) => `pend-${p.idPublicacion}-${fechaISO(p.FechaSolicitud)}-${huella(`${p.TituloPendiente}|${p.DescripcionPendiente}`)}`) }
+          claves: publicaciones.map((p) => `pend-${p.idPublicacion}-${fechaISO(p.FechaSolicitud)}-${huella(`${p.TituloPendiente}|${p.DescripcionPendiente}`)}`) },
+        // La clave cambia con cada envío: si las facturas observadas vuelven, llegan como novedad
+        { seccion: 'administrar-emprendimientos', nombre: 'Administración de Emprendimientos', singular: 'emprendimiento con facturas para validar', plural: 'emprendimientos con facturas para validar',
+          claves: facturas.map((f) => `fac-${f.tipo}-${f.idAyuda}-${fechaISO(f.FechaEntregaFacturas)}`) }
     ];
 
     const notificaciones = categorias.filter((c) => c.claves.length).map((c) => ({
@@ -113,10 +139,51 @@ const notificacionesEmprendedor = async (idUsuario) => {
     });
 
     const vistas = await modelClavesVistas(idUsuario, notificaciones.map((n) => n.clave));
+    const facturas = await avisoFacturas(idUsuario);
     return {
-        total: notificaciones.length,
+        total: notificaciones.length + (facturas.aviso ? 1 : 0),
         vistasEnServidor: vistas !== null,
-        notificaciones: notificaciones.map((n) => ({ ...n, vista: vistas ? vistas.has(n.clave) : false }))
+        accionFacturas: facturas.pendiente, // muestra "Enviar Facturas de Ley" en el botón "+"
+        notificaciones: [
+            ...(facturas.aviso ? [facturas.aviso] : []),
+            ...notificaciones.map((n) => ({ ...n, vista: vistas ? vistas.has(n.clave) : false }))
+        ]
+    };
+};
+
+// Facturas de Ley sin enviar a revisar: aviso con los días que le quedan. Es "soloSesion": la página la da por
+// vista solo hasta que cierra la sesión, así el punto rojo vuelve a aparecer cada vez que inicia sesión.
+const avisoFacturas = async (idUsuario) => {
+    let ayuda;
+    try {
+        ayuda = await modelAyudaDelEmprendedor(idUsuario);
+    } catch (error) {
+        // Sin la actualización de la base todavía: la campanita sigue funcionando sin este aviso
+        if (error.code === 'ER_BAD_FIELD_ERROR') return { pendiente: false, aviso: null };
+        throw error;
+    }
+    if (!ayuda || ayuda.estado !== 'pendiente') return { pendiente: false, aviso: null };
+
+    const dias = Number(ayuda.DiasRestantes);
+    const titulo = ayuda.MotivoObservacionFacturas
+        ? 'Sus facturas de ley fueron observadas: corríjalas y vuelva a enviarlas'
+        : dias > 1 ? `Le quedan ${dias} días para entregar las facturas a tiempo`
+        : dias === 1 ? 'Le queda 1 día para entregar las facturas a tiempo'
+        : dias === 0 ? 'Hoy vence el plazo para entregar las facturas'
+        : `El plazo para entregar las facturas venció hace ${-dias} ${dias === -1 ? 'día' : 'días'}`;
+    return {
+        pendiente: true,
+        aviso: {
+            clave: `facturas-${ayuda.tipo}-${ayuda.id}`,
+            soloSesion: true,
+            tipo: 'facturas-pendientes',
+            titulo,
+            detalle: ayuda.MotivoObservacionFacturas
+                ? `Observación: ${ayuda.MotivoObservacionFacturas}`
+                : `Facturas de Ley de su ${ayuda.Nombre}. Hacé clic para enviarlas.`,
+            fecha: null,
+            url: '/Emprendedor-Facturas'
+        }
     };
 };
 
@@ -151,7 +218,7 @@ export const marcarNotificacionesVistas = async (req, res) => {
         res.json({ mensaje: 'Notificaciones marcadas como vistas.' });
     } catch (error) {
         if (error?.code === 'ER_NO_SUCH_TABLE' || error?.code === 'ER_TABLEACCESS_DENIED_ERROR') {
-            return res.status(503).json({ error: 'Falta ejecutar database/Notificaciones.sql.' });
+            return res.status(503).json({ error: 'La base de datos no tiene la tabla de notificaciones vistas: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
         }
         console.error('Error al marcar notificaciones como vistas:', error);
         res.status(500).json({ error: 'No se pudieron marcar las notificaciones.' });

@@ -1,0 +1,126 @@
+/* Formulario de Inicio: hoja oficio, con las medidas y la tipografía de la nota oficial */
+@page { size: 8.5in 14in; margin: 0; }
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    color: #000;
+}
+
+p { margin: 0; }
+
+.hoja {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 8.5in;
+    min-height: 14in;
+    padding: 9mm 13mm 8mm;
+    page-break-after: always;
+}
+.hoja:last-child { page-break-after: auto; }
+
+.logo { width: 59mm; }
+
+.fecha { text-align: right; margin: 4mm 0 5mm; }
+
+.destinatario { font-weight: bold; line-height: 1.45; margin-bottom: 6mm; }
+.raya { display: inline-block; width: 38mm; border-bottom: 1px solid #000; }
+
+.parrafo { text-align: justify; line-height: 1.45; }
+.sangria { text-indent: 66mm; }
+
+.titulo-campos { text-align: center; font-weight: bold; margin: 5mm 0 1mm; }
+.subtitulo { font-weight: bold; text-decoration: underline; margin: 2.5mm 0 1mm; }
+
+/* ---------- Datos completados ---------- */
+/* Los datos se escriben en Arial sobre la línea punteada, como si se llenara la hoja impresa */
+.relleno {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10.5pt;
+    border-bottom: 1px dotted #000;
+    padding: 0 1.5mm;
+    overflow-wrap: anywhere;
+}
+/* Renglón sin completar dentro de un párrafo (formulario en blanco): se deja lugar para escribir a mano */
+.parrafo .relleno:empty { display: inline-block; min-width: 45mm; height: 4.5mm; vertical-align: -1mm; }
+
+.campo {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5mm;
+    margin-bottom: 1.3mm;
+}
+.campo > span:first-child { white-space: nowrap; }
+.campo .relleno { flex: 1; min-height: 5.5mm; }
+.campo-doble { display: flex; gap: 5mm; }
+.campo-doble .campo { flex: 1; min-width: 0; }
+.campo-doble .campo.angosto { flex: 0 0 52mm; }
+
+.en-marcha { margin: 1.5mm 0 3mm; }
+.en-marcha .opcion { margin-left: 5mm; }
+.casilla {
+    display: inline-block;
+    width: 6mm;
+    height: 5mm;
+    border: 0.75pt solid #000;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    line-height: 5mm;
+    vertical-align: -1mm;
+    margin-right: 2mm;
+}
+
+.bienes { margin: 1mm 0 0; padding-left: 7mm; }
+.bienes li { margin-bottom: 1mm; }
+.bienes .relleno { display: inline-block; width: 100%; min-height: 5.5mm; vertical-align: top; }
+
+.saludo { text-align: center; margin: 4mm 0 0; }
+
+/* ---------- Firma, aclaración y DNI ---------- */
+.firmas {
+    display: flex;
+    gap: 8mm;
+    margin-top: 2mm;
+}
+.firmas > div { flex: 1; display: flex; flex-direction: column; text-align: center; }
+.firmas .valor-firma {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 17mm;
+    border-bottom: 1px dotted #000;
+    padding: 0 0 0.5mm;
+}
+.firma-imagen { max-width: 100%; max-height: 16mm; }
+.firma-texto { font-style: italic; font-size: 13pt; }
+.firmas .relleno { font-size: 9.5pt; }
+
+/* ---------- Nota legal al pie (siempre abajo de la hoja) ---------- */
+.nota-importante {
+    margin-top: auto;
+    padding-top: 4mm;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 8pt;
+    text-align: justify;
+    line-height: 1.35;
+}
+.nota-importante .nota-destacada { font-size: 9.5pt; }
+
+/* ---------- Hojas de los adjuntos ---------- */
+/* Debajo del título queda libre el espacio de ESPACIO_ADJUNTO (formulariosDigitalesController.js) para la imagen */
+.hoja-adjunto {
+    position: relative;
+    width: 8.5in;
+    height: 14in;
+    overflow: hidden;
+    page-break-after: always;
+}
+.hoja-adjunto:last-child { page-break-after: auto; }
+.hoja-adjunto .logo { position: absolute; top: 9mm; left: 13mm; }
+.titulo-adjunto { position: absolute; top: 35mm; left: 13mm; font-weight: bold; }

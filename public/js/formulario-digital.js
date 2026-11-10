@@ -19,14 +19,42 @@ const completarFecha = () => {
 };
 completarFecha();
 
+// Envía el formulario mostrando el avance: subida de los adjuntos, armado del PDF y descarga.
+// (fetch no informa cuánto se subió; con conexión lenta, sin esto parece que la página no responde)
+const enviarConAvance = (url, cabeceras, cuerpo, mostrar) => new Promise((resolve, reject) => {
+  const pedido = new XMLHttpRequest();
+  pedido.open('POST', url);
+  Object.entries(cabeceras).forEach(([nombre, valor]) => pedido.setRequestHeader(nombre, valor));
+  pedido.responseType = 'blob';
+  const porcentaje = (evento) => (evento.lengthComputable && evento.total ? ` ${Math.floor((evento.loaded / evento.total) * 100)} %` : '');
+  pedido.upload.onprogress = (evento) => mostrar(`Enviando el formulario y los adjuntos...${porcentaje(evento)}`);
+  pedido.upload.onload = () => mostrar('Generando el documento...');
+  pedido.onprogress = (evento) => {
+    if (pedido.status === 201) mostrar(`Formulario registrado. Descargando el documento...${porcentaje(evento)}`);
+  };
+  pedido.onload = async () => {
+    const tipo = pedido.getResponseHeader('content-type') || '';
+    const datos = tipo.includes('application/json') ? await pedido.response.text().then(JSON.parse).catch(() => ({})) : null;
+    resolve({
+      ok: pedido.status >= 200 && pedido.status < 300,
+      status: pedido.status,
+      headers: { get: (nombre) => pedido.getResponseHeader(nombre) },
+      json: async () => datos || {},
+      blob: async () => pedido.response
+    });
+  };
+  pedido.onerror = () => reject(new Error('No se pudo conectar con el servidor. Revise su conexión a internet e inténtelo nuevamente.'));
+  pedido.ontimeout = pedido.onerror;
+  pedido.send(cuerpo);
+});
+
 if (form) {
   const esFormularioCredito = form.querySelector('input[name="tipoFormulario"]')?.value === 'Formulario de Creditos Reintegrables';
   const esFormularioSubsidio = form.querySelector('input[name="tipoFormulario"]')?.value === 'Formulario de Subsidios no Reintegrables';
   const definicionesTablas = {
     bienesPropios: { cantidad: 10, columnas: ['bien', 'cantidad', 'antiguedad', 'montoEstimado'] },
     activoFijo: { cantidad: 7, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] },
-    bienesUso: { cantidad: 9, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] },
-    recursosNecesarios: { cantidad: 9, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] }
+    bienesUso: { cantidad: 9, columnas: ['bien', 'cantidad', 'precioUnitario', 'subtotal'] }
   };
   const etiquetasColumnas = {
     bien: 'Bien', cantidad: 'Cantidad', antiguedad: 'Antigüedad',
@@ -80,35 +108,9 @@ if (form) {
   };
   const sumarMontos = (nombreTabla, campo) => filasDeTabla(nombreTabla)
     .reduce((total, fila) => total + numero(fila[campo]), 0);
+  // Crédito y subsidio: la columna "Solicitado" del costo total sale de los cuadros de activo fijo y bienes de uso
   const actualizarCalculosCredito = () => {
-    if (esFormularioSubsidio) {
-      const cuerpo = cuerposTabla.find((elemento) => elemento.dataset.tablaLineas === 'recursosNecesarios');
-      cuerpo?.querySelectorAll('tr').forEach((fila) => {
-        const cantidad = numero(fila.querySelector('[data-campo-fila="cantidad"]')?.value);
-        const precio = numero(fila.querySelector('[data-campo-fila="precioUnitario"]')?.value);
-        const subtotal = fila.querySelector('[data-campo-fila="subtotal"]');
-        if (subtotal) subtotal.value = cantidad && precio ? (cantidad * precio).toFixed(2) : '';
-      });
-      const total = sumarMontos('recursosNecesarios', 'subtotal');
-      const oculto = form.querySelector('[name="montoSolicitado"]');
-      if (oculto) oculto.value = total.toFixed(2);
-      const formato = (valor) => valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const totalVisible = form.querySelector('#total-recursos');
-      const totalSolicitadoVisible = form.querySelector('#total-solicitado');
-      if (totalVisible) totalVisible.textContent = formato(total);
-      if (totalSolicitadoVisible) totalSolicitadoVisible.textContent = `$ ${formato(total)}`;
-      const propio = numero(form.querySelector('[name="aporteActivoFijo"]')?.value)
-        + numero(form.querySelector('[name="aporteBienesUso"]')?.value)
-        + numero(form.querySelector('[name="aporteManoObra"]')?.value);
-      const solicitado = numero(form.querySelector('[name="solicitadoActivoFijo"]')?.value)
-        + numero(form.querySelector('[name="solicitadoBienesUso"]')?.value);
-      const outputPropio = form.querySelector('#costo-total-propio');
-      const outputSolicitado = form.querySelector('#costo-total-solicitado');
-      if (outputPropio) outputPropio.textContent = formato(propio);
-      if (outputSolicitado) outputSolicitado.textContent = formato(solicitado);
-      return;
-    }
-    if (!esFormularioCredito) return;
+    if (!esFormularioCredito && !esFormularioSubsidio) return;
     ['activoFijo', 'bienesUso'].forEach((nombreTabla) => {
       const cuerpo = cuerposTabla.find((elemento) => elemento.dataset.tablaLineas === nombreTabla);
       cuerpo?.querySelectorAll('tr').forEach((fila) => {
@@ -131,12 +133,14 @@ if (form) {
     };
     mostrar('#solicitado-activo-fijo', totalActivoFijo);
     mostrar('#solicitado-bienes-uso', totalBienesUso);
+    mostrar('#total-solicitado-activo-fijo', totalActivoFijo);
+    mostrar('#total-solicitado-bienes-uso', totalBienesUso);
     mostrar('#total-solicitado', totalSolicitado);
     mostrar('#costo-total-propio', aporteTotal);
     mostrar('#costo-total-solicitado', totalSolicitado);
   };
   form.addEventListener('input', (evento) => {
-    if (evento.target.matches('[data-campo-fila], [name="aporteActivoFijo"], [name="aporteBienesUso"], [name="aporteManoObra"], [name="solicitadoActivoFijo"], [name="solicitadoBienesUso"]')) {
+    if (evento.target.matches('[data-campo-fila], [name="aporteActivoFijo"], [name="aporteBienesUso"], [name="aporteManoObra"]')) {
       actualizarCalculosCredito();
     }
   });
@@ -313,51 +317,59 @@ if (form) {
     campoTelefono.value = campoTelefono.value.replace(/\D/g, '').slice(0, 10);
     campoTelefono.setCustomValidity('');
   });
-  form.querySelectorAll('input[name="dniGarante"], input[name="cuilGarante"], input[name="telefonoGarante"]').forEach((input) => {
+  // Formulario de Inicio: sugerencias del rubro con los rubros registrados (se puede escribir otro igual)
+  const listaRubros = form.querySelector('#lista-rubros');
+  if (listaRubros) {
+    fetch(`${apiBaseUrl}/api/rubros`)
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : []))
+      .then((rubros) => rubros.forEach(({ Nombre }) => listaRubros.append(new Option(Nombre))))
+      .catch(() => {}); // sin sugerencias el campo sigue funcionando como texto libre
+  }
+
+  // El número de calle del emprendimiento solo admite números (con "Sin número" queda S/N y el campo bloqueado)
+  numeroEmprendimiento?.addEventListener('input', () => { numeroEmprendimiento.value = numeroEmprendimiento.value.replace(/\D/g, ''); });
+  form.querySelectorAll('input[name="dniGarante"], input[name="dniFirmaGarante"], input[name="cuilGarante"], input[name="telefonoGarante"]').forEach((input) => {
     input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); });
   });
 
-  // Subsidios y Créditos: Área / Administrador eligen a nombre de qué emprendimiento cargan el pedido
-  const selectorEmprendimiento = form.querySelector('select[name="idEmprendimiento"]');
-  const cargarEmprendimientos = async () => {
-    const token = sessionStorage.getItem('token_ministerio');
-    if (!selectorEmprendimiento || !token) return;
-    try {
-      const respuesta = await fetch(`${apiBaseUrl}/api/formularios-digitales/emprendimientos`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const lista = await respuesta.json();
-      if (!respuesta.ok) throw new Error(lista.error || 'No se pudieron cargar los emprendimientos.');
-
-      selectorEmprendimiento.replaceChildren(new Option(lista.length ? 'Seleccione un emprendimiento...' : 'No hay emprendimientos con emprendedor asignado', ''));
-      lista.forEach((e) => selectorEmprendimiento.add(new Option(
-        `${e.Nombre} · Proyecto ${e.NroProyecto} · ${e.ApellidoEmprendedor}, ${e.NombreEmprendedor} (DNI ${e.DNI}) · ${e.Departamento}`,
-        e.idEmprendimiento
-      )));
-      selectorEmprendimiento.disabled = lista.length === 0;
-    } catch (error) {
-      selectorEmprendimiento.replaceChildren(new Option(error.message || 'No se pudieron cargar los emprendimientos.', ''));
-    }
+  // Crédito: cada documento del garante tiene su botón; al lado se muestra el archivo elegido
+  const documentosGaranteElegidos = [...form.querySelectorAll('[data-documento-garante]')];
+  const mostrarArchivoGarante = (control) => {
+    const fila = control.closest('.documento-garante');
+    const archivo = control.files?.[0];
+    fila?.classList.toggle('con-archivo', Boolean(archivo));
+    const texto = fila?.querySelector('[data-archivo-elegido]');
+    if (texto) texto.textContent = archivo ? archivo.name : 'Sin archivo';
   };
-  cargarEmprendimientos();
+  documentosGaranteElegidos.forEach((control) => control.addEventListener('change', () => mostrarArchivoGarante(control)));
+  form.addEventListener('reset', () => {
+    window.setTimeout(() => documentosGaranteElegidos.forEach(mostrarArchivoGarante), 0);
+  });
+  form.querySelectorAll('input[type="file"]').forEach((control) => control.addEventListener('change', () => adelantarFotos(control)));
+
+  // Límites de los adjuntos: el crédito suma los 5 documentos del garante a los presupuestos
+  const limitesAdjuntos = esFormularioCredito
+    ? { archivos: 12, presupuestos: 7, megas: 30 }
+    : { archivos: 8, presupuestos: 8, megas: 16 };
+  // Fotos: se aceptan como salen del celular y se achican acá antes de enviarlas (ver achicarFoto)
+  const MEGAS_FOTO_ORIGINAL = 25;
+  const MEGAS_FOTO_ENVIADA = 4; // igual que el servidor (incrustarAdjuntos)
+  const MEGAS_PDF = 8;
+  const megas = (bytes) => bytes * 1024 * 1024;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Inicio es público; Subsidios y Créditos los carga Área / Administrador a nombre de un emprendimiento
+    // Todos son públicos: Subsidio y Crédito se identifican con Nº de expediente, correo y DNI de la solicitud de inicio
     const esInicio = form.querySelector('input[name="tipoFormulario"]')?.value === 'Formulario de Inicio';
-    const esSubsidio = esFormularioSubsidio;
+    const esAyuda = esFormularioSubsidio || esFormularioCredito;
     const token = sessionStorage.getItem('token_ministerio');
-    if (!esInicio && !token) {
-      resultado.innerHTML = 'Debe <a href="/login">iniciar sesión</a> como Empleado de Área o Administrador para enviar este formulario.';
+    const verificacion = esAyuda ? window.verificacionExpediente?.obtener() : null;
+    if (esAyuda && !verificacion) {
+      resultado.textContent = 'Primero verifique el Nº de expediente, el correo y el DNI de su solicitud de inicio.';
       return;
     }
-    if (selectorEmprendimiento && !selectorEmprendimiento.value) {
-      resultado.textContent = 'Seleccione el emprendimiento al que corresponde el pedido.';
-      selectorEmprendimiento.focus();
-      return;
-    }
-    if ((esInicio || esSubsidio) && localidad && localidadPersona.cargando()) {
+    if ((esInicio || esFormularioSubsidio) && localidad && localidadPersona.cargando()) {
       resultado.textContent = 'Seleccione el departamento y espere a que se carguen sus localidades.';
       return;
     }
@@ -366,49 +378,109 @@ if (form) {
       return;
     }
 
-    resultado.textContent = 'Generando el PDF...';
+    // Crédito: si el Área pidió reenviar una sola parte, solo se completa y se envía esa (la otra se conserva)
+    const parte = esFormularioCredito ? window.verificacionExpediente?.parte?.() || 'Completo' : 'Completo';
+    const conTitular = parte !== 'Garante';
+    const conGarante = esFormularioCredito && parte !== 'Titular';
+
+    // El DNI que acompaña a la firma se escribe a mano, pero tiene que ser el del titular de la solicitud
+    // (en el Formulario de Inicio, el mismo DNI que se cargó arriba)
+    const dniFirma = form.querySelector('[name="dniProyecto"]');
+    const dniTitular = form.querySelector('[name="dniCuit"]')?.value.trim().toUpperCase();
+    if ((esInicio || (esAyuda && conTitular)) && dniFirma && dniFirma.value.replace(/[.\s]/g, '').toUpperCase() !== dniTitular) {
+      resultado.textContent = esInicio
+        ? 'El D.N.I. Nº junto a la firma debe ser el mismo DNI (o documento) ingresado arriba.'
+        : 'El D.N.I. Nº junto a la firma debe ser el mismo del titular de la solicitud de inicio.';
+      dniFirma.focus();
+      return;
+    }
+
+    // El Formulario de Inicio lleva la misma firma que subsidio y crédito
+    const firmas = window.firmasDigitales || {};
+    const conFirma = esInicio || (esAyuda && conTitular);
+    const firma = conFirma ? firmas.titular?.obtener() : null;
+    if (conFirma && !firma) {
+      resultado.textContent = esInicio
+        ? 'Firme en el recuadro o marque "No tengo firma" y escriba su nombre completo.'
+        : 'Firme en el recuadro del titular o marque "No tengo firma" y escriba su nombre completo.';
+      firmas.titular?.enfocar();
+      return;
+    }
+    const firmaGarante = conGarante ? firmas.garante?.obtener() : null;
+    if (conGarante && !firmaGarante) {
+      resultado.textContent = 'Falta la firma del garante: que firme en su recuadro, o marque "No tiene firma" y escriba su nombre completo.';
+      firmas.garante?.enfocar();
+      return;
+    }
+
+    resultado.textContent = 'Generando y enviando documento...';
     const boton = form.querySelector('button[type="submit"]');
     if (boton) boton.disabled = true;
 
     const datos = Object.fromEntries(new FormData(form).entries());
     const selectorImagenes = form.querySelector('input[name="imagenes"]');
-    const controlesArchivos = esFormularioCredito
-      ? [...form.querySelectorAll('[data-documento-garante]')]
-      : [selectorImagenes].filter(Boolean);
-    const archivos = controlesArchivos.flatMap((control) =>
-      [...(control.files || [])].map((archivo) => ({ archivo, categoria: control.dataset.documentoGarante || '' }))
-    );
+    // Presupuestos (o imágenes del emprendimiento en el Formulario de Inicio) y, en el crédito, un archivo por documento del garante
+    let presupuestos = conTitular ? [...(selectorImagenes?.files || [])] : [];
+    const controlesGarante = conGarante ? [...form.querySelectorAll('[data-documento-garante]')] : [];
+    const documentosGarante = controlesGarante.map((control) => ({ archivo: control.files?.[0], categoria: control.dataset.documentoGarante }));
+    let archivos = [...presupuestos, ...documentosGarante.map(({ archivo }) => archivo)].filter(Boolean);
 
-    if ((esInicio || esSubsidio) && archivos.length === 0) {
-      resultado.textContent = 'Debe adjuntar al menos una foto o un PDF para enviar y descargar el formulario.';
+    if (conTitular && presupuestos.length === 0) {
+      resultado.textContent = esAyuda
+        ? 'Adjunte al menos un presupuesto (fotografía o PDF) de los bienes solicitados.'
+        : 'Debe adjuntar al menos una foto o un PDF para enviar y descargar el formulario.';
       if (boton) boton.disabled = false;
       selectorImagenes?.focus();
       return;
     }
-    if (esFormularioCredito && controlesArchivos.some((control) => !control.files?.length)) {
-      resultado.textContent = 'Adjunte los cinco documentos solicitados del garante.';
+    const faltaGarante = controlesGarante.find((control) => !control.files?.length);
+    if (faltaGarante) {
+      resultado.textContent = `Falta adjuntar un documento del garante: ${faltaGarante.dataset.documentoGarante}.`;
       if (boton) boton.disabled = false;
-      controlesArchivos.find((control) => !control.files?.length)?.focus();
+      faltaGarante.focus();
       return;
     }
 
-    if (archivos.length > 8) {
-      resultado.textContent = 'Puede seleccionar hasta 8 archivos adjuntos.';
+    if (presupuestos.length > limitesAdjuntos.presupuestos || archivos.length > limitesAdjuntos.archivos) {
+      resultado.textContent = esFormularioCredito
+        ? `Puede adjuntar hasta ${limitesAdjuntos.presupuestos} archivos de presupuestos (más los 5 documentos del garante).`
+        : `Puede seleccionar hasta ${limitesAdjuntos.archivos} archivos adjuntos.`;
       if (boton) boton.disabled = false;
       return;
     }
-    const tamanioTotal = archivos.reduce((total, item) => total + item.archivo.size, 0);
-    if (tamanioTotal > 16 * 1024 * 1024) {
-      resultado.textContent = 'El total de los archivos adjuntos no puede superar 16 MB.';
-      if (boton) boton.disabled = false;
-      return;
-    }
-    if (archivos.some(({ archivo }) => {
+    const fueraDeLimite = (archivo, megasFoto) => {
       const esPdf = archivo.type === 'application/pdf';
       const esImagen = ['image/jpeg', 'image/png'].includes(archivo.type);
-      return (!esPdf && !esImagen) || archivo.size > (esPdf ? 8 : 2) * 1024 * 1024;
-    })) {
-      resultado.textContent = 'Adjunte imágenes JPG o PNG de hasta 2 MB, o PDF de hasta 8 MB cada uno.';
+      return (!esPdf && !esImagen) || archivo.size > megas(esPdf ? MEGAS_PDF : megasFoto);
+    };
+    if (archivos.some((archivo) => fueraDeLimite(archivo, MEGAS_FOTO_ORIGINAL))) {
+      resultado.textContent = `Adjunte fotos JPG o PNG (de hasta ${MEGAS_FOTO_ORIGINAL} MB) o PDF de hasta ${MEGAS_PDF} MB cada uno.`;
+      if (boton) boton.disabled = false;
+      return;
+    }
+
+    // Se achican las fotos antes de medir el total: es lo que realmente se envía
+    const cantidadFotos = archivos.filter((archivo) => archivo.type !== 'application/pdf').length;
+    let fotosListas = 0;
+    const prepararFoto = async (archivo) => {
+      if (archivo.type === 'application/pdf') return archivo;
+      resultado.textContent = `Preparando las fotos (${++fotosListas} de ${cantidadFotos})...`;
+      return fotoAchicada(archivo); // la mayoría ya está lista desde que se eligió
+    };
+    const presupuestosListos = [];
+    for (const archivo of presupuestos) presupuestosListos.push(await prepararFoto(archivo));
+    presupuestos = presupuestosListos;
+    for (const documento of documentosGarante) documento.archivo = await prepararFoto(documento.archivo);
+    archivos = [...presupuestos, ...documentosGarante.map(({ archivo }) => archivo)];
+
+    if (archivos.some((archivo) => fueraDeLimite(archivo, MEGAS_FOTO_ENVIADA))) {
+      resultado.textContent = `Una de las fotos no se pudo achicar a menos de ${MEGAS_FOTO_ENVIADA} MB. Pruebe sacarla de nuevo con menor resolución o adjúntela en PDF.`;
+      if (boton) boton.disabled = false;
+      return;
+    }
+    const tamanioTotal = archivos.reduce((total, archivo) => total + archivo.size, 0);
+    if (tamanioTotal > megas(limitesAdjuntos.megas)) {
+      resultado.textContent = `El total de los archivos adjuntos no puede superar ${limitesAdjuntos.megas} MB.`;
       if (boton) boton.disabled = false;
       return;
     }
@@ -421,7 +493,7 @@ if (form) {
     });
 
     try {
-      if (esFormularioCredito) {
+      if (conGarante) {
         const correo = String(datos.correoGarante || '').trim().toLowerCase();
         const confirmacion = String(datos.correoGaranteConfirmacion || '').trim().toLowerCase();
         if (correo !== confirmacion) {
@@ -430,36 +502,47 @@ if (form) {
           form.querySelector('[name="correoGaranteConfirmacion"]')?.focus();
           return;
         }
+        if (String(datos.dniGarante || '').trim() === dniTitular) {
+          resultado.textContent = 'El garante no puede ser el mismo titular del proyecto: ingrese los datos de otra persona.';
+          if (boton) boton.disabled = false;
+          form.querySelector('[name="dniGarante"]')?.focus();
+          return;
+        }
+        // El correo del titular sale de su solicitud de inicio (campo de solo lectura)
+        if (correo === String(form.querySelector('[name="correo"]')?.value || '').trim().toLowerCase()) {
+          resultado.textContent = 'El correo del garante debe ser distinto del correo del titular.';
+          if (boton) boton.disabled = false;
+          form.querySelector('[name="correoGarante"]')?.focus();
+          return;
+        }
+        if (String(datos.dniFirmaGarante || '').trim() !== String(datos.dniGarante || '').trim()) {
+          resultado.textContent = 'El D.N.I. Nº junto a la firma del garante debe ser el mismo DNI del garante.';
+          if (boton) boton.disabled = false;
+          form.querySelector('[name="dniFirmaGarante"]')?.focus();
+          return;
+        }
         datos.correoGarante = correo;
         datos.correoGaranteConfirmacion = confirmacion;
+        datos.firmaGarante = firmaGarante;
+      }
+      if (esAyuda) datos.verificacion = verificacion;
+      if (esAyuda && conTitular) {
         datos.bienesPropios = filasDeTabla('bienesPropios').filter((fila) => Object.values(fila).some(Boolean));
         datos.activoFijo = filasDeTabla('activoFijo').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
         datos.bienesUso = filasDeTabla('bienesUso').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
-        datos.montoSolicitado = sumarMontos('activoFijo', 'subtotal') + sumarMontos('bienesUso', 'subtotal');
-        if (!datos.montoSolicitado) {
-          resultado.textContent = 'Ingrese al menos un bien solicitado con cantidad y precio unitario.';
+        if (!sumarMontos('activoFijo', 'subtotal') && !sumarMontos('bienesUso', 'subtotal')) {
+          resultado.textContent = 'Ingrese al menos un bien solicitado (activo fijo o bienes de uso) con cantidad y precio unitario.';
           if (boton) boton.disabled = false;
           return;
         }
-      }
-      if (esSubsidio) {
-        datos.localidad = localidadPersona.valor(datos.localidad);
-        datos.bienesPropios = filasDeTabla('bienesPropios').filter((fila) => Object.values(fila).some(Boolean));
-        datos.recursosNecesarios = filasDeTabla('recursosNecesarios').filter((fila) => fila.bien || fila.cantidad || fila.precioUnitario);
-        datos.aporteActivoFijo = form.querySelector('[name="aporteActivoFijo"]')?.value || '';
-        datos.solicitadoActivoFijo = form.querySelector('[name="solicitadoActivoFijo"]')?.value || '';
-        datos.aporteBienesUso = form.querySelector('[name="aporteBienesUso"]')?.value || '';
-        datos.solicitadoBienesUso = form.querySelector('[name="solicitadoBienesUso"]')?.value || '';
-        datos.aporteManoObra = form.querySelector('[name="aporteManoObra"]')?.value || '';
-        datos.totalProyectoPropio = numero(datos.aporteActivoFijo) + numero(datos.aporteBienesUso) + numero(datos.aporteManoObra);
-        datos.totalProyectoSolicitado = numero(datos.solicitadoActivoFijo) + numero(datos.solicitadoBienesUso);
-        datos.domicilio = `${datos.calleDomicilio || ''} ${calleSinNumero?.checked ? 'S/N' : (datos.numeroDomicilio || '')}`.trim();
+        datos.firma = firma;
       }
       datos.fechaLugar = datos.dia
         ? `${datos.dia} de ${datos.mes} de ${datos.anio}`
         : `${fechaActual.getDate()} de ${meses[fechaActual.getMonth()]} de ${fechaActual.getFullYear()}`;
       datos.documentoExtranjero = Boolean(extranjero?.checked);
       if (esInicio) {
+        datos.firma = firma;
         datos.localidad = localidadPersona.valor(datos.localidad);
         if (localidadEmprendimiento) datos.localidadEmprendimiento = localidadEmprendimiento.valor(datos.localidadEmprendimiento);
         delete datos.localidadLibre;
@@ -467,29 +550,25 @@ if (form) {
       }
       datos.calleSinNumero = Boolean(calleSinNumero?.checked);
       if (datos.calleSinNumero) datos.numeroEmprendimiento = 'S/N';
-      if (esSubsidio) {
-        const fechaEnvio = new Date();
-        datos.fechaLugar = `SANTIAGO DEL ESTERO, ${String(fechaEnvio.getDate()).padStart(2, '0')} de ${meses[fechaEnvio.getMonth()]} de ${fechaEnvio.getFullYear()}`;
-        datos.domicilio = `${datos.calleDomicilio || ''} ${calleSinNumero?.checked ? 'S/N' : (datos.numeroDomicilio || '')}`.trim();
+      datos.imagenes = await Promise.all(presupuestos.map((archivo) => leerArchivo(archivo)));
+      if (conGarante) {
+        datos.documentosGarante = await Promise.all(documentosGarante.map(({ archivo, categoria }) => leerArchivo(archivo, categoria)));
       }
-      datos.imagenes = await Promise.all(archivos.map(({ archivo, categoria }) => leerArchivo(archivo, categoria)));
       const headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/pdf'
       };
-      if (!esInicio) headers.Authorization = `Bearer ${token}`;
-      const respuesta = await fetch(`${apiBaseUrl}/api/formularios-digitales/${esInicio ? 'inicio' : 'ayuda'}`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(datos)
-      });
+      // En Subsidio y Crédito la sesión es opcional: si la carga un empleado por el emprendedor, queda en la auditoría
+      if (esAyuda && token) headers.Authorization = `Bearer ${token}`;
+      const ruta = esInicio ? 'inicio' : esFormularioCredito ? 'credito' : 'subsidio';
+      const respuesta = await enviarConAvance(`${apiBaseUrl}/api/formularios-digitales/${ruta}`, headers, JSON.stringify(datos),
+        (texto) => { resultado.textContent = texto; });
 
       if (!respuesta.ok) {
         const data = await respuesta.json().catch(() => ({}));
-        resultado.textContent = data.error || 'No se pudo guardar el formulario';
-        if (respuesta.status === 401 || respuesta.status === 403) {
-          resultado.insertAdjacentHTML('beforeend', ' <a href="/login">Iniciar sesión</a>');
-        }
+        resultado.textContent = data.error || (respuesta.status === 413
+          ? 'Los archivos adjuntos son demasiado grandes para enviarlos.'
+          : 'No se pudo guardar el formulario');
         return;
       }
 
@@ -498,9 +577,12 @@ if (form) {
       }
       const archivoPdf = await respuesta.blob();
       const urlPdf = URL.createObjectURL(archivoPdf);
+      const urlGarante = respuesta.headers.get('X-Formulario-Garante-Url');
 
       resultado.textContent = 'Formulario registrado correctamente. ';
       form.reset();
+      window.verificacionExpediente?.restaurar();
+      Object.values(firmas).forEach((firmaDigital) => firmaDigital.reiniciar());
       completarFecha();
       actualizarFormatoDocumento();
       actualizarNumeroCalle();
@@ -511,11 +593,22 @@ if (form) {
       const enlace = document.createElement('a');
       enlace.className = 'btn descargar';
       enlace.href = urlPdf;
-      const correoDescarga = esFormularioCredito ? datos.correoGarante : datos.correo;
-      const correoArchivo = String(correoDescarga || '').trim().toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
-      enlace.download = `Solicitud_Microemprendimiento_${correoArchivo}.pdf`;
-      enlace.textContent = 'Descargar PDF nuevamente';
+      // Nombre que entienda el emprendedor: tipo de solicitud y fecha del envío (ej: Solicitud_Subsidio_Microemprendimiento_05_11_2026.pdf)
+      const hoy = new Date();
+      const fechaArchivo = [hoy.getDate(), hoy.getMonth() + 1].map((n) => String(n).padStart(2, '0')).concat(hoy.getFullYear()).join('_');
+      const tipoArchivo = esFormularioSubsidio ? 'Subsidio_' : esFormularioCredito ? 'Credito_' : '';
+      enlace.download = `Solicitud_${tipoArchivo}Microemprendimiento_${fechaArchivo}.pdf`;
+      enlace.textContent = 'Descargar documento nuevamente';
       resultado.append(enlace);
+      // Crédito: también queda a mano el documento del garante (hoja 7 y sus documentos), que va al final del completo
+      if (urlGarante) {
+        const enlaceGarante = document.createElement('a');
+        enlaceGarante.className = 'btn descargar';
+        enlaceGarante.href = urlGarante;
+        enlaceGarante.download = `Documentacion_Garante_${fechaArchivo}.pdf`;
+        enlaceGarante.textContent = 'Descargar documento del garante';
+        resultado.append(' ', enlaceGarante);
+      }
       enlace.click();
       window.setTimeout(() => URL.revokeObjectURL(urlPdf), 60000);
     } catch (error) {

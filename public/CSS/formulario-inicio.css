@@ -40,6 +40,53 @@
     text-overflow: ellipsis;
 }
 
+/* Subsidios: Nº de expediente, correo y DNI de la solicitud de inicio antes de mostrar las hojas */
+.formulario-inicio .verificacion-subsidio {
+    background: white;
+    padding: 6px 24px 22px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid var(--azul);
+}
+
+.formulario-inicio .acciones-verificacion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.formulario-inicio .mensaje-verificacion {
+    margin: 14px 0 0;
+    color: var(--azul);
+    font-weight: bold;
+}
+
+.formulario-inicio .mensaje-verificacion:empty {
+    display: none;
+}
+
+.formulario-inicio .verificacion-subsidio .linea[readonly] {
+    color: #555;
+}
+
+/* Datos que salen de la solicitud de inicio: se ven, pero no se pueden cambiar */
+.formulario-inicio .linea[data-dato-solicitud] {
+    background: #eef0f3;
+    color: #444;
+    cursor: default;
+}
+
+.formulario-inicio textarea.linea {
+    resize: none;
+}
+
+.formulario-inicio .nota-solicitud {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: #666;
+}
+
 /* Encabezado de la nota */
 .formulario-inicio .fecha-lugar {
     text-align: right;
@@ -104,6 +151,54 @@
 .formulario-inicio .campo-responsable .linea {
     min-width: 0;
     margin-top: 0;
+}
+
+.formulario-inicio .firma-referencia {
+    font-weight: normal;
+    font-style: italic;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Recuadro para dibujar la firma (js/firma-digital.js) */
+.formulario-inicio .firma-digital {
+    margin-top: 24px;
+}
+
+.formulario-inicio .firma-lienzo {
+    display: block;
+    width: 100%;
+    max-width: 540px;
+    aspect-ratio: 3 / 1; /* misma proporción que la imagen que se envía (900 x 300) */
+    margin-top: 8px;
+    border: 1px dashed #999;
+    border-radius: 6px;
+    background: #fff;
+    cursor: crosshair;
+    touch-action: none; /* al firmar con el dedo no se desplaza la página */
+}
+
+.formulario-inicio .firma-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    max-width: 540px;
+    margin: 6px 0 10px;
+}
+
+.formulario-inicio .firma-borrar {
+    padding: 6px 14px;
+    font-size: 13px;
+    background: #2f4e78;
+    color: #fff;
+}
+
+/* Mientras se genera y envía el documento el botón queda gris y no se puede volver a pulsar */
+.formulario-inicio .btn.enviar:disabled {
+    background: #9aa3ad;
+    cursor: not-allowed;
 }
 
 .formulario-inicio .firmas-en-linea {
@@ -231,8 +326,18 @@
     margin: 35px 0 20px;
 }
 
-.formulario-inicio .firma {
-    max-width: 380px;
+/* Documentación que se pide adjuntar (hoja 2 del Formulario de Inicio) */
+.formulario-inicio .documentacion-solicitada {
+    margin: 12px 0 16px;
+    padding: 12px 16px;
+    border-left: 4px solid #2f4e78;
+    border-radius: 4px;
+    background: #eef3f9;
+    line-height: 1.5;
+}
+.formulario-inicio .documentacion-solicitada p + p {
+    margin-top: 10px;
+    font-size: 13px;
 }
 
 /* Nota legal al pie */
@@ -334,24 +439,6 @@
 
 .formulario-inicio .tabla-costos .celda-no-aplica {
     background: #d6d6d6;
-}
-
-.formulario-inicio .documentos-garante {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 20px;
-}
-
-.formulario-inicio .documentos-garante input[type='file'] {
-    display: block;
-    width: 100%;
-    margin-top: 8px;
-}
-
-@media (max-width: 650px) {
-    .formulario-inicio .documentos-garante {
-        grid-template-columns: 1fr;
-    }
 }
 
 .formulario-inicio .revision {
@@ -492,6 +579,16 @@
         margin-bottom: 30px;
     }
 
+    /* En celular la fecha completa no entra en un renglón: se deja cortar para que no salga de la hoja */
+    .formulario-inicio .fecha-automatica {
+        display: inline;
+        white-space: normal;
+    }
+
+    .formulario-inicio .parrafo:has(.fecha-automatica) {
+        text-align: left;
+    }
+
     .formulario-inicio .opciones {
         flex-wrap: wrap;
     }
@@ -499,4 +596,153 @@
     .formulario-inicio .encabezado-oficial .gobierno {
         font-size: 22px;
     }
+}
+
+/* ---------- Formulario de Créditos ---------- */
+/* Recomendación de completarlo junto al garante (antes de verificar el expediente) */
+.aviso-garante {
+    background: #fff4e5;
+    border-left: 4px solid #d35400;
+    padding: 12px 18px;
+    margin: 0 0 22px;
+    line-height: 1.5;
+}
+
+.aviso-garante p + p {
+    margin-top: 6px;
+}
+
+.aviso-garante i {
+    color: #d35400;
+}
+
+/* Carátula: el nombre completo del Ministerio es largo */
+.formulario-inicio .encabezado-oficial .ministerio:first-child {
+    font-size: 18px;
+    margin: 0 0 6px;
+}
+
+/* Hoja 5: fecha arriba a la derecha y "QUEDA UD. DEBIDAMENTE NOTIFICADO." centrado */
+.formulario-inicio .fecha-notificacion {
+    text-align: right;
+    margin-top: 0;
+}
+
+.formulario-inicio .notificado-centrado {
+    text-align: center;
+    font-size: 18px;
+}
+
+/* Hoja 6: incisos del artículo 17 (llevan su letra en el texto) */
+.formulario-inicio .lista-incisos {
+    list-style: none;
+    margin-top: 0;
+}
+
+.formulario-inicio .lista-incisos li {
+    margin: 2px 0;
+}
+
+/* Hoja 7: un botón por cada documento del garante */
+.formulario-inicio .documentos-garante {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.formulario-inicio .documento-garante {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border: 1px dashed #aaa;
+    border-radius: 6px;
+}
+
+.formulario-inicio .documento-garante.con-archivo {
+    border-style: solid;
+    border-color: #2e7d32;
+    background: #f1f8f1;
+}
+
+.formulario-inicio .nombre-documento {
+    font-weight: 600;
+}
+
+.formulario-inicio .boton-adjuntar {
+    position: relative;
+    margin: 0;
+    padding: 8px 18px;
+    background: #2f4e78;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.formulario-inicio .boton-adjuntar:hover {
+    background: #24406a;
+}
+
+.formulario-inicio .boton-adjuntar:focus-within {
+    outline: 2px solid var(--azul);
+    outline-offset: 2px;
+}
+
+/* El input queda invisible dentro del botón, pero se puede enfocar (para avisar si falta) */
+.formulario-inicio .archivo-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.formulario-inicio .archivo-elegido {
+    font-size: 14px;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.formulario-inicio .con-archivo .archivo-elegido {
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+@media (max-width: 650px) {
+    .formulario-inicio .documento-garante {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+}
+
+/* Envío del crédito: va debajo de las hojas (en un reenvío parcial se muestra solo una parte) */
+.formulario-inicio .envio-credito {
+    background: white;
+    padding: 30px 60px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Reenvío parcial: qué parte se completa y cuál se conserva */
+.formulario-inicio .aviso-parte-reenvio {
+    background: #fff4e5;
+    border-left: 4px solid #d35400;
+    padding: 12px 18px;
+    margin: 0 0 25px;
+    line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+    .formulario-inicio .envio-credito {
+        padding: 24px 16px;
+    }
+}
+
+/* .hoja usa display:flex: sin esto, hidden no la ocultaría */
+.formulario-inicio .hoja[hidden] {
+    display: none;
 }

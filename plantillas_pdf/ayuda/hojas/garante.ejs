@@ -1,0 +1,28 @@
+<p class="titulo-declaracion">DOCUMENTACION<br>DEL GARANTE</p>
+
+<div class="datos-garante">
+    <p class="campo">EXPEDIENTE Nº<span class="relleno"><%= datos.expediente %></span></p>
+    <p class="campo">Proyecto:<span class="relleno"><%= datos.nombreEmprendimiento %></span></p>
+    <p class="campo">Titular del proyecto:<span class="relleno"><%= datos.nombreApellido %><% if (datos.dniCuit) { %> (DNI Nº <%= datos.dniCuit %>)<% } %></span></p>
+
+    <p class="subtitulo-garante">DATOS DEL GARANTE</p>
+    <p class="campo">Nombre completo:<span class="relleno"><%= datos.nombreGarante %></span></p>
+    <div class="campo-doble">
+        <p class="campo">D.N.I. Nº<span class="relleno"><%= datos.dniGarante %></span></p>
+        <p class="campo">CUIL Nº<span class="relleno"><%= datos.cuilGarante %></span></p>
+    </div>
+    <p class="campo">Teléfono:<span class="relleno"><%= datos.telefonoGarante %></span></p>
+    <p class="campo">Correo electrónico:<span class="relleno"><%= datos.correoGarante %></span></p>
+
+    <p class="subtitulo-garante">DOCUMENTACIÓN ADJUNTA <small>(en las hojas siguientes)</small></p>
+    <ul class="lista-documentos">
+        <% documentosGarante.forEach((documento) => { %><li><%= documento %></li><% }) %>
+    </ul>
+</div>
+
+<div class="firma-responsable">
+    <span class="linea-firma"><%- include('../firma.ejs', { firma: datos.firmaGarante }) %></span>
+    <p>Garante</p>
+    <p>Aclaración <span class="linea-firma"><%= datos.aclaracionGarante %></span></p>
+    <p>D.N.I. N <span class="linea-firma"><%= datos.dniFirmaGarante %></span></p>
+</div>
