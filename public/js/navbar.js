@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="dropdown-menu menu-derecha" id="menu-crear">
                         <ul>
                             <li><a href="/Emprendedor-Publicaciones">• Crear Publicación</a></li>
+                            <li><a href="/Emprendedor-Productos#nuevo-producto">• Añadir Productos</a></li>
+                            <li id="item-enviar-facturas" style="display: none;"><a href="/Emprendedor-Facturas">• Enviar Facturas de Ley</a></li>
+                            <li><a href="/Emprendedor-Documentos">• Mis Documentos</a></li>
                         </ul>
                     </div>
                 </div>
@@ -121,7 +124,7 @@ let sesionVencidaEnCurso = false;
 function cerrarSesionVencida() {
     if (sesionVencidaEnCurso) return;
     sesionVencidaEnCurso = true;
-    ['token_ministerio', 'notif_ultimo_id', 'notif_avisadas', 'notif_pendientes_vistas']
+    ['token_ministerio', 'notif_ultimo_id', 'notif_avisadas', 'notif_pendientes_vistas', 'notif_vistas_sesion']
         .forEach((clave) => sessionStorage.removeItem(clave));
     window.location.href = '/login?sesion=vencida';
 }
@@ -219,6 +222,9 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
             const datos = await respuesta.json();
             const { total, ultimoId, notificaciones } = datos;
             if (tipoUsuario === 'Emprendedor') {
+                // "+" > "Enviar Facturas de Ley": solo mientras no envió las facturas de su Subsidio o Crédito
+                const itemFacturas = document.getElementById('item-enviar-facturas');
+                if (itemFacturas) itemFacturas.style.display = datos.accionFacturas ? '' : 'none';
                 procesarNotificacionesEmprendedor(notificaciones, idUsuario, datos.vistasEnServidor);
                 return;
             }
@@ -295,7 +301,8 @@ const SECCIONES_PANEL = {
     'creditos-sin-revisar': 'Solicitudes de Créditos',
     'inicio-en-revision': 'En Revisión - Inicio',
     'subsidio-en-revision': 'En Revisión - Subsidio',
-    'creditos-en-revision': 'En Revisión - Créditos'
+    'creditos-en-revision': 'En Revisión - Créditos',
+    'administrar-emprendimientos': 'Administración de Emprendimientos'
 };
 
 // Si ya estamos en el Panel de Control, se abre la sección sin recargar la página;
@@ -341,13 +348,14 @@ function avisarPublicacionesNuevas(pendientes) {
     const nuevas = pendientes.filter((c) => !conocidas.has(c));
     if (!nuevas.length) return;
 
-    // Qué llegó, según el prefijo de la clave (ini- / sub- / cre- / rev- / pend-)
+    // Qué llegó, según el prefijo de la clave (ini- / sub- / cre- / rev- / pend- / fac-)
     const tipos = {
         ini: { seccion: 'inicio-sin-revisar', uno: 'una solicitud de inicio', varios: 'solicitudes de inicio' },
         sub: { seccion: 'subsidio-sin-revisar', uno: 'una solicitud de subsidio', varios: 'solicitudes de subsidio' },
         cre: { seccion: 'creditos-sin-revisar', uno: 'una solicitud de crédito', varios: 'solicitudes de crédito' },
         rev: { seccion: 'inicio-en-revision', uno: 'una solicitud de inicio asignada a vos', varios: 'solicitudes de inicio asignadas a vos' },
-        pend: { seccion: 'publicaciones-espera', uno: 'una publicación', varios: 'publicaciones' }
+        pend: { seccion: 'publicaciones-espera', uno: 'una publicación', varios: 'publicaciones' },
+        fac: { seccion: 'administrar-emprendimientos', uno: 'un envío de Facturas de Ley', varios: 'envíos de Facturas de Ley' }
     };
     const prefijos = [...new Set(nuevas.map((c) => c.split('-')[0]))].filter((pre) => tipos[pre]);
     if (!prefijos.length) return;
@@ -425,6 +433,10 @@ function mostrarAvisoNotificacion(titulo, detalle, url, seccion, alHacerClic) {
 // recuerda aunque cierre sesión. Cada notificación trae una "clave" única.
 // ==========================================
 const CLAVE_AVISADAS = 'notif_avisadas'; // avisos emergentes ya mostrados en esta sesión
+// Notificaciones "soloSesion" (ej. facturas sin entregar): vistas solo hasta cerrar la sesión, así vuelven
+// a marcarse con el punto rojo cada vez que inicia sesión
+const CLAVE_VISTAS_SESION = 'notif_vistas_sesion';
+const clavesSoloSesion = new Set();
 
 function leerLista(almacen, clave) {
     try {
@@ -445,7 +457,10 @@ function guardarLista(almacen, clave, lista) {
 
 const claveVistas = (idUsuario) => `notif_vistas_${idUsuario}`;
 
-function marcarVistas(idUsuario, claves) {
+function marcarVistas(idUsuario, todas) {
+    const deSesion = todas.filter((c) => clavesSoloSesion.has(c));
+    if (deSesion.length) guardarLista(sessionStorage, CLAVE_VISTAS_SESION, [...new Set([...leerLista(sessionStorage, CLAVE_VISTAS_SESION), ...deSesion])]);
+    const claves = todas.filter((c) => !clavesSoloSesion.has(c));
     const vistas = new Set(leerLista(localStorage, claveVistas(idUsuario)));
     claves.forEach((c) => vistas.add(c));
     guardarLista(localStorage, claveVistas(idUsuario), [...vistas]);
@@ -466,12 +481,15 @@ function procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnSe
     // Vista = la marcó en cualquier computadora (servidor) o en este navegador
     const locales = new Set(leerLista(localStorage, claveVistas(idUsuario)));
     notificaciones.forEach((n) => { if (n.vista) locales.add(n.clave); });
-    const vistas = locales;
+    const vistasSesion = new Set(leerLista(sessionStorage, CLAVE_VISTAS_SESION));
+    notificaciones.filter((n) => n.soloSesion).forEach((n) => clavesSoloSesion.add(n.clave));
+    const vistas = new Set([...locales].filter((c) => !clavesSoloSesion.has(c)));
+    vistasSesion.forEach((c) => vistas.add(c));
     const noVistas = notificaciones.filter((n) => !vistas.has(n.clave));
 
     // Lo visto en este navegador antes de que existiera la tabla se sube al servidor una vez
     if (vistasEnServidor) {
-        const soloLocales = notificaciones.filter((n) => !n.vista && vistas.has(n.clave)).map((n) => n.clave);
+        const soloLocales = notificaciones.filter((n) => !n.soloSesion && !n.vista && vistas.has(n.clave)).map((n) => n.clave);
         if (soloLocales.length) marcarVistas(idUsuario, soloLocales);
     }
 
@@ -489,12 +507,14 @@ function procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnSe
         } else {
             lista.innerHTML = notificaciones.map((n) => {
                 const aprobada = n.tipo === 'publicacion-aprobada';
+                const [icono, color] = n.tipo === 'facturas-pendientes' ? ['file-invoice-dollar', '#f6ad55']
+                    : aprobada ? ['circle-check', '#68d391'] : ['circle-xmark', '#fc8181'];
                 const fecha = n.fecha ? new Date(n.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : '';
                 return `
                     <li>
                         <a href="${escaparNotif(n.url)}" class="notif-item${vistas.has(n.clave) ? '' : ' notif-no-leida'}" data-clave="${escaparNotif(n.clave)}">
                             <span class="notif-titulo">
-                                <i class="fa-solid fa-${aprobada ? 'circle-check' : 'circle-xmark'}" style="color: ${aprobada ? '#68d391' : '#fc8181'};"></i>
+                                <i class="fa-solid fa-${icono}" style="color: ${color};"></i>
                                 ${escaparNotif(n.titulo)}
                             </span>
                             <span class="notif-detalle">${escaparNotif(n.detalle)}${fecha ? ` · ${fecha}` : ''}</span>
@@ -536,8 +556,8 @@ function procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnSe
             procesarNotificacionesEmprendedor(notificaciones, idUsuario, vistasEnServidor);
         });
     } else {
-        mostrarAvisoNotificacion(`Tenés ${paraAvisar.length} novedades en tus publicaciones`,
-            'Revisalas en la campanita de notificaciones.', '/VISTA%20USUARIO/Publicaciones.html', null);
+        mostrarAvisoNotificacion(`Tenés ${paraAvisar.length} notificaciones nuevas`,
+            'Revisalas en la campanita de notificaciones.', paraAvisar.some((n) => n.soloSesion) ? '/Emprendedor-Facturas' : '/Emprendedor-Publicaciones', null);
     }
 }
 
@@ -585,6 +605,7 @@ function inicializarDropdowns() {
             sessionStorage.removeItem(CLAVE_ULTIMA_NOTIF);
             sessionStorage.removeItem(CLAVE_AVISADAS);
             sessionStorage.removeItem(CLAVE_PENDIENTES_VISTAS);
+            sessionStorage.removeItem(CLAVE_VISTAS_SESION);
 
             // 2. Se queda en la página actual (ej. el mapa) y la recarga ya sin sesión.
             //    Las vistas privadas (panel de empleado / vista de emprendedor) no sirven

@@ -26,7 +26,22 @@ document.addEventListener('perfil-listo', ({ detail: Perfil }) => {
         actualizarCupoProductos(Perfil, formulario);
     }
     pintarProductos(Perfil);
+    if (Perfil.esDueno) irAlFormularioProducto();
 });
+
+// "+" > "Añadir Productos" (/Emprendedor-Productos#nuevo-producto): baja hasta el formulario (o al aviso del cupo)
+function irAlFormularioProducto() {
+    if (window.location.hash !== '#nuevo-producto') return;
+    const formulario = document.getElementById('form-producto');
+    const destino = formulario && formulario.style.display !== 'none'
+        ? formulario.closest('section') || formulario
+        : document.getElementById('aviso-cupo-productos');
+    if (!destino) return;
+    destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (formulario && formulario.style.display !== 'none') formulario.querySelector('input, textarea')?.focus({ preventScroll: true });
+}
+// Ya estando en Productos, el "+" solo cambia el #
+window.addEventListener('hashchange', irAlFormularioProducto);
 
 // Cuántos productos le quedan; si no le quedan, el formulario se reemplaza por un aviso
 function actualizarCupoProductos(Perfil, formulario) {

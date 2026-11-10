@@ -74,6 +74,11 @@ function inicializarPanelPorRol(rol) {
                     <li id="item-creditos-en-revision"><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
             </li>
+            <li class="item-simple" id="item-administrar-emprendimientos">
+                <a href="#" onclick="cargarSección('administrar-emprendimientos', 'Administración de Emprendimientos')">
+                    <i class="fa-solid fa-store" style="margin-right: 8px;"></i> Administración de Emprendimientos
+                </a>
+            </li>
             <li class="item-simple" id="item-publicaciones-espera">
                 <a href="#" onclick="cargarSección('publicaciones-espera', 'Publicaciones en Espera')">
                     <i class="fa-solid fa-hourglass-half" style="margin-right: 8px;"></i> Publicaciones en Espera
@@ -115,6 +120,11 @@ function inicializarPanelPorRol(rol) {
                     <li id="item-subsidio-en-revision"><a href="#" onclick="cargarSección('subsidio-en-revision', 'En Revisión - Subsidio')">• Solicitudes de Subsidio</a></li>
                     <li id="item-creditos-en-revision"><a href="#" onclick="cargarSección('creditos-en-revision', 'En Revisión - Créditos')">• Solicitudes de Créditos</a></li>
                 </ul>
+            </li>
+            <li class="item-simple" id="item-administrar-emprendimientos">
+                <a href="#" onclick="cargarSección('administrar-emprendimientos', 'Administración de Emprendimientos')">
+                    <i class="fa-solid fa-store" style="margin-right: 8px;"></i> Administración de Emprendimientos
+                </a>
             </li>
             <li class="item-simple" id="item-publicaciones-espera">
                 <a href="#" onclick="cargarSección('publicaciones-espera', 'Publicaciones en Espera')">
@@ -177,7 +187,8 @@ function inicializarPanelPorRol(rol) {
         'inicio-en-revision': 'En Revisión - Inicio',
         'subsidio-en-revision': 'En Revisión - Subsidio',
         'creditos-en-revision': 'En Revisión - Créditos',
-        'estadisticas': 'Estadísticas'
+        'estadisticas': 'Estadísticas',
+        'administrar-emprendimientos': 'Administración de Emprendimientos'
     };
     const seccionPedida = window.location.hash.slice(1);
     if (seccionesPorEnlace[seccionPedida] && document.getElementById(`item-${seccionPedida}`)) {
@@ -785,6 +796,13 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         `;
 
         inicializarControlesAuditoria();
+    }
+    // ======================================================================
+    // ADMINISTRACIÓN DE EMPRENDIMIENTOS (Área / Admin): facturas, puesta en marcha y antecedentes
+    // ======================================================================
+    else if (codigoSeccion === 'administrar-emprendimientos') {
+        filtrosTabla.style.display = 'none';
+        inicializarAdministracionEmprendimientos(zonaRender);
     }
     // ======================================================================
     // ESTADÍSTICAS (SOLO ADMINISTRADORES): gráfico por mes y tabla por departamento

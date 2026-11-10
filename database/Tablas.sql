@@ -28,9 +28,9 @@ use ProyectoEmprendimientos2026;
 
 -- Producto (idProducto (PK), idEmprendimiento (FK), Nombre, Precio, Descripcion, PathFoto, Activo (Si-No), FechaAlta)
 
--- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaEntregaFacturas, FechaFacturasValidadas, MotivoObservacionFacturas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK), idEmpleadoFacturas (FK), idEmpleadoPuestaMarcha (FK))
 
--- Credito (idCredito (PK), PathFormularioCredito, monto, MontoAnterior, FechaRecibido, EstadoRevision, ReenvioSolicitado, ParteReenvio, Aprobado (Si-No), FechaResolucion, MotivoRechazo, MensajeSolicitudReenvio, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Credito (idCredito (PK), PathFormularioCredito, monto, MontoAnterior, FechaRecibido, EstadoRevision, ReenvioSolicitado, ParteReenvio, Aprobado (Si-No), FechaResolucion, MotivoRechazo, MensajeSolicitudReenvio, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaEntregaFacturas, FechaFacturasValidadas, MotivoObservacionFacturas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK), idEmpleadoFacturas (FK), idEmpleadoPuestaMarcha (FK))
 
 -- Garante (idGarante (PK), NombreCompleto, DNI, Cuil, Telefono, Correo, PathFormularioGarante, idCredito (FK))
 
@@ -237,7 +237,7 @@ constraint fk_PE_Publicacion foreign key (idPublicacion) references Publicacion(
 constraint fk_PE_Etiqueta foreign key (idEtiqueta) references Etiqueta(idEtiqueta) on delete cascade
 );
 
--- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaEntregaFacturas, FechaFacturasValidadas, MotivoObservacionFacturas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK), idEmpleadoFacturas (FK), idEmpleadoPuestaMarcha (FK))
 create table Subsidio (
 idSubsidio int auto_increment primary key,
 PathFormularioSub varchar(1024) not null,
@@ -251,17 +251,25 @@ FechaResolucion date null,
 MotivoRechazo varchar(512) null, -- lo que escribió el empleado al rechazar (también se envía por correo al emprendedor)
 MensajeSolicitudReenvio varchar(512) null, 		-- Para explicar por qué se solicitó el reenvio de formulario
 
-PathDirectorioFacturas varchar(1024) null, -- null hasta que se apruebe el subsidio; carpeta de las facturas que sube el emprendedor desde su cuenta
-FacturasEntregadas boolean null default 0, -- hasta 30 dias desde la parobación  -- CAMBIAR A TINYINT? Emprendedor entrega todas las facturas = 1 (entregadas y en revision), 2= Validadas - 3 = no validadas?
+PathDirectorioFacturas varchar(1024) null, -- null hasta que el emprendedor sube su primera factura; carpeta de las facturas que sube desde su cuenta
+FacturasEntregadas boolean null default 0, -- hasta 30 dias desde la aprobación del Ministro. 0: sin entregar (o observadas), 1: enviadas a revisar; validadas = FechaFacturasValidadas
+FechaEntregaFacturas date null, -- cuando el emprendedor envió las facturas a revisar
 FechaFacturasValidadas date null, -- cuando un empleado validó las facturas entregadas
+MotivoObservacionFacturas varchar(512) null, -- si el empleado no las valida: qué debe corregir el emprendedor (FacturasEntregadas vuelve a 0)
 PuestaMarchaAcreditada boolean null default 0,-- hasta 90 dias desde la aprobación; la declara un empleado (no el emprendedor)
 FechaPuestaMarcha date null,
 idSolicitudInicio int not null,
-idEmpleadoRevisor int null,
+idEmpleadoRevisor int null, -- aprobó o rechazó el formulario
+idEmpleadoFacturas int null, -- validó u observó las facturas
+idEmpleadoPuestaMarcha int null, -- acreditó la puesta en marcha
 CONSTRAINT fk_Subsidio_SolicitudInicio
 	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio (idSolicitudInicio),
 CONSTRAINT fk_Subsidio_EmpleadoRevisor
 	FOREIGN KEY (idEmpleadoRevisor) REFERENCES Empleado (idEmpleado),
+CONSTRAINT fk_Subsidio_EmpleadoFacturas
+	FOREIGN KEY (idEmpleadoFacturas) REFERENCES Empleado (idEmpleado),
+CONSTRAINT fk_Subsidio_EmpleadoPuestaMarcha
+	FOREIGN KEY (idEmpleadoPuestaMarcha) REFERENCES Empleado (idEmpleado),
 -- Check para evitar cargar Fecha de aprovación si Aprobado es null
 -- Finalizado solo con resolución, y toda resolución deja el subsidio finalizado
 CONSTRAINT chk_estado_revision_sub CHECK (
@@ -282,7 +290,7 @@ CONSTRAINT chk_marcha_solo_aprobado_sub CHECK (
     )
 );
 
--- Credito (idCredito (PK), PathFormularioCredito, monto, MontoAnterior, FechaRecibido, EstadoRevision, ReenvioSolicitado, ParteReenvio, Aprobado (Si-No), FechaResolucion, MotivoRechazo, MensajeSolicitudReenvio, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Credito (idCredito (PK), PathFormularioCredito, monto, MontoAnterior, FechaRecibido, EstadoRevision, ReenvioSolicitado, ParteReenvio, Aprobado (Si-No), FechaResolucion, MotivoRechazo, MensajeSolicitudReenvio, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaEntregaFacturas, FechaFacturasValidadas, MotivoObservacionFacturas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK), idEmpleadoFacturas (FK), idEmpleadoPuestaMarcha (FK))
 -- Mismas columnas de revisión que Subsidio: el emprendedor lo completa con su Nº de expediente y el Área lo revisa
 create table Credito (
 idCredito int auto_increment primary key,
@@ -298,17 +306,25 @@ FechaResolucion date null,
 MotivoRechazo varchar(512) null, -- lo que escribió el empleado al rechazar (también se envía por correo al emprendedor)
 MensajeSolicitudReenvio varchar(512) null, -- Para explicar por qué se solicitó el reenvio de formulario
 
-PathDirectorioFacturas varchar(1024) null,-- null hasta que se apruebe el credito
-FacturasEntregadas boolean null default 0, -- hasta 30 dias desde la parobación
+PathDirectorioFacturas varchar(1024) null,-- null hasta que el emprendedor sube su primera factura
+FacturasEntregadas boolean null default 0, -- hasta 30 dias desde la aprobación del Ministro. 0: sin entregar (o observadas), 1: enviadas a revisar; validadas = FechaFacturasValidadas
+FechaEntregaFacturas date null, -- cuando el emprendedor envió las facturas a revisar
 FechaFacturasValidadas date null,
+MotivoObservacionFacturas varchar(512) null, -- si el empleado no las valida: qué debe corregir el emprendedor (FacturasEntregadas vuelve a 0)
 PuestaMarchaAcreditada boolean null default 0,-- hasta 90 dias desde la aprobación
 FechaPuestaMarcha date null,
 idSolicitudInicio int not null,
 idEmpleadoRevisor int null, -- aprobó o rechazó el formulario
+idEmpleadoFacturas int null, -- validó u observó las facturas
+idEmpleadoPuestaMarcha int null, -- acreditó la puesta en marcha
 CONSTRAINT fk_Credito_SolicitudInicio
 	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio (idSolicitudInicio),
 CONSTRAINT fk_Credito_Empleado
 	FOREIGN KEY (idEmpleadoRevisor) REFERENCES Empleado (idEmpleado),
+CONSTRAINT fk_Credito_EmpleadoFacturas
+	FOREIGN KEY (idEmpleadoFacturas) REFERENCES Empleado (idEmpleado),
+CONSTRAINT fk_Credito_EmpleadoPuestaMarcha
+	FOREIGN KEY (idEmpleadoPuestaMarcha) REFERENCES Empleado (idEmpleado),
 -- Check para evitar cargar Fecha de aprovación si Aprobado es null
 -- Finalizado solo con resolución, y toda resolución deja el crédito finalizado
 CONSTRAINT chk_estado_revision_cred CHECK (

@@ -27,6 +27,9 @@ import ayudasRouter from './routes/ayudasRoutes.js';
 import cuentaRouter from './routes/cuentaRoutes.js';
 import noticiasRouter from './routes/noticiasRoutes.js';
 import estadisticasRouter from './routes/estadisticasRoutes.js';
+import facturasRouter from './routes/facturasRoutes.js';
+import emprendimientosAdminRouter from './routes/emprendimientosAdminRoutes.js';
+import documentosRouter from './routes/documentosRoutes.js';
 import { prepararNavegador } from './helpers/pdfDesdeHtml.js';
 
 // Inicializamos la app express
@@ -67,6 +70,9 @@ app.use('/api', ayudasRouter);     // Subsidios y créditos sin revisar para el 
 app.use('/api', cuentaRouter);     // Enlace por correo para que el emprendedor aprobado cree su contraseña (/api/cuenta)
 app.use('/api', noticiasRouter);   // Noticias del Ministerio: públicas, las cargan los usuarios Noticiero (/api/noticias)
 app.use('/api', estadisticasRouter); // Estadísticas anuales para el Administrador (/api/estadisticas)
+app.use('/api', facturasRouter);   // Facturas de Ley que rinde el emprendedor de su Subsidio o Crédito (/api/facturas)
+app.use('/api', documentosRouter);   // "Mis Documentos" del emprendedor (/api/documentos)
+app.use('/api', emprendimientosAdminRouter); // Administración de Emprendimientos del Área: facturas, puesta en marcha y antecedentes (/api/emprendimientos-admin)
 
 // ==========================================
 // VISTAS FRONTEND (RUTAS DE PÁGINAS)
@@ -159,6 +165,13 @@ app.get('/Emprendedor-Contacto', (req, res) => {
 // 13. Ruta para Emprendedor Fotos
 app.get('/Emprendedor-Fotos', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Fotos.html'));
+});
+// 14. Ruta para que el emprendedor envíe las Facturas de Ley de su Subsidio o Crédito
+app.get('/Emprendedor-Facturas', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Facturas.html'));
+});
+app.get('/Emprendedor-Documentos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'VISTA USUARIO', 'Documentos.html'));
 });
 
 // ==========================================

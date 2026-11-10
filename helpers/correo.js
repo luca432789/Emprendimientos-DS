@@ -77,7 +77,8 @@ export const textoResultadoIntento = (resultado) => resultado.correoEnviado
     ? ` Se envió el correo a ${resultado.correo}.`
     : ` ATENCIÓN: no se pudo enviar el correo a ${resultado.correo} (${resultado.motivoCorreo}) Puede reintentarlo.`;
 
-export const enviarCorreo = async ({ para, asunto, html, texto }) => {
+// adjuntos (opcional): [{ filename, content: Buffer, contentType }]
+export const enviarCorreo = async ({ para, asunto, html, texto, adjuntos }) => {
     if (!correoConfigurado()) {
         const error = new Error('El envío de correos no está configurado (faltan SMTP_USER y SMTP_PASS en el .env).');
         error.code = 'CORREO_NO_CONFIGURADO';
@@ -89,6 +90,7 @@ export const enviarCorreo = async ({ para, asunto, html, texto }) => {
         to: para,
         subject: asunto,
         text: texto,
-        html
+        html,
+        ...(adjuntos?.length ? { attachments: adjuntos } : {})
     });
 };

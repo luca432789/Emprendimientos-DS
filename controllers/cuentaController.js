@@ -35,7 +35,7 @@ export const enviarCorreoActivacion = async (req, idUsuarioEmprendedor) => {
         const ayuda = datos.EleccionAyuda === 'Credito' ? 'Crédito' : 'Subsidio';
         const avisoFacturas = Number(datos.CargaHistorica) === 1 ? '' :
             `Dentro de los 30 (treinta) días de recibidos los fondos del ${ayuda}, deberá presentar a través de su cuenta, `
-            + 'en la sección de su perfil, la FACTURA de LEY que acredite la compra de los materiales y/o equipamiento e insumos '
+            + 'desde la opción "Enviar Facturas de Ley" del botón "+", la FACTURA de LEY que acredite la compra de los materiales y/o equipamiento e insumos '
             + 'necesarios para llevar a cabo su emprendimiento.';
 
         await enviarCorreo({

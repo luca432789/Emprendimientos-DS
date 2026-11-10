@@ -1,0 +1,253 @@
+/* =========================================================
+   Facturas de Ley del emprendedor (facturas.js)
+   ========================================================= */
+
+.perfil-content > .facturas-card {
+  grid-column: 1 / -1; /* la página tiene una sola tarjeta: ocupa todo el ancho */
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.facturas-card h3 i {
+  color: #2f4e78;
+  margin-right: 6px;
+}
+
+.facturas-plazo,
+.facturas-estado {
+  margin: 10px 0 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 4px solid #2f4e78;
+  background: #eef3fa;
+  line-height: 1.5;
+}
+
+.facturas-plazo i,
+.facturas-estado i {
+  margin-right: 6px;
+}
+
+.facturas-plazo.urgente {
+  border-left-color: #d35400;
+  background: #fff4e5;
+}
+
+.facturas-plazo.vencido {
+  border-left-color: #c53030;
+  background: #fde8e8;
+  color: #9b2c2c;
+}
+
+.facturas-estado.revision {
+  border-left-color: #a16207;
+  background: #fef3c7;
+}
+
+.facturas-estado.validadas {
+  border-left-color: #2f855a;
+  background: #e6f4ea;
+}
+
+.facturas-explicacion {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.facturas-agregar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 14px 0 6px;
+}
+
+.facturas-agregar .btn-adjuntar.deshabilitado {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.facturas-ayuda {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.facturas-progreso {
+  margin: 6px 0;
+  color: #2f4e78;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.facturas-lista {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 10px;
+}
+
+.factura-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.factura-miniatura {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #f3f4f6;
+}
+
+.factura-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: #c53030;
+  text-decoration: none;
+}
+
+.factura-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.factura-info a {
+  color: #1f2933;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.factura-info span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.facturas-pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #374151;
+}
+
+.facturas-pie .btn-publicar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .factura-item {
+    flex-wrap: wrap;
+  }
+
+  .facturas-pie .btn-publicar {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Mis Documentos (documentos.js)
+   ========================================================= */
+.documentos-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+
+.documentos-numeros div {
+  background: #eef3fa;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.documentos-numeros span {
+  display: block;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.documentos-numeros strong {
+  color: #1a3a5f;
+  word-break: break-word;
+}
+
+.documentos-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.documento-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.documento-item.sin-archivo {
+  background: #f8fafc;
+}
+
+.documento-icono {
+  font-size: 26px;
+  color: #2f4e78;
+  width: 32px;
+  text-align: center;
+}
+
+.documento-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.documento-info span,
+.documento-estado {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.documento-item .btn-publicar,
+.documento-item .btn-producto {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .documento-item {
+    flex-wrap: wrap;
+  }
+
+  .documento-item .btn-publicar,
+  .documento-item .btn-producto {
+    width: 100%;
+    text-align: center;
+  }
+}
