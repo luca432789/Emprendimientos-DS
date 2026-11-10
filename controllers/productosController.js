@@ -57,7 +57,7 @@ const rutaFotoNueva = (idEmprendimiento, idProducto) => `/uploads/productos/${id
 const responderError = (res, error, mensaje) => {
     if (error instanceof ErrorImagen) return res.status(400).json({ error: error.message });
     if (error?.code === 'ER_NO_SUCH_TABLE' || error?.code === 'ER_TABLEACCESS_DENIED_ERROR') {
-        return res.status(503).json({ error: 'La tabla de productos no está creada en la base de datos (ejecutar database/Productos.sql).' });
+        return res.status(503).json({ error: 'La tabla de productos no está creada en la base de datos: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
     }
     console.error(mensaje, error);
     return res.status(500).json({ error: mensaje });

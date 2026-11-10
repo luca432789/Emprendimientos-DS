@@ -93,7 +93,7 @@ const formatoNoticia = async (n, usuario, esNoticiero) => ({
 const responderError = (res, error, mensaje) => {
     if (error instanceof ErrorImagen) return res.status(400).json({ error: error.message });
     if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR', 'ER_TABLEACCESS_DENIED_ERROR'].includes(error?.code)) {
-        return res.status(503).json({ error: 'Las noticias no están instaladas en la base de datos (ejecutar database/Noticias.sql).' });
+        return res.status(503).json({ error: 'Las noticias no están instaladas en la base de datos: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
     }
     // Rechazos de los triggers de seguridad de Noticia (permiso o ventana de 1 hora)
     if (error?.code === 'ER_SIGNAL_EXCEPTION') return res.status(403).json({ error: error.sqlMessage });

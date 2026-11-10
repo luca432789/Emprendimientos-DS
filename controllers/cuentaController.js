@@ -13,7 +13,7 @@ import { obtenerIpCliente } from '../helpers/ipCliente.js';
 // Mismas reglas que el registro de usuarios: 12 caracteres, mayúscula, minúscula, número y especial
 const REGEX_CONTRASEÑA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-])[A-Za-z\d@$!%*?&-]{12,}$/;
 const ROLES_REENVIO = ['Empleado de Area', 'Administrador'];
-const FALTA_TABLA = 'Falta ejecutar database/Activacion de cuenta.sql en la base de datos.';
+const FALTA_TABLA = 'La base de datos no tiene la tabla de enlaces para crear contraseña: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).';
 const faltaTabla = (error) => error?.code === 'ER_NO_SUCH_TABLE' || error?.code === 'ER_TABLEACCESS_DENIED_ERROR';
 
 // Crea el enlace y envía el correo "su emprendimiento fue aprobado, cree su contraseña".

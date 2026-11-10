@@ -218,7 +218,7 @@ export const marcarNotificacionesVistas = async (req, res) => {
         res.json({ mensaje: 'Notificaciones marcadas como vistas.' });
     } catch (error) {
         if (error?.code === 'ER_NO_SUCH_TABLE' || error?.code === 'ER_TABLEACCESS_DENIED_ERROR') {
-            return res.status(503).json({ error: 'Falta ejecutar database/Notificaciones.sql.' });
+            return res.status(503).json({ error: 'La base de datos no tiene la tabla de notificaciones vistas: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
         }
         console.error('Error al marcar notificaciones como vistas:', error);
         res.status(500).json({ error: 'No se pudieron marcar las notificaciones.' });

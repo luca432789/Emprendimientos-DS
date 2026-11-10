@@ -178,7 +178,7 @@ const correoDeLaSolicitud = (req, datos) => {
     return null;
 };
 
-const FALTA_MIGRACION_RESOLUCION = 'Falta ejecutar "Actualizacion resolucion final 2026-11-08.sql" en la base de datos.';
+const FALTA_MIGRACION_RESOLUCION = 'La base de datos no está actualizada para la resolución final: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).';
 
 // Motivo escrito por el empleado: sin espacios de más, de 10 a 512 caracteres
 const motivoEmpleado = (valor) => {
@@ -428,12 +428,12 @@ export const resolverRevisionArea = async (req, res) => {
         }
         if (error.code === 'ER_SIGNAL_EXCEPTION') {
             return res.status(409).json({
-                error: 'La base de datos todavía bloquea los cambios de coordenadas. Ejecuta la migración de coordenadas de revisión del Área.'
+                error: 'La base de datos todavía bloquea los cambios de coordenadas: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).'
             });
         }
         if (error.code === 'ER_SIGNAL_EXCEPTION') {
             return res.status(409).json({
-                error: 'La base de datos aún no permite la actualización controlada de coordenadas. Ejecute la migración de revisión del Área.'
+                error: 'La base de datos aún no permite la actualización controlada de coordenadas: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).'
             });
         }
 
@@ -550,7 +550,7 @@ export const asignarExpedienteGED = async (req, res) => {
     } catch (error) {
         console.error("Error en asignarExpedienteGED:", error.message);
         if (error.code === 'ER_BAD_FIELD_ERROR') {
-            return res.status(500).json({ error: 'Falta ejecutar "Actualizacion limpieza de columnas 2026-11-08.sql" en la base de datos.' });
+            return res.status(500).json({ error: 'La base de datos no está actualizada para asignar expedientes: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
         }
         res.status(500).json({ error: "Error interno al actualizar el expediente." });
     }
@@ -773,7 +773,7 @@ export const registrarEmprendimientoHistorico = async (req, res) => {
     } catch (error) {
         await Promise.all(archivosGuardados.map(ruta => fs.unlink(ruta).catch(() => {})));
         if (error.code === 'ER_BAD_FIELD_ERROR' && /CargaHistorica/.test(error.sqlMessage || '')) {
-            return res.status(500).json({ error: 'Falta ejecutar la migración "Migracion Carga Historica.sql" en la base de datos.' });
+            return res.status(500).json({ error: 'La base de datos no está actualizada para la carga histórica: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
         }
         return responderErrorEtapaMinistro(res, error, 'No se pudo registrar el emprendimiento.');
     }

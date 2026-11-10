@@ -791,7 +791,7 @@ const registrarAyuda = async (tipo, solicitud, direccionWeb, datos, datosAuditor
     if (error.codigo) throw new ErrorValidacion(error.message, 409);
     // Sin la actualización de la base, el trigger viejo (o la falta de permiso) no deja actualizar el garante
     if (garante && (/Garante es inmutable/.test(error.sqlMessage || '') || /^ER_(TABLE|COLUMN)ACCESS_DENIED/.test(error.code || ''))) {
-      throw new ErrorValidacion('Falta ejecutar database/Actualizacion garante unico 2026-11-09.sql en la base de datos.', 503);
+      throw new ErrorValidacion('La base de datos no permite actualizar el garante: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).', 503);
     }
     throw error;
   }

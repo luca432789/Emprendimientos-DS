@@ -19,7 +19,7 @@ import {
 // por eso el total es chico: así ese PDF se puede mandar por correo
 export const LIMITES_FACTURAS = { maximoArchivos: 20, megasTotal: 20, megasFoto: 4, megasPdf: 8 };
 const MEGA = 1024 * 1024;
-const FALTA_MIGRACION = 'Falta ejecutar database/Actualizacion facturas de ley 2026-11-09.sql en la base de datos.';
+const FALTA_MIGRACION = 'La base de datos no está actualizada para las Facturas de Ley: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).';
 
 // Nombre guardado: <milisegundos>-<azar>__<nombre original>.<jpg|png|pdf> (el orden es el de subida)
 const PATRON_ARCHIVO = /^(\d{13})-([0-9a-f]{8})__(.+)\.(jpg|png|pdf)$/;

@@ -15,7 +15,7 @@ document.addEventListener('perfil-listo', ({ detail: Perfil }) => {
     if (!Perfil.datos.productosDisponibles) {
         if (tarjetaFormulario) tarjetaFormulario.style.display = 'none';
         document.getElementById('productos-grid').innerHTML = Perfil.esDueno
-            ? '<p class="sin-datos">La sección de productos todavía no está habilitada en la base de datos (falta ejecutar <code>database/Productos.sql</code>).</p>'
+            ? '<p class="sin-datos">La sección de productos todavía no está habilitada en la base de datos (hay que actualizar la base de datos).</p>'
             : '<p class="sin-datos">Este emprendimiento todavía no cargó productos.</p>';
         return;
     }

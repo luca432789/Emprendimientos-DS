@@ -184,7 +184,7 @@ const responderErrorAyuda = (res, error, mensajeGenerico) => {
     };
     if (estados[error.codigo]) return res.status(estados[error.codigo]).json({ error: error.message });
     if (error.code === 'ER_BAD_FIELD_ERROR') {
-        return res.status(500).json({ error: 'Falta ejecutar "Actualizacion revision de creditos 2026-11-09.sql" en la base de datos.' });
+        return res.status(500).json({ error: 'La base de datos no está actualizada para la revisión de créditos: créela de nuevo con los scripts de la carpeta database (Tablas.sql, Triggers.sql y Usuario Conexion.sql).' });
     }
     console.error(mensajeGenerico, error);
     return res.status(500).json({ error: mensajeGenerico });

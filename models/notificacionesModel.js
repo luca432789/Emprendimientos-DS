@@ -24,7 +24,7 @@ export const modelPublicacionesEnEspera = async () => {
 };
 
 // Cuáles de estas claves ya vio el usuario. Devuelve null si la tabla NotificacionVista no existe
-// todavía (falta ejecutar database/Notificaciones.sql): el navegador se encarga en ese caso.
+// (base sin actualizar): el navegador se encarga en ese caso.
 export const modelClavesVistas = async (idUsuario, claves) => {
     if (!claves.length) return new Set();
     try {
