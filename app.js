@@ -44,7 +44,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Middlewares de control (CORS y procesamiento de JSON)
 app.use(cors()); 
-app.use(express.json({ limit: '25mb' })); // los formularios digitales envían adjuntos en base64 (hasta 16 MB)
+app.use(express.json({ limit: '45mb' })); // los formularios digitales envían adjuntos en base64 (hasta 30 MB en el de crédito)
 
 app.use(express.static(path.resolve('./public')));  // Servirá tus HTMLs, CSS e Imágenes automáticos
 

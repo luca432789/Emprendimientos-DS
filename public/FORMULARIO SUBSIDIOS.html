@@ -40,8 +40,8 @@
         <form id="formulario-digital" class="formulario-inicio">
             <input type="hidden" name="tipoFormulario" value="Formulario de Subsidios no Reintegrables">
 
-            <!-- Identificación: Nº de expediente + correo + DNI de la solicitud de inicio (js/formulario-subsidio.js) -->
-            <section class="verificacion-subsidio" data-verificacion>
+            <!-- Identificación: Nº de expediente + correo + DNI de la solicitud de inicio (js/verificacion-expediente.js) -->
+            <section class="verificacion-subsidio" data-verificacion="subsidio">
                 <h3 class="titulo-campos">DATOS DE SU SOLICITUD DE INICIO</h3>
                 <label class="etiqueta" for="verificacion-expediente">Nº de expediente</label>
                 <input type="text" id="verificacion-expediente" class="linea" maxlength="50" autocomplete="off" data-verificacion-campo="expediente" placeholder="Ej.: EX-2026-...">
@@ -63,7 +63,7 @@
             </section>
 
             <!-- Las hojas se muestran recién cuando coinciden los datos de la solicitud -->
-            <div data-contenido-subsidio hidden>
+            <div data-contenido-ayuda hidden>
 
             <!-- HOJA 1: CARÁTULA -->
             <section class="hoja">
@@ -189,14 +189,18 @@
                 </table></div>
                 <p class="parrafo">Presupuestos y documentación respaldatoria del proyecto</p>
                 <div class="zona-archivos"><label class="etiqueta" for="imagenes-emprendimiento">Adjuntar presupuestos, fotografías o PDF (obligatorio)</label><input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple required></div>
-                <small>JPG/PNG hasta 2 MB o PDF hasta 8 MB cada uno; máximo 8 archivos y 16 MB en total. Se agregan como hojas al final del formulario.</small>
+                <small>Fotos JPG/PNG (se achican automáticamente al enviar) o PDF de hasta 8 MB cada uno; máximo 8 archivos y 16 MB en total. Se agregan como hojas al final del formulario.</small>
             </section>
 
             <!-- HOJA 4: ACTA ACUERDO (TEXTO DEL PDF OFICIAL) -->
             <section class="hoja">
                 <h3 class="titulo-campos">ACTA ACUERDO PLAN PROVINCIAL SANTIAGO PRODUCTIVO</h3>
-                <p class="parrafo">Entre la SUBSECRETARIA DE DESARROLLO SOCIAL con domicilio en calle Sáenz Peña Nº 340 representada en este acto por el Subsecretario de Desarrollo Social Lic. Ramiro Banco, en adelante LA SUBSECRETARIA DE DESARROLLO SOCIAL y el Sr. <strong data-valor="nombreApellido"></strong>, D.N.I. Nº <strong data-valor="dniCuit"></strong>, domiciliado en calle <strong data-valor="domicilio"></strong>, localidad <strong data-valor="localidadTitular"></strong>, Departamento <strong data-valor="departamentoTitular"></strong> de la Provincia de Santiago del Estero, en adelante EL EMPRENDEDOR, convienen lo siguiente:</p>
-                <ol class="texto-oficial"><li>EL EMPRENDEDOR declara conocer y aceptar los términos y condiciones de lo dispuesto en la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que reglamenta el Plan Provincial Santiago Productivo en cuanto a las condiciones, modalidades, requisitos y documentación exigibles.</li><li>EL EMPRENDEDOR se compromete a cumplir con lo establecido en el reglamento, como así también a facilitar con las facultades de supervisión, contralor y evaluación de LA DIRECCION GENERAL DE DESARROLLO SOCIAL respecto del compromiso asumido.</li><li>En caso de incumplimiento por parte de EL EMPRENDEDOR, LA DIRECCION GENERAL DE DESARROLLO SOCIAL se encuentra facultada para iniciar los trámites correspondientes ante los organismos que corresponde a los efectos de procurar, por imperio de la Ley, el cumplimiento de la presente.</li><li>Las partes reconocen que todo lo declarado en la presente reviste el carácter de DECLARACION JURADA.</li></ol>
+                <p class="parrafo">Entre la <strong>SUBSECRETARIA DE DESARROLLO SOCIAL</strong> con domicilio en calle Sáenz Peña Nº 340 representada en este acto por el Subsecretario de Desarrollo Social Lic. Ramiro Banco, en adelante LA SUBSECRETARIA DE DESARROLLO SOCIAL y el Sr. <strong data-valor="nombreApellido"></strong>, D.N.I. Nº <strong data-valor="dniCuit"></strong>, domiciliado en calle <strong data-valor="domicilio"></strong>, localidad <strong data-valor="localidadTitular"></strong>, Departamento <strong data-valor="departamentoTitular"></strong> de la Provincia de Santiago del Estero, en adelante <strong>EL EMPRENDEDOR</strong>, convienen lo siguiente:</p>
+                <ol class="texto-oficial">
+                    <li><strong>EL EMPRENDEDOR</strong> declara conocer y aceptar los términos y condiciones de lo dispuesto en la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que reglamenta el Plan Provincial Santiago Productivo en cuanto a las condiciones, modalidades, requisitos y documentación exigibles.</li>
+                    <li><strong>EL EMPRENDEDOR</strong> se compromete a cumplir con lo establecido en el reglamento, como así también a facilitar con las facultades de supervisión, contralor y evaluación de <strong>DIRECCION GENERAL DE DESARROLLO SOCIAL</strong> respecto del compromiso asumido.</li>
+                    <li>En caso de incumplimiento por parte de <strong>EL EMPRENDEDOR, LA DIRECCION GENERAL DE DESARROLLO SOCIAL</strong> se encuentra facultada para iniciar los trámites correspondientes ante los organismos que corresponde a los efectos de procurar, por imperio de la Ley, el cumplimiento de la presente.</li>
+                    <li>Las partes reconocen que todo lo declarado en la presente reviste el carácter de <strong>DECLARACION JURADA</strong>.</li></ol>
                 <p class="campo-firma">FIRMA:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
                 <p class="campo-firma">ACLARACION:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
                 <p class="campo-firma">DNI Nº:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
@@ -205,11 +209,16 @@
             <!-- HOJA 5: NOTIFICACIÓN -->
             <section class="hoja">
                 <h3 class="titulo-campos">SRES. BENEFICIARIOS DEL PLAN PROVINCIAL SANTIAGO PRODUCTIVO</h3>
-                <p class="parrafo">La Subsecretaria de Desarrollo Social de la Provincia de Santiago del Estero informa a Ud. que según la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que regula al Plan Provincial Santiago Productivo, los beneficiarios de dicho Plan Provincial deberán presentar de carácter OBLIGATORIO las facturas de ley que acrediten el cumplimiento de la compra de los materiales y/o equipamientos e insumos necesarios para llevar a cabo el proyecto, que se encuentran detallados en el Presupuesto Definitivo del Proyecto. El tiempo límite para la presentación de dicha documentación es de 30 (treinta) días corridos a partir del otorgamiento del beneficio.</p>
+                <p class="parrafo">La Subsecretaria de Desarrollo Social de la Provincia de Santiago del Estero informa a Ud. que según la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que regula al Plan Provincial Santiago Productivo, los beneficiarios de dicho Plan Provincial deberán presentar de carácter <strong>OBLIGATORIO</strong> las facturas de ley que acrediten el cumplimiento de la compra de los materiales y/o equipamientos e insumos necesarios para llevar a cabo el proyecto, que se encuentran detallados en el Presupuesto Definitivo del Proyecto. El tiempo límite para la presentación de dicha documentación es de <strong>30 (treinta) días corridos</strong> a partir del otorgamiento del beneficio.</p>
                 <p class="parrafo">La rendición de las facturas de ley deberán realizarla en las Oficinas de Rendición de Cuentas dependiente de la Subsecretaría de Desarrollo Social, sito en calle Sáenz Peña Nº 340 en el horario de 7:00 a 13:00 hs.</p>
                 <p class="parrafo">La falta de cumplimiento inmediatamente transcurrido el periodo anteriormente mencionado dará lugar al inicio de las acciones pertinentes fines de determinar la responsabilidad y penalidades correspondientes, las que consistan en:</p>
-                <ul class="texto-oficial"><li>Devolución del dinero recibido y/o,</li><li>Devolución del equipamiento comprado,</li><li>Multa por infracción del 10 % al 50 % del importe recibido,</li><li>Trabajo social por el valor de la deuda,</li><li>Acciones legales encuadradas en el Capítulo IV del Código Penal y otras judicialmente aplicadas.</li></ul>
-                <p class="parrafo">Se deberá acreditar dentro de los 90 (noventa) días la puesta en marcha del proyecto conforme a las pautas establecidas por el Equipo Técnico del Área de Economía Social. En todos los casos intervendrá la Justicia Federal o Provincial según corresponda con jurisdicción de la Provincia del Santiago Productivo. <strong>QUEDA UD. DEBIDAMENTE NOTIFICADO.</strong></p>
+                <ul class="texto-oficial">
+                    <li>Devolución del dinero recibido y/o,</li>
+                    <li>Devolución del equipamiento comprado,</li>
+                    <li>Multa por infracción del 10 % al 50 % del importe recibido,</li>
+                    <li>Trabajo social por el valor de la deuda,</li>
+                    <li>Acciones legales encuadradas en el Capítulo IV del Código Penal y otras judicialmente aplicadas.</li></ul>
+                <p class="parrafo">Se deberá acreditar dentro de los <strong>90 (noventa)</strong> días la puesta en marcha del proyecto conforme a las pautas establecidas por el Equipo Técnico del Área de Economía Social. En todos los casos intervendrá la Justicia Federal o Provincial según corresponda con jurisdicción de la Provincia del Santiago Productivo. <strong>QUEDA UD. DEBIDAMENTE NOTIFICADO.</strong></p>
                 <p class="campo-firma">FIRMA:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
                 <p class="campo-firma">ACLARACION:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
                 <div class="fila firmas-en-linea">
@@ -227,10 +236,10 @@
                 <h3 class="titulo-campos">DECLARACIÓN JURADA DE USO Y RENDICIÓN DE FONDOS</h3>
                 <p class="parrafo">LUGAR Y FECHA <strong data-valor="lugarFirma"></strong>, <span class="fecha-automatica"></span></p>
                 <p class="parrafo">El que suscribe: <strong data-valor="nombreApellido"></strong></p>
-                <p class="parrafo">D.N.I. Nº <strong data-valor="dniCuit"></strong>, con domicilio en <strong data-valor="domicilio"></strong>, Dpto. <strong data-valor="departamentoTitular"></strong>, Provincia de Santiago del Estero, DECLARA EN CARÁCTER DE DECLARACIÓN JURADA conocer y dar cumplimiento a las siguientes normas:</p>
-                <p class="parrafo">1) Una vez concluido el trámite de pago y recibidos los valores para la financiación de Proyecto, se deberá presentar dentro de los 30 (treinta) días la recepción de los mismos, FACTURA DE LEY de manera que acredite la compra de los materiales y/o equipamiento e insumo necesario para llevar a cabo el mismo.</p>
+                <p class="parrafo">D.N.I. Nº <strong data-valor="dniCuit"></strong>, con domicilio en <strong data-valor="domicilio"></strong>, Dpto. <strong data-valor="departamentoTitular"></strong>, Provincia de Santiago del Estero, <strong>DECLARA EN CARÁCTER DE DECLARACIÓN JURADA conocer y dar cumplimiento a las siguientes normas:</strong></p>
+                <p class="parrafo">1) Una vez concluido el trámite de pago y recibidos los valores para la financiación de Proyecto, se deberá presentar dentro de los <strong>30 (treinta) días</strong> la recepción de los mismos, <strong>FACTURA DE LEY</strong> de manera que acredite la compra de los materiales y/o equipamiento e insumo necesario para llevar a cabo el mismo.</p>
                 <p class="parrafo">2) Ante la falta de cumplimiento en la entrega de la documentación requerida, la Subsecretaría de Desarrollo Social a través del organismo que corresponda podrá iniciar las acciones tendientes al reintegro de los fondos, que podrán consistir en la devolución del dinero y/o equipamiento comprado y/o multa. Asimismo el incumplimiento de las causales previstas dará lugar al inicio de acciones legales pertinentes.</p>
-                <p class="parrafo">3) Transcurrido los 90 (noventa) días de recibidos los valores se deberá acreditar la puesta en marcha del proyecto conforme a las metas y objetivos planteados en el proyecto para respaldar de esta forma la continuidad del mismo y la generación del beneficio económico y social esperado.</p>
+                <p class="parrafo">3) Transcurrido los <strong>90 (noventa)</strong> días de recibidos los valores <strong>se deberá acreditar la puesta en marcha del proyecto</strong> conforme a las metas y objetivos planteados en el proyecto para respaldar de esta forma la continuidad del mismo y la generación del beneficio económico y social esperado.</p>
                 <p class="parrafo">4) Por los incumplimientos de cualquier tipo detectados y probados por el área ejecutora de los programas, y una vez que se hayan agotado todas las instancias administrativas, intervendrá la Justicia Provincial y/o Federal sito en la Jurisdicción de Santiago del Estero.</p>
                 <!-- Una sola firma para todo el formulario: se imprime en la carátula, el acta, la notificación y esta declaración -->
                 <div class="firma-digital" data-firma>
@@ -288,7 +297,8 @@
     </footer>
 
     <script src="js/firma-digital.js"></script>
-    <script src="js/formulario-subsidio.js"></script>
+    <script src="js/verificacion-expediente.js"></script>
+    <script src="js/achicar-fotos.js"></script>
     <script src="js/formulario-digital.js"></script>
 </body>
 </html>

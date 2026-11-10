@@ -1,9 +1,9 @@
-// Firma dibujada con el mouse o el dedo dentro de [data-firma].
+// Firma dibujada con el mouse o el dedo dentro de cada [data-firma] (el crédito tiene dos: data-firma="titular" y "garante").
 // Si la persona no tiene firma, marca "No tengo firma" y escribe su nombre completo.
-// window.firmaDigital.obtener() devuelve { tipo: 'dibujo', imagen } o { tipo: 'texto', texto }, o null si falta.
-(() => {
-  const contenedor = document.querySelector('[data-firma]');
-  if (!contenedor) return;
+// window.firmasDigitales[nombre].obtener() devuelve { tipo: 'dibujo', imagen } o { tipo: 'texto', texto }, o null si falta.
+// window.firmaDigital es la del titular (la primera).
+window.firmasDigitales = {};
+document.querySelectorAll('[data-firma]').forEach((contenedor) => {
 
   const lienzo = contenedor.querySelector('canvas');
   const contexto = lienzo.getContext('2d');
@@ -92,7 +92,7 @@
     return salida.toDataURL('image/png');
   };
 
-  window.firmaDigital = {
+  window.firmasDigitales[contenedor.dataset.firma || 'titular'] = {
     obtener() {
       if (sinFirma.checked) {
         const texto = campoNombre.value.trim();
@@ -115,4 +115,5 @@
   };
 
   actualizarModo();
-})();
+});
+window.firmaDigital = window.firmasDigitales.titular || Object.values(window.firmasDigitales)[0];

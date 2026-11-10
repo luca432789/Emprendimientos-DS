@@ -664,13 +664,13 @@ function htmlDatosEtapaMinistro(solicitud) {
     `;
 }
 
-// Subsidio: solo se confirma el envío con el formulario de subsidio aprobado por el Área
-// (para el crédito se agregará cuando exista su revisión)
+// Solo se confirma el envío con el formulario de la ayuda (subsidio o crédito) aprobado por el Área
 function ayudaPendienteDeAprobacion(solicitud) {
-    if (solicitud.ayuda !== 'Subsidio' || solicitud.ayudaAprobada === '1') return '';
+    if (solicitud.ayudaAprobada === '1') return '';
+    const ayuda = nombreAyudaSolicitud(solicitud);
     return solicitud.idAyuda
-        ? `El Subsidio de la solicitud aún no fue aprobado (Subsidio #${String(solicitud.idAyuda).padStart(4, '0')}).`
-        : 'No se encontró formulario de Subsidio enviado por el emprendedor.';
+        ? `El ${ayuda} de la solicitud aún no fue aprobado (${ayuda} #${String(solicitud.idAyuda).padStart(4, '0')}).`
+        : `No se encontró formulario de ${ayuda} enviado por el emprendedor.`;
 }
 
 async function enviarEtapaMinistro(idSolicitud, ruta, cuerpo) {
@@ -731,13 +731,8 @@ async function abrirEnvioMinistro(solicitud) {
 
     try {
         const resultado = await enviarEtapaMinistro(solicitud.id, 'enviar-ministro', {});
-        await Swal.fire({
-            icon: 'success',
-            title: 'Envío registrado',
-            text: resultado.mensaje,
-            confirmButtonColor: '#1a3a5f'
-        });
         cargarRevisionesAsignadas();
+        await mostrarResultadoCorreoDecision(resultado, solicitud.id, 'Envío registrado');
     } catch (error) {
         Swal.fire('Error', `No se pudo registrar el envío al Ministro: ${error.message}`, 'error');
     }
@@ -971,13 +966,13 @@ async function cargarRevisionesAsignadas() {
                 : 'Sin fecha';
             const decisionAreaTomada = solicitud.AprobacionArea !== null;
             const enviadoMinistro = Number(solicitud.EnvioMinistro) === 1;
-            const subsidioPendiente = solicitud.EleccionAyuda === 'Subsidio' && Number(solicitud.SubsidioAprobado) !== 1;
+            const esSubsidio = solicitud.EleccionAyuda === 'Subsidio';
+            const ayudaPendiente = Number(esSubsidio ? solicitud.SubsidioAprobado : solicitud.CreditoAprobado) !== 1;
             const estadoEtapa = enviadoMinistro
                 ? 'Enviado al Ministro · En espera de resolución'
-                : subsidioPendiente
-                    ? 'Aprobado por el Área · Subsidio pendiente de aprobación'
+                : ayudaPendiente
+                    ? `Aprobado por el Área · ${esSubsidio ? 'Subsidio' : 'Crédito'} pendiente de aprobación`
                     : 'Aprobado por el Área · Pendiente de envío al Ministro';
-            const esSubsidio = solicitud.EleccionAyuda === 'Subsidio';
             const datosEtapaMinistro = `
                     data-id="${escaparDatoRevision(solicitud.idSolicitudInicio)}"
                     data-expediente="${escaparDatoRevision(solicitud.NroExpediente || '')}"

@@ -33,37 +33,55 @@
         </ul>
     </nav>
 
-    <!-- Sin sesión de Área / Administrador: solo este aviso -->
-    <main class="contenedor-formulario" data-sin-acceso>
+    <main class="contenedor-formulario">
         <h2>Formulario de Créditos Reintegrables</h2>
-        <p class="texto">Este formulario solo está disponible para el personal del Área y la Administración del Ministerio. <a href="/formularios">Volver a Formularios</a></p>
-    </main>
+        <p class="texto">Para completar el formulario ingrese los datos de su solicitud de inicio aprobada: el Nº de expediente que recibió por correo, y el correo electrónico y el DNI con los que la presentó.</p>
 
-    <main class="contenedor-formulario" data-solo-area style="display:none">
-        <h2>Formulario de Créditos Reintegrables</h2>
-        <p class="texto">Complete los campos del formulario oficial. Elija el emprendimiento al que corresponde: el pedido de crédito queda registrado a su nombre y se descarga el PDF.</p>
+        <!-- El crédito lleva la firma del garante y su documentación: conviene completarlo con él -->
+        <div class="aviso-garante" role="note">
+            <p><i class="fa-solid fa-user-group" aria-hidden="true"></i> <strong>Le recomendamos completar este formulario junto a su garante:</strong> se necesita la firma de ambos.</p>
+            <p>Tenga a mano los presupuestos de los bienes que solicita y la documentación del garante: <strong>fotocopia de DNI autenticada, constancia de CUIL, certificado de residencia, boleta de impuesto y su último recibo de sueldo</strong>.</p>
+        </div>
 
         <form id="formulario-digital" class="formulario-inicio">
             <input type="hidden" name="tipoFormulario" value="Formulario de Creditos Reintegrables">
 
-            <!-- A nombre de qué emprendimiento se carga el pedido (Área / Administrador) -->
-            <div class="selector-emprendimiento">
-                <label class="etiqueta subrayada" for="selector-emprendimiento">Emprendimiento que solicita:</label>
-                <select id="selector-emprendimiento" name="idEmprendimiento" class="linea" required disabled>
-                    <option value="">Cargando emprendimientos...</option>
-                </select>
-            </div>
+            <!-- Identificación: Nº de expediente + correo + DNI de la solicitud de inicio (js/verificacion-expediente.js) -->
+            <section class="verificacion-subsidio" data-verificacion="credito">
+                <h3 class="titulo-campos">DATOS DE SU SOLICITUD DE INICIO</h3>
+                <label class="etiqueta" for="verificacion-expediente">Nº de expediente</label>
+                <input type="text" id="verificacion-expediente" class="linea" maxlength="50" autocomplete="off" data-verificacion-campo="expediente" placeholder="Ej.: EX-2026-...">
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta" for="verificacion-correo">Correo electrónico</label>
+                        <input type="email" id="verificacion-correo" class="linea" maxlength="150" autocomplete="email" data-verificacion-campo="correo">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta" for="verificacion-dni">DNI / documento</label>
+                        <input type="text" id="verificacion-dni" class="linea" maxlength="15" autocomplete="off" data-verificacion-campo="dni">
+                    </div>
+                </div>
+                <div class="acciones-verificacion">
+                    <button type="button" class="btn enviar" data-verificar>Verificar datos</button>
+                    <button type="button" class="btn firma-borrar" data-cambiar-expediente hidden>Usar otro expediente</button>
+                </div>
+                <p class="mensaje-verificacion" data-verificacion-mensaje role="status" aria-live="polite"></p>
+            </section>
 
-            <!-- HOJA 1: CARÁTULA -->
-            <section class="hoja">
+            <!-- Las hojas se muestran recién cuando coinciden los datos de la solicitud -->
+            <div data-contenido-ayuda hidden>
+            <!-- Reenvío de una sola parte (la pidió el Área): js/verificacion-expediente.js muestra solo esas hojas -->
+            <div class="aviso-parte-reenvio" data-aviso-parte role="note" hidden></div>
+
+            <!-- HOJA 1: CARÁTULA (como la oficial del crédito: sin Beneficiarios ni Rubro) -->
+            <section class="hoja" data-parte="titular">
                 <div class="cuadro-expediente">
-                    <div><strong>EXPEDIENTE Nº</strong><span>Uso interno</span></div>
-                    <div><strong>PROYECTO Nº</strong><span>Uso interno</span></div>
+                    <div><strong>EXPEDIENTE Nº</strong><span data-valor="expediente"></span></div>
                 </div>
 
                 <div class="encabezado-oficial">
+                    <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL, PROMOCION HUMANA Y RELACIONES INSTITUCIONALES CON LA COMUNIDAD</p>
                     <p>SUBSECRETARIA DE DESARROLLO SOCIAL</p>
-                    <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL</p>
                     <p class="gobierno">GOBIERNO DE LA PROVINCIA DE<br>SANTIAGO DEL ESTERO</p>
                     <p>PLAN PROVINCIAL SANTIAGO PRODUCTIVO</p>
                     <p class="presentacion">FORMULARIO DE PRESENTACIÓN DE PROYECTOS</p>
@@ -71,33 +89,57 @@
                 </div>
 
                 <h3 class="titulo-campos">DATOS DEL PROYECTO</h3>
+                <p class="nota-solicitud">Los campos grises se completan con su solicitud de inicio y no se pueden modificar.</p>
+                <input type="hidden" name="expediente">
 
                 <label class="etiqueta subrayada">Nombre del proyecto:</label>
-                <input type="text" name="nombreEmprendimiento" class="linea" maxlength="100" required aria-label="Nombre del proyecto">
+                <input type="text" name="nombreEmprendimiento" class="linea" readonly data-dato-solicitud aria-label="Nombre del proyecto">
 
                 <div class="fila">
                     <div class="columna">
                         <label class="etiqueta">Localidad:</label>
-                        <input type="text" name="localidad" class="linea" maxlength="40" required aria-label="Localidad">
+                        <input type="text" name="localidad" class="linea" readonly data-dato-solicitud aria-label="Localidad">
                     </div>
                     <div class="columna">
                         <label class="etiqueta">Departamento:</label>
-                        <input type="text" name="departamento" class="linea" maxlength="40" required aria-label="Departamento">
+                        <input type="text" name="departamento" class="linea" readonly data-dato-solicitud aria-label="Departamento">
                     </div>
                 </div>
 
                 <label class="etiqueta">Actividad principal:</label>
-                <input type="text" name="rubro" class="linea" maxlength="150" required aria-label="Actividad principal">
+                <textarea name="rubro" class="linea" rows="2" readonly data-dato-solicitud aria-label="Actividad principal"></textarea>
 
                 <h3 class="titulo-campos">DATOS DEL TITULAR</h3>
 
                 <label class="etiqueta">(Nombre y apellido)</label>
-                <input type="text" name="nombreApellido" class="linea" maxlength="80" required aria-label="Nombre y apellido">
+                <input type="text" name="nombreApellido" class="linea" readonly data-dato-solicitud aria-label="Nombre y apellido">
 
                 <label class="etiqueta">(DNI / documento)</label>
-                <label class="extranjero-control"><input type="checkbox" name="documentoExtranjero" value="true"><span>Soy extranjero/a (pasaporte o documento del país)</span></label>
-                <input type="text" name="dniCuit" class="linea" required aria-label="DNI o documento extranjero" autocomplete="off">
-                <small>Argentino/a: 7 u 8 números. Extranjero/a: active la opción para ingresar letras.</small>
+                <input type="text" name="dniCuit" class="linea" readonly data-dato-solicitud aria-label="DNI o documento">
+
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Celular</label>
+                        <input type="text" name="telefono" class="linea" readonly data-dato-solicitud aria-label="Celular">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Correo electrónico</label>
+                        <input type="text" name="correo" class="linea" readonly data-dato-solicitud aria-label="Correo electrónico">
+                    </div>
+                </div>
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta">Localidad del titular</label>
+                        <input type="text" name="localidadTitular" class="linea" readonly data-dato-solicitud aria-label="Localidad del titular">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta">Departamento del titular</label>
+                        <input type="text" name="departamentoTitular" class="linea" readonly data-dato-solicitud aria-label="Departamento del titular">
+                    </div>
+                </div>
+                <label class="etiqueta" for="domicilio-titular">Domicilio del titular</label>
+                <input type="text" id="domicilio-titular" name="domicilio" class="linea" maxlength="150" required aria-label="Domicilio del titular">
+                <small>Se completa con el domicilio de su solicitud. Puede corregirlo: deje solo la calle y el número, que es lo que va en el acta acuerdo.</small>
 
                 <p class="parrafo">
                     El que suscribe, en su carácter de titular del proyecto de referencia, afirma que los datos consignados en
@@ -110,98 +152,219 @@
             </section>
 
             <!-- HOJA 2: BIENES PROPIOS Y ACTIVO FIJO -->
-            <section class="hoja">
+            <section class="hoja" data-parte="titular">
                 <h3 class="titulo-campos">1. BIENES PROPIOS APORTADOS PARA LA EJECUCIÓN DEL PROYECTO</h3>
-                <p class="parrafo">Mencione las maquinarias, herramientas, inmuebles e insumos y el valor en su estado actual.</p>
-                <div class="tabla-responsive">
-                    <table class="tabla-oficial">
-                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Antigüedad</th><th>Monto estimado</th></tr></thead>
-                        <tbody id="tabla-bienes-propios" data-tabla-lineas="bienesPropios" data-cantidad="10" data-columnas="bien,cantidad,antiguedad,montoEstimado"></tbody>
-                    </table>
-                </div>
-
+                <p class="parrafo">Mencione las maquinarias, herramientas, inmuebles e insumos y el valor en el estado actual de los mismos.</p>
+                <div class="tabla-responsive"><table class="tabla-oficial">
+                    <thead><tr><th>Bienes</th><th>Cantidad</th><th>Antigüedad</th><th>Monto estimado</th></tr></thead>
+                    <tbody id="tabla-bienes-propios" data-tabla-lineas="bienesPropios" data-cantidad="9" data-columnas="bien,cantidad,antiguedad,montoEstimado"></tbody>
+                </table></div>
                 <h3 class="titulo-campos">2. DESTINO DEL CRÉDITO</h3>
                 <p class="parrafo">Mencione los bienes solicitados en el proyecto.</p>
                 <h4>a) ACTIVO FIJO (maquinarias y herramientas)</h4>
-                <div class="tabla-responsive">
-                    <table class="tabla-oficial">
-                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
-                        <tbody id="tabla-activo-fijo" data-tabla-lineas="activoFijo" data-cantidad="7" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
-                    </table>
-                </div>
+                <div class="tabla-responsive"><table class="tabla-oficial">
+                    <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                    <tbody id="tabla-activo-fijo" data-tabla-lineas="activoFijo" data-cantidad="7" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                </table></div>
             </section>
 
-            <!-- HOJA 3: BIENES DE USO Y COSTO TOTAL -->
-            <section class="hoja">
+            <!-- HOJA 3: BIENES DE USO, TOTAL SOLICITADO, COSTO TOTAL Y PRESUPUESTOS (VAN COMO HOJAS DESPUÉS DE LA HOJA 6) -->
+            <section class="hoja" data-parte="titular">
                 <h4>b) BIENES DE USO (materia prima e insumos)</h4>
-                <div class="tabla-responsive">
-                    <table class="tabla-oficial">
-                        <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
-                        <tbody id="tabla-bienes-uso" data-tabla-lineas="bienesUso" data-cantidad="9" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
-                    </table>
-                </div>
-
-                <h4>c) TOTAL SOLICITADO</h4>
-                <p>La suma de los bienes solicitados: <strong id="total-solicitado">$ 0,00</strong></p>
-
+                <div class="tabla-responsive"><table class="tabla-oficial">
+                    <thead><tr><th>Bienes</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                    <tbody id="tabla-bienes-uso" data-tabla-lineas="bienesUso" data-cantidad="9" data-columnas="bien,cantidad,precioUnitario,subtotal"></tbody>
+                </table></div>
+                <p class="parrafo"><strong>c) TOTAL SOLICITADO</strong> (suma de los cuadros anteriores): <strong>$ <output id="total-solicitado">0,00</output></strong></p>
                 <h3 class="titulo-campos">COSTO TOTAL DEL PROYECTO</h3>
                 <p class="parrafo">Tenga en cuenta un ciclo de producción completo.</p>
-                <div class="tabla-responsive">
-                    <table class="tabla-oficial tabla-costos">
-                        <thead><tr><th></th><th>Aporte propio ($)</th><th>Solicitado ($)</th></tr></thead>
-                        <tbody>
-                            <tr><th>Activo fijo (maquinarias y herramientas)</th><td><input type="number" name="aporteActivoFijo" min="0" step="0.01" aria-label="Aporte propio para activo fijo"></td><td><output id="solicitado-activo-fijo">0,00</output></td></tr>
-                            <tr><th>Bienes de uso (insumo y materia prima)</th><td><input type="number" name="aporteBienesUso" min="0" step="0.01" aria-label="Aporte propio para bienes de uso"></td><td><output id="solicitado-bienes-uso">0,00</output></td></tr>
-                            <tr><th>Mano de obra</th><td><input type="number" name="aporteManoObra" min="0" step="0.01" aria-label="Aporte propio en mano de obra"></td><td class="celda-no-aplica"></td></tr>
-                            <tr><th>COSTO TOTAL DEL PROYECTO</th><td><output id="costo-total-propio">0,00</output></td><td><output id="costo-total-solicitado">0,00</output></td></tr>
-                        </tbody>
-                    </table>
+                <div class="tabla-responsive"><table class="tabla-oficial tabla-costos">
+                    <thead><tr><th></th><th>Aporte propio</th><th>Solicitado</th></tr></thead>
+                    <tbody>
+                        <tr><th>Activo fijo (maquinarias y herramientas)</th><td><input type="number" name="aporteActivoFijo" min="0" step="0.01" aria-label="Aporte propio para activo fijo"></td><td><output id="solicitado-activo-fijo">0,00</output></td></tr>
+                        <tr><th>Bienes de uso (insumo y materia prima)</th><td><input type="number" name="aporteBienesUso" min="0" step="0.01" aria-label="Aporte propio para bienes de uso"></td><td><output id="solicitado-bienes-uso">0,00</output></td></tr>
+                        <tr><th>Mano de obra</th><td><input type="number" name="aporteManoObra" min="0" step="0.01" aria-label="Aporte propio en mano de obra"></td><td class="celda-no-aplica"></td></tr>
+                        <tr><th>COSTO TOTAL DEL PROYECTO</th><td><output id="costo-total-propio">0,00</output></td><td><output id="costo-total-solicitado">0,00</output></td></tr>
+                    </tbody>
+                </table></div>
+                <p class="parrafo">Presupuestos y documentación respaldatoria del proyecto</p>
+                <div class="zona-archivos"><label class="etiqueta" for="imagenes-emprendimiento">Adjuntar presupuestos, fotografías o PDF (obligatorio)</label><input type="file" id="imagenes-emprendimiento" name="imagenes" accept="image/jpeg,image/png,application/pdf" multiple required></div>
+                <small>Fotos JPG/PNG (se achican automáticamente al enviar) o PDF de hasta 8 MB cada uno; máximo 7 archivos. Junto con los documentos del garante, hasta 30 MB en total. Se agregan como hojas después de la hoja 6.</small>
+            </section>
+
+            <!-- HOJA 4: ACTA ACUERDO (TEXTO DEL PDF OFICIAL) -->
+            <section class="hoja" data-parte="titular">
+                <h3 class="titulo-campos">ACTA ACUERDO PLAN PROVINCIAL SANTIAGO PRODUCTIVO</h3>
+                <p class="parrafo">Entre la <strong>SUBSECRETARIA DE DESARROLLO SOCIAL</strong> con domicilio en calle Sáenz Peña Nº 340 representada en este acto por el Subsecretario de Desarrollo Social Lic. Ramiro Banco, en adelante LA SUBSECRETARIA DE DESARROLLO SOCIAL y el Sr. <strong data-valor="nombreApellido"></strong>, D.N.I. Nº <strong data-valor="dniCuit"></strong>, domiciliado en calle <strong data-valor="domicilio"></strong>, localidad <strong data-valor="localidadTitular"></strong>, Departamento <strong data-valor="departamentoTitular"></strong> de la Provincia de Santiago del Estero, en adelante <strong>EL EMPRENDEDOR</strong>, convienen lo siguiente:</p>
+                <ol class="texto-oficial">
+                    <li><strong>EL EMPRENDEDOR</strong> declara conocer y aceptar los términos y condiciones de lo dispuesto en la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que reglamenta el Plan Provincial Santiago Productivo en cuanto a las condiciones, modalidades, requisitos y documentación exigibles.</li>
+                    <li><strong>EL EMPRENDEDOR</strong> se compromete a cumplir con lo establecido en el reglamento, como así también a facilitar con las facultades de supervisión, contralor y evaluación de <strong>DIRECCION GENERAL DE DESARROLLO SOCIAL</strong> respecto del compromiso asumido.</li>
+                    <li>En caso de incumplimiento por parte de <strong>EL EMPRENDEDOR, LA DIRECCION GENERAL DE DESARROLLO SOCIAL</strong> se encuentra facultada para iniciar los trámites correspondientes ante los organismos que corresponde a los efectos de procurar, por imperio de la Ley, el cumplimiento de la presente.</li>
+                    <li>Las partes reconocen que todo lo declarado en la presente reviste el carácter de <strong>DECLARACION JURADA</strong>.</li></ol>
+                <p class="campo-firma">FIRMA:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
+                <p class="campo-firma">ACLARACION:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
+                <p class="campo-firma">DNI Nº:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
+            </section>
+
+            <!-- HOJA 5: NOTIFICACIÓN (el crédito agrega la forma de pago de las cuotas) -->
+            <section class="hoja" data-parte="titular">
+                <p class="parrafo fecha-notificacion"><span class="fecha-automatica"></span></p>
+                <h3 class="titulo-campos">SRES. BENEFICIARIOS DEL PLAN PROVINCIAL SANTIAGO PRODUCTIVO</h3>
+                <p class="parrafo">La Subsecretaria de Desarrollo Social de la Provincia de Santiago del Estero informa a Ud. que según la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS que regula al Plan Provincial Santiago Productivo, los beneficiarios de dicho Plan Provincial deberán presentar de carácter <strong>OBLIGATORIO</strong> las facturas de ley que acrediten el cumplimiento de la compra de los materiales y/o equipamientos e insumos necesarios para llevar a cabo el proyecto, que se encuentran detallados en el Presupuesto Definitivo del Proyecto. El tiempo límite para la presentación de dicha documentación es de <strong>30 (treinta) días corridos</strong> a partir del otorgamiento del beneficio.</p>
+                <p class="parrafo">La rendición de las facturas de ley deberán realizarla en las Oficinas de Rendición de Cuentas dependiente de la Dirección General de Desarrollo Social, sito en calle Sáenz Peña Nº 340 en el horario de 7:00 a 13:00 hs.</p>
+                <p class="parrafo">La falta de cumplimiento inmediatamente transcurrido el periodo anteriormente mencionado dará lugar al inicio de las acciones pertinentes fines de determinar la responsabilidad y penalidades correspondientes, las que constaran en:</p>
+                <ul class="texto-oficial">
+                    <li>Devolución del dinero recibido y/o,</li>
+                    <li>Devolución del equipamiento comprado,</li>
+                    <li>Multa por infracción del 10 % al 50 % del importe recibido,</li>
+                    <li>Trabajo social por el valor de la deuda,</li>
+                    <li>Acciones legales encuadradas en el Capítulo IV del Código Penal y otras judicialmente aplicadas.</li></ul>
+                <p class="parrafo">La forma de pago de las cuotas del <strong>PRÉSTAMO</strong> otorgado se efectuará de la siguiente manera:</p>
+                <ol class="texto-oficial">
+                    <li>Depósito en el Banco Santiago en la <strong>Cuenta Corriente Nº 1990901/82</strong> denominada Impuesto a los Premios, Tómbola y Compra de Fichas de Casino, en concepto de la cuota vencida.</li>
+                    <li>Posteriormente se deberá presentar el <strong>comprobante del depósito de la cuota</strong> ante las Oficinas del Departamento Tesorería del depósito y copia del mismo, para posterior devolución de los pagarés firmados y certificación de las copias.</li></ol>
+                <p class="parrafo">Se deberá acreditar dentro de los <strong>90 (noventa)</strong> días la puesta en marcha del proyecto conforme a las pautas establecidas por el Equipo Técnico del Área de Economía Social. En todos los casos intervendrá la Justicia Federal o Provincial según corresponda con jurisdicción de la Provincia del Santiago Productivo.</p>
+                <p class="parrafo notificado-centrado"><strong>QUEDA UD. DEBIDAMENTE NOTIFICADO.</strong></p>
+                <p class="campo-firma">FIRMA:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
+                <p class="campo-firma">ACLARACION:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
+                <div class="fila firmas-en-linea">
+                    <p class="columna campo-firma">DNI Nº:<span class="firma-referencia">Se completa con la firma del final del formulario</span></p>
+                    <div class="columna campo-fecha-firma">
+                        <label class="campo-firma">LUGAR Y FECHA:<input type="text" name="lugarFirma" class="linea" maxlength="80" required aria-label="Lugar donde se firma"></label>
+                        <span class="fecha-automatica"></span>
+                        <small>Se completa con la localidad y el departamento del titular; cámbielo si firma en otro lugar.</small>
+                    </div>
                 </div>
             </section>
 
-            <!-- HOJA 7: DATOS Y DOCUMENTACIÓN DEL GARANTE -->
-            <section class="hoja">
+            <!-- HOJA 6: DECLARACIÓN JURADA DE USO Y RENDICIÓN DE FONDOS (el crédito agrega la norma 2, del artículo 17) -->
+            <section class="hoja" data-parte="titular">
+                <h3 class="titulo-campos">DECLARACIÓN JURADA DE USO Y RENDICIÓN DE FONDOS</h3>
+                <p class="parrafo">LUGAR Y FECHA <strong data-valor="lugarFirma"></strong>, <span class="fecha-automatica"></span></p>
+                <p class="parrafo">El que suscribe: <strong data-valor="nombreApellido"></strong></p>
+                <p class="parrafo">D.N.I. Nº <strong data-valor="dniCuit"></strong>, con domicilio en <strong data-valor="domicilio"></strong>, Dpto. <strong data-valor="departamentoTitular"></strong>, Provincia de Santiago del Estero, <strong>DECLARA EN CARÁCTER DE DECLARACIÓN JURADA conocer y dar cumplimiento a las siguientes normas:</strong></p>
+                <p class="parrafo">1) Una vez concluido el trámite de pago y recibidos los valores para la financiación de Proyecto, se deberá presentar dentro de los <strong>30 (treinta) días</strong> la recepción de los mismos, <strong>FACTURA DE LEY</strong> de manera que acredite la compra de los materiales y/o equipamiento e insumo necesario para llevar a cabo el mismo.</p>
+                <p class="parrafo">2) De acuerdo al <strong>artículo 17</strong> de la Resolución Ministerial Nº 2023-713-E-GDESDE-MDS del Plan Provincial Santiago Productivo, <strong>no podrán:</strong></p>
+                <ul class="texto-oficial lista-incisos">
+                    <li>a- Cambiar el destino de bienes.</li>
+                    <li>b- Comprar otros productos que no sean los estipulados y/o solicitados en formulario de solicitud.</li>
+                    <li>c- Financiar la adquisición de los bienes solicitados mediante créditos personales y/o tarjetas de crédito, etc.</li>
+                    <li>d- <strong>Es obligatoria la compra de todos los bienes aprobados</strong> para el microemprendimiento.</li></ul>
+                <p class="parrafo">3) Ante la falta de cumplimiento en la entrega de la documentación requerida, la Subsecretaría de Desarrollo Social a través del organismo que corresponda podrá iniciar las acciones tendientes al reintegro de los fondos, que podrán consistir en la devolución del dinero y/o equipamiento comprado y/o multa. Asimismo el incumplimiento de las causales previstas dará lugar al inicio de acciones legales pertinentes.</p>
+                <p class="parrafo">4) Transcurrido los <strong>90 (noventa)</strong> días de recibidos los valores <strong>se deberá acreditar la puesta en marcha del proyecto</strong> conforme a las metas y objetivos planteados en el proyecto para respaldar de esta forma la continuidad del mismo y la generación del beneficio económico y social esperado.</p>
+                <p class="parrafo">5) Por los incumplimientos de cualquier tipo detectados y probados por el área ejecutora de los programas, y una vez que se hayan agotado todas las instancias administrativas, intervendrá la Justicia Provincial y/o Federal sito en la Jurisdicción de Santiago del Estero.</p>
+                <!-- Una sola firma del titular para todo el formulario: se imprime en la carátula, el acta, la notificación y esta declaración -->
+                <div class="firma-digital" data-firma="titular">
+                    <p class="etiqueta">Firma del Responsable del Proyecto</p>
+                    <div class="firma-zona-dibujo">
+                        <canvas class="firma-lienzo" aria-label="Recuadro para dibujar la firma del responsable del proyecto"></canvas>
+                        <div class="firma-acciones">
+                            <small>Firme dentro del recuadro con el mouse o con el dedo.</small>
+                            <button type="button" class="btn firma-borrar" data-firma-borrar>Borrar firma</button>
+                        </div>
+                    </div>
+                    <label class="extranjero-control"><input type="checkbox" data-firma-sin-firma><span>No tengo firma</span></label>
+                    <div class="firma-zona-nombre" hidden>
+                        <label class="etiqueta" for="firma-nombre">Escriba su nombre completo en lugar de la firma</label>
+                        <input type="text" id="firma-nombre" class="linea" maxlength="80" data-firma-nombre autocomplete="off">
+                    </div>
+                </div>
+                <label class="campo-firma">Aclaración:<input type="text" name="aclaracionProyecto" class="linea" maxlength="80" required aria-label="Aclaración del responsable del proyecto"></label>
+                <label class="campo-firma">D.N.I. Nº:<input type="text" name="dniProyecto" class="linea" maxlength="20" required aria-label="DNI del responsable del proyecto" autocomplete="off"></label>
+                <small>Debe ser el mismo DNI del titular de la solicitud de inicio.</small>
+            </section>
+
+            <!-- HOJA 7: DATOS Y DOCUMENTACIÓN DEL GARANTE (también forma sola el documento del garante) -->
+            <section class="hoja" data-parte="garante">
                 <h3 class="titulo-campos">DOCUMENTACIÓN DEL GARANTE</h3>
-                <div class="fila">
-                    <div class="columna">
-                        <label class="etiqueta">Nombre completo</label>
-                        <input type="text" name="nombreGarante" class="linea" maxlength="100" required aria-label="Nombre completo del garante">
-                    </div>
-                    <div class="columna">
-                        <label class="etiqueta">DNI</label>
-                        <input type="text" name="dniGarante" class="linea" inputmode="numeric" maxlength="8" pattern="[0-9]{7,8}" required aria-label="DNI del garante">
-                    </div>
-                </div>
-                <label class="etiqueta">CUIL</label>
-                <input type="text" name="cuilGarante" class="linea" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" required aria-label="CUIL del garante">
-                <div class="fila">
-                    <div class="columna">
-                        <label class="etiqueta">Teléfono</label>
-                        <input type="tel" name="telefonoGarante" class="linea" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required aria-label="Teléfono del garante">
-                    </div>
-                    <div class="columna">
-                        <label class="etiqueta">Correo electrónico</label>
-                        <input type="email" name="correoGarante" class="linea" maxlength="150" required aria-label="Correo electrónico del garante">
-                    </div>
-                </div>
-                <label class="etiqueta">Confirmar correo electrónico</label>
-                <input type="email" name="correoGaranteConfirmacion" class="linea" maxlength="150" required aria-label="Confirmación del correo del garante">
-                <small>Los dos correos deben coincidir y el dominio debe recibir correo.</small>
+                <p class="parrafo">Complete los datos de su garante, adjunte <strong>un archivo por cada documento</strong> y pídale que firme al final de esta hoja.</p>
 
-                <h3 class="titulo-imagenes">Documentación respaldatoria del garante</h3>
-                <p class="parrafo">Adjunte una imagen JPG/PNG o un PDF para cada documento solicitado.</p>
+                <label class="etiqueta" for="nombre-garante">Nombre completo</label>
+                <input type="text" id="nombre-garante" name="nombreGarante" class="linea" maxlength="70" required autocomplete="off">
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta" for="dni-garante">D.N.I. Nº</label>
+                        <input type="text" id="dni-garante" name="dniGarante" class="linea" inputmode="numeric" maxlength="8" pattern="[0-9]{7,8}" title="7 u 8 números, sin puntos." required autocomplete="off">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta" for="cuil-garante">CUIL Nº</label>
+                        <input type="text" id="cuil-garante" name="cuilGarante" class="linea" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" title="11 números, sin guiones." required autocomplete="off">
+                    </div>
+                </div>
+                <small>Sin puntos ni guiones. El CUIL lleva el DNI en el medio.</small>
+                <label class="etiqueta" for="telefono-garante">Teléfono (celular)</label>
+                <input type="tel" id="telefono-garante" name="telefonoGarante" class="linea" inputmode="numeric" maxlength="10" pattern="[1-9][0-9]{9}" title="10 números, sin 0 inicial, 15 ni espacios." required autocomplete="off">
+                <small>10 números, sin 0 inicial, 15 ni espacios.</small>
+                <div class="fila">
+                    <div class="columna">
+                        <label class="etiqueta" for="correo-garante">Correo electrónico</label>
+                        <input type="email" id="correo-garante" name="correoGarante" class="linea" maxlength="150" required autocomplete="off">
+                    </div>
+                    <div class="columna">
+                        <label class="etiqueta" for="correo-garante-confirmacion">Confirmar correo electrónico</label>
+                        <input type="email" id="correo-garante-confirmacion" name="correoGaranteConfirmacion" class="linea" maxlength="150" required autocomplete="off">
+                    </div>
+                </div>
+
+                <h3 class="titulo-imagenes">Documentos del garante para adjuntar</h3>
+                <p class="parrafo">Los cinco documentos son obligatorios. Use el botón de cada uno: foto JPG/PNG (se achica automáticamente al enviar) o PDF (hasta 8 MB).</p>
+                <!-- Un botón por documento (js/formulario-digital.js muestra el archivo elegido); van al final de ambos PDF -->
                 <div class="documentos-garante">
-                    <label class="etiqueta">Fotocopia de DNI <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="DNI" required></label>
-                    <label class="etiqueta">Constancia de CUIL <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="CUIL" required></label>
-                    <label class="etiqueta">Recibo de sueldo <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Recibo de sueldo" required></label>
-                    <label class="etiqueta">Certificado de residencia <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Certificado de residencia" required></label>
-                    <label class="etiqueta">Boleta de impuesto <input type="file" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Boleta de impuesto" required></label>
+                    <div class="documento-garante">
+                        <span class="nombre-documento">1. Fotocopia de DNI autenticada</span>
+                        <label class="btn boton-adjuntar"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar<input type="file" class="archivo-oculto" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Fotocopia de DNI autenticada" aria-label="Adjuntar fotocopia de DNI autenticada del garante"></label>
+                        <span class="archivo-elegido" data-archivo-elegido>Sin archivo</span>
+                    </div>
+                    <div class="documento-garante">
+                        <span class="nombre-documento">2. Constancia de CUIL</span>
+                        <label class="btn boton-adjuntar"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar<input type="file" class="archivo-oculto" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Constancia de CUIL" aria-label="Adjuntar constancia de CUIL del garante"></label>
+                        <span class="archivo-elegido" data-archivo-elegido>Sin archivo</span>
+                    </div>
+                    <div class="documento-garante">
+                        <span class="nombre-documento">3. Certificado de residencia</span>
+                        <label class="btn boton-adjuntar"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar<input type="file" class="archivo-oculto" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Certificado de residencia" aria-label="Adjuntar certificado de residencia del garante"></label>
+                        <span class="archivo-elegido" data-archivo-elegido>Sin archivo</span>
+                    </div>
+                    <div class="documento-garante">
+                        <span class="nombre-documento">4. Boleta de impuesto</span>
+                        <label class="btn boton-adjuntar"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar<input type="file" class="archivo-oculto" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Boleta de impuesto" aria-label="Adjuntar boleta de impuesto del garante"></label>
+                        <span class="archivo-elegido" data-archivo-elegido>Sin archivo</span>
+                    </div>
+                    <div class="documento-garante">
+                        <span class="nombre-documento">5. Recibo de sueldo <small>(el último del mes)</small></span>
+                        <label class="btn boton-adjuntar"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar<input type="file" class="archivo-oculto" accept="image/jpeg,image/png,application/pdf" data-documento-garante="Recibo de sueldo" aria-label="Adjuntar recibo de sueldo del garante"></label>
+                        <span class="archivo-elegido" data-archivo-elegido>Sin archivo</span>
+                    </div>
                 </div>
 
-                <p class="parrafo revision">Revise todos los campos y documentos antes de enviar la solicitud.</p>
-                <div class="acciones"><button type="submit" class="btn enviar">Enviar solicitud y descargar PDF</button></div>
-                <div id="resultado-formulario"></div>
+                <div class="firma-digital" data-firma="garante">
+                    <p class="etiqueta">Firma del Garante</p>
+                    <div class="firma-zona-dibujo">
+                        <canvas class="firma-lienzo" aria-label="Recuadro para dibujar la firma del garante"></canvas>
+                        <div class="firma-acciones">
+                            <small>El garante firma dentro del recuadro con el mouse o con el dedo.</small>
+                            <button type="button" class="btn firma-borrar" data-firma-borrar>Borrar firma</button>
+                        </div>
+                    </div>
+                    <label class="extranjero-control"><input type="checkbox" data-firma-sin-firma><span>El garante no tiene firma</span></label>
+                    <div class="firma-zona-nombre" hidden>
+                        <label class="etiqueta" for="firma-nombre-garante">Nombre completo del garante en lugar de su firma</label>
+                        <input type="text" id="firma-nombre-garante" class="linea" maxlength="80" data-firma-nombre autocomplete="off">
+                    </div>
+                </div>
+                <label class="campo-firma">Aclaración:<input type="text" name="aclaracionGarante" class="linea" maxlength="80" required aria-label="Aclaración del garante" autocomplete="off"></label>
+                <label class="campo-firma">D.N.I. Nº:<input type="text" name="dniFirmaGarante" class="linea" inputmode="numeric" maxlength="8" required aria-label="DNI del garante junto a su firma" autocomplete="off"></label>
+                <small>Debe ser el mismo DNI del garante ingresado arriba.</small>
+
             </section>
+
+            <!-- Envío: fuera de las hojas, porque en un reenvío parcial se muestra solo la parte del titular o la del garante -->
+            <div class="envio-credito">
+                <p class="parrafo revision">Revise todos los campos y documentos antes de enviar la solicitud. Se descargará el documento completo; el documento del garante (hoja 7 y sus documentos) también queda disponible para descargar.</p>
+                <div class="acciones"><button type="submit" class="btn enviar">Enviar solicitud y descargar documento</button></div>
+                <div id="resultado-formulario"></div>
+            </div>
+            </div>
         </form>
     </main>
 
@@ -233,7 +396,9 @@
         </div>
     </footer>
 
-    <script src="js/acceso-formularios-ayuda.js"></script>
+    <script src="js/firma-digital.js"></script>
+    <script src="js/verificacion-expediente.js"></script>
+    <script src="js/achicar-fotos.js"></script>
     <script src="js/formulario-digital.js"></script>
 </body>
 </html>

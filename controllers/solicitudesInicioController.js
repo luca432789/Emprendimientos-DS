@@ -25,6 +25,7 @@ import {
 const ASUNTO_INICIO_APROBADO = 'Solicitud de Inicio de Emprendimiento - Aprobado';
 const ASUNTO_INICIO_RECHAZO = 'Solicitud de Inicio de Emprendimiento - Rechazo';
 const ASUNTO_RECHAZO_INACTIVIDAD = 'Solicitud de Inicio de Emprendimiento - Rechazo por inactividad';
+const ASUNTO_ENVIO_MINISTRO = 'Solicitud de Emprendimiento - Última etapa de revisión';
 const MENSAJE_RECHAZO_MINISTRO = 'Emprendimiento Rechazado por ministro';
 
 // Día del rechazo, desde el que se cuentan los días para presentar una nueva solicitud
@@ -34,14 +35,14 @@ const fechaDelRechazo = (datos) => datos.FechaResolucionFinal || datos.FechaFinR
 const enviarCorreoInicioAprobado = (req, datos) => {
     const esSubsidio = datos.EleccionAyuda === 'Subsidio';
     const formulario = esSubsidio ? 'Formulario de Subsidio' : 'Formulario de Crédito';
-    const enlace = esSubsidio
-        ? `${urlDelSitio(req)}/formulario-Subsidio?expediente=${encodeURIComponent(datos.NroExpediente || '')}`
-        : `${urlDelSitio(req)}/formulario-Credito`;
+    const enlace = `${urlDelSitio(req)}/${esSubsidio ? 'formulario-Subsidio' : 'formulario-Credito'}`
+        + `?expediente=${encodeURIComponent(datos.NroExpediente || '')}`;
     const recomendacion = 'Antes de completarlo, le recomendamos pedir presupuestos de los bienes que necesita para su proyecto '
-        + '(maquinarias, herramientas, materia prima e insumos), ya que deberá cargarlos en el formulario y adjuntarlos.';
-    const ingreso = esSubsidio
-        ? 'Para ingresar use su Nº de expediente, su correo electrónico y su DNI, los mismos de su solicitud de inicio.'
-        : '';
+        + '(maquinarias, herramientas, materia prima e insumos), ya que deberá cargarlos en el formulario y adjuntarlos.'
+        // El crédito lleva la firma y la documentación del garante
+        + (esSubsidio ? '' : ' Complételo junto a su garante: se necesita la firma de ambos y la documentación del garante '
+            + '(fotocopia de DNI autenticada, constancia de CUIL, certificado de residencia, boleta de impuesto y su último recibo de sueldo).');
+    const ingreso = 'Para ingresar use su Nº de expediente, su correo electrónico y su DNI, los mismos de su solicitud de inicio.';
     return enviarCorreo({
         para: datos.Correo,
         asunto: ASUNTO_INICIO_APROBADO,
@@ -138,12 +139,39 @@ const enviarCorreoRechazoMinistro = (datos) => enviarCorreo({
         ${avisoNuevaSolicitudHtml(fechaDelRechazo(datos))}`)
 });
 
+// Enviada al Ministro: el emprendedor queda avisado de que solo falta la decisión final
+const enviarCorreoEnvioMinistro = (datos) => {
+    const ayuda = datos.EleccionAyuda === 'Credito' ? 'Crédito' : 'Subsidio';
+    return enviarCorreo({
+        para: datos.Correo,
+        asunto: ASUNTO_ENVIO_MINISTRO,
+        texto: [
+            `Hola ${datos.Solicitante}:`,
+            '',
+            `Le informamos que la solicitud de su emprendimiento "${datos.Emprendimiento}" del PLAN PROVINCIAL SANTIAGO PRODUCTIVO `
+                + 'se encuentra en la última etapa de revisión para su decisión final.',
+            `El Área de Economía Social aprobó su Solicitud de Inicio y su Formulario de ${ayuda}, y el expediente fue enviado a su revisión final.`,
+            'Le avisaremos por este medio cuando se registre la resolución. No es necesario que realice ningún trámite mientras tanto.',
+            '',
+            `Nº de expediente: ${datos.NroExpediente}`
+        ].join('\n'),
+        html: plantillaCorreo('Su solicitud está en la última etapa de revisión', `
+            <p>Hola ${escaparHtml(datos.Solicitante)}:</p>
+            <p>Le informamos que la solicitud de su emprendimiento <strong>"${escaparHtml(datos.Emprendimiento)}"</strong> del
+               <strong>PLAN PROVINCIAL SANTIAGO PRODUCTIVO</strong> se encuentra en la <strong>última etapa de revisión</strong> para su decisión final.</p>
+            <p>El Área de Economía Social aprobó su Solicitud de Inicio y su Formulario de ${ayuda}, y el expediente fue enviado a su revisión final.</p>
+            <p>Le avisaremos por este medio cuando se registre la resolución. No es necesario que realice ningún trámite mientras tanto.</p>
+            <p>Nº de expediente: <strong>${escaparHtml(datos.NroExpediente)}</strong></p>`)
+    });
+};
+
 // Correo que corresponde al estado ya guardado de la solicitud (null si no corresponde ninguno).
 // La aprobación del Ministro tiene su propio correo (crear la contraseña), con su propio reenvío.
 const correoDeLaSolicitud = (req, datos) => {
     if (!datos) return null;
     if (datos.MensajeResolucionFinal === MENSAJE_RECHAZO_MINISTRO) return () => enviarCorreoRechazoMinistro(datos);
     if (Number(datos.EnvioMinistro) === 2 && datos.MensajeResolucionFinal) return () => enviarCorreoRechazoFaltaFormulario(datos);
+    if (Number(datos.EnvioMinistro) === 1 && datos.AprobacionMinistro === null) return () => enviarCorreoEnvioMinistro(datos);
     if (Number(datos.EstadoRevisionArea) !== 2 || datos.AprobacionArea === null) return null;
     if (Number(datos.AprobacionArea) === 0) return () => enviarCorreoInicioRechazo(datos);
     if (Number(datos.EnvioMinistro) === 0 && !datos.MensajeResolucionFinal) return () => enviarCorreoInicioAprobado(req, datos);
@@ -198,7 +226,10 @@ export const registrarEnvioMinistro = async (req, res) => {
 
     try {
         await ModelRegistrarEnvioMinistro(idSolicitud, idUsuario, obtenerIpCliente(req));
-        return res.status(200).json({ mensaje: 'Se registró el envío de la solicitud al Ministro.' });
+        // El envío ya quedó registrado aunque falle el correo (se puede reintentar desde el panel)
+        const datos = await ModelDatosCorreoSolicitud(idSolicitud);
+        const correo = await intentarCorreo(() => enviarCorreoEnvioMinistro(datos), datos.Correo);
+        return res.status(200).json({ mensaje: 'Se registró el envío de la solicitud al Ministro.' + textoResultadoIntento(correo), ...correo });
     } catch (error) {
         return responderErrorEtapaMinistro(res, error, 'No se pudo registrar el envío al Ministro.');
     }
@@ -412,7 +443,7 @@ export const resolverRevisionArea = async (req, res) => {
 };
 
 // POST /api/solicitudes/:id/reenviar-correo -> vuelve a mandar el último correo de la solicitud
-// (decisión del Área, rechazo por falta de formulario o rechazo del Ministro)
+// (decisión del Área, envío al Ministro, rechazo por falta de formulario o rechazo del Ministro)
 export const reenviarCorreoSolicitud = async (req, res) => {
     if (!['Empleado de Area', 'Administrador'].includes(req.usuarioLogueado?.tipoUsuario)) {
         return res.status(403).json({ error: 'Solo empleados del Área y administradores pueden reenviar este correo.' });

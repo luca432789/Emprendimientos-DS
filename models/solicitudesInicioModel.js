@@ -340,7 +340,7 @@ export const ModelRechazarPorFaltaFormulario = async (idSolicitud, idUsuario, ip
         if (idAyuda) {
             const error = new Error(ayuda.EleccionAyuda === 'Subsidio'
                 ? `El emprendedor ya envió el formulario de Subsidio (Subsidio #${idAyuda}): resuélvalo desde la revisión del subsidio.`
-                : `El emprendedor ya tiene un formulario de Crédito (Crédito #${idAyuda}).`);
+                : `El emprendedor ya envió el formulario de Crédito (Crédito #${idAyuda}): resuélvalo desde la revisión del crédito.`);
             error.code = 'AYUDA_FORM_EXISTS';
             throw error;
         }
@@ -376,20 +376,23 @@ export const ModelRegistrarEnvioMinistro = async (idSolicitud, idUsuario, ipClie
             throw error;
         }
 
-        // Subsidio: solo se envía al Ministro con el formulario de subsidio aprobado por el Área
-        // (el de crédito se agregará cuando exista su revisión)
+        // Solo se envía al Ministro con el formulario de la ayuda elegida (subsidio o crédito) aprobado por el Área
         const [[ayuda]] = await conexion.query(
-            `SELECT d.EleccionAyuda, sub.idSubsidio, sub.Aprobado
+            `SELECT d.EleccionAyuda, COALESCE(sub.idSubsidio, cre.idCredito) AS idAyuda,
+                    IF(d.EleccionAyuda = 'Subsidio', sub.Aprobado, cre.Aprobado) AS Aprobado
              FROM DatosSolicitudInicio d
-             LEFT JOIN Subsidio sub ON sub.idSubsidio =
+             LEFT JOIN Subsidio sub ON d.EleccionAyuda = 'Subsidio' AND sub.idSubsidio =
                   (SELECT MAX(u.idSubsidio) FROM Subsidio u WHERE u.idSolicitudInicio = d.idSolicitudInicio)
+             LEFT JOIN Credito cre ON d.EleccionAyuda = 'Credito' AND cre.idCredito =
+                  (SELECT MAX(c.idCredito) FROM Credito c WHERE c.idSolicitudInicio = d.idSolicitudInicio)
              WHERE d.idSolicitudInicio = ?`,
             [idSolicitud]
         );
-        if (ayuda?.EleccionAyuda === 'Subsidio' && Number(ayuda.Aprobado) !== 1) {
-            const error = new Error(ayuda.idSubsidio
-                ? `El Subsidio de la solicitud aún no fue aprobado (Subsidio #${ayuda.idSubsidio}).`
-                : 'No se encontró formulario de Subsidio enviado por el emprendedor.');
+        if (ayuda && Number(ayuda.Aprobado) !== 1) {
+            const nombreAyuda = ayuda.EleccionAyuda === 'Subsidio' ? 'Subsidio' : 'Crédito';
+            const error = new Error(ayuda.idAyuda
+                ? `El ${nombreAyuda} de la solicitud aún no fue aprobado (${nombreAyuda} #${ayuda.idAyuda}).`
+                : `No se encontró formulario de ${nombreAyuda} enviado por el emprendedor.`);
             error.code = 'AYUDA_NOT_APPROVED';
             throw error;
         }
@@ -611,17 +614,15 @@ export const ModelRegistrarEmprendimientoHistorico = async (idUsuario, ipCliente
         const valorSeguimiento = aprobado === true ? 0 : null;
         const tablaAyuda = ayuda.tipo === 'Subsidio' ? 'Subsidio' : 'Credito';
         const columnaPdf = ayuda.tipo === 'Subsidio' ? 'PathFormularioSub' : 'PathFormularioCredito';
-        // Subsidio.EstadoRevision: un subsidio ya resuelto queda finalizado (2); uno pendiente, sin revisar (0)
-        const columnaEstado = ayuda.tipo === 'Subsidio' ? ', EstadoRevision' : '';
-        const valoresEstado = ayuda.tipo === 'Subsidio' ? [aprobado === null ? 0 : 2] : [];
+        // EstadoRevision: una ayuda ya resuelta queda finalizada (2); una pendiente, sin revisar (0)
         await conexion.query(
             `INSERT INTO ${tablaAyuda} (${columnaPdf}, monto, FechaRecibido, Aprobado, FechaResolucion,
-                    FacturasEntregadas, PuestaMarchaAcreditada, idSolicitudInicio${columnaEstado})
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?${valoresEstado.length ? ', ?' : ''})`,
+                    FacturasEntregadas, PuestaMarchaAcreditada, idSolicitudInicio, EstadoRevision)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 ayuda.direccionPdf, ayuda.monto, ayuda.fechaRecibido, aprobado,
                 aprobado === null ? null : ayuda.fechaResolucion,
-                valorSeguimiento, valorSeguimiento, idSolicitud, ...valoresEstado
+                valorSeguimiento, valorSeguimiento, idSolicitud, aprobado === null ? 0 : 2
             ]
         );
 

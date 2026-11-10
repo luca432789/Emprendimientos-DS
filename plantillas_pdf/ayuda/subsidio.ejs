@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Formulario de Subsidios no Reintegrables</title>
-    <style><%- include('subsidio.css') %></style>
+    <style><%- include('formulario.css') %></style>
 </head>
 <body>
 <%
-// Cada hoja es un parcial que se envuelve con el marco común (logo, expediente y pie)
+// Cada hoja es un parcial que se envuelve con el marco común (logo, expediente y pie).
+// Las hojas son las mismas del crédito: lo que cambia se elige con esCredito.
 ['portada', 'bienes', 'costos', 'acta', 'notificacion', 'declaracion'].forEach((nombreHoja, indice) => { %>
     <%- include('hoja.ejs', { numero: indice + 1, contenido: include(`hojas/${nombreHoja}.ejs`) }) %>
 <% }) %>

@@ -1,4 +1,4 @@
-/* Formulario de Subsidios no Reintegrables: medidas copiadas de la hoja oficial (A4) */
+/* Formularios de Subsidios no Reintegrables y de Créditos Reintegrables: medidas copiadas de la hoja oficial (A4) */
 @page { size: A4; margin: 0; }
 
 * { box-sizing: border-box; }
@@ -289,3 +289,35 @@ p { margin: 0; }
 }
 .firma-responsable p { margin-top: 4mm; }
 .firma-responsable p:first-of-type { margin-top: 0; }
+
+/* ---------- Crédito ---------- */
+/* Carátula: el nombre completo del Ministerio va arriba */
+.titulos-credito .ministerio { font-size: 13pt; margin: 0 0 1.5mm; line-height: 1.25; }
+.titulos-credito .subsecretaria { margin: 0 0 6mm; }
+.campo-ultimo { margin-bottom: 7mm; }
+
+/* Hoja 5: fecha arriba y la forma de pago de las cuotas (más texto que en el subsidio) */
+.fecha-notificacion { text-align: right; font-size: 11.5pt; margin: -2mm 0 0; }
+.fecha-notificacion + .titulo-notificacion { margin-bottom: 5mm; }
+.texto-legal.compacto.credito { line-height: 1.33; font-size: 11.5pt; }
+.texto-legal.credito p { margin-bottom: 1mm; }
+.lista-cuotas { padding-left: 10mm; margin-bottom: 1mm; }
+.notificado.centrado { text-align: center; margin: 1mm 0 0; font-size: 14pt; }
+/* Firma y aclaración en un renglón, DNI y lugar y fecha en el siguiente */
+.firmas-notificacion.credito { display: grid; grid-template-columns: 1fr 1fr; column-gap: 6mm; }
+.firmas-notificacion.credito p:last-child { grid-column: 1 / -1; }
+
+/* Hoja 6: norma 2 con los incisos del artículo 17 */
+.normas-declaracion.credito { font-size: 11.5pt; }
+.normas-declaracion.credito p { margin-bottom: 2mm; }
+.titulo-declaracion.credito { font-size: 18pt; margin-bottom: 4mm; }
+.lista-articulo { list-style: none; margin: -1.5mm 0 2.5mm; padding-left: 6mm; line-height: 1.15; }
+.normas-declaracion.credito ~ .firma-responsable { margin-top: 5mm; }
+.normas-declaracion.credito ~ .firma-responsable p { margin-top: 2mm; }
+.datos-declaracion.credito p { margin-bottom: 2mm; line-height: 1.35; }
+
+/* Hoja 7: datos y documentación del garante */
+.datos-garante .campo { font-size: 12pt; margin-bottom: 2.6mm; }
+.subtitulo-garante { font-weight: bold; font-size: 12pt; text-decoration: underline; margin: 6mm 0 3mm; }
+.subtitulo-garante small { font-weight: normal; text-decoration: none; font-size: 10pt; }
+.lista-documentos { margin: 0; padding-left: 10mm; line-height: 1.5; }

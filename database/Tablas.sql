@@ -1,7 +1,6 @@
 Create database ProyectoEmprendimientos2026;
 use ProyectoEmprendimientos2026;
 -- drop database ProyectoEmprendimientos2026;
--- select * from usuario;
 
 -- -----------------------------------------------------------------------------------------------------------
 -- Seccion de DEFINICION de TABLAS --------------------------------------------------------------------------------
@@ -31,9 +30,9 @@ use ProyectoEmprendimientos2026;
 
 -- Subsidio (idSubsidio (PK), PathFormularioSub, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
 
--- Credito (idCredito (PK), PathFormularioCredito, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Credito (idCredito (PK), PathFormularioCredito, monto, MontoAnterior, FechaRecibido, EstadoRevision, ReenvioSolicitado, ParteReenvio, Aprobado (Si-No), FechaResolucion, MotivoRechazo, MensajeSolicitudReenvio, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
 
--- Garante (idGarante (PK), NombreCompleto, DNI, Teléfono, Correo, PathFotocopiaDNIautenticada, ConstanciaCuil,  PathCertificadoResidencia, PathBoletaImpuesto, PathCopiaResiboSueldo, idCredito (FK))
+-- Garante (idGarante (PK), NombreCompleto, DNI, Cuil, Telefono, Correo, PathFormularioGarante, idCredito (FK))
 
 -- Expediente (NroExpediente (PK), idSolicitudInicio, FechaCarga, idUsuarioCargo)
 
@@ -83,7 +82,7 @@ EnvioMinistro tinyint default 0, -- 0: Sin enviar, 1: Enviado a ministro, 2: No 
 FechaEnvioMinistro date null,
 AprobacionMinistro boolean null,  -- La respuesta de aprobacion/rechazo del ministro
 FechaResolucionMin date null,
-MensajeResolucionFinal varchar(512) null, -- Cómo terminó: "Rechazado por el Área", "Rechazado por Subsidio", "Emprendimiento Aprobado por ministro", "Emprendimiento Rechazado por ministro" o el texto del rechazo por falta de formulario (EnvioMinistro = 2)
+MensajeResolucionFinal varchar(512) null, -- Cómo terminó: "Rechazado por el Área", "Rechazado por Subsidio", "Rechazado por Crédito", "Emprendimiento Aprobado por ministro", "Emprendimiento Rechazado por ministro" o el texto del rechazo por falta de formulario (EnvioMinistro = 2)
 FechaResolucionFinal date null, -- Día en que quedó finalizada (junto con MensajeResolucionFinal): tras un rechazo, la misma persona puede presentar otra solicitud pasados 7 días
 CargaHistorica boolean not null default False, -- True: emprendimiento antiguo cargado directo por un empleado (sin DatosSolicitudInicio ni fechas de revisión)
 CONSTRAINT fk_Solicitud_EmpleadoTec
@@ -283,15 +282,21 @@ CONSTRAINT chk_marcha_solo_aprobado_sub CHECK (
     )
 );
 
--- Credito (idCredito (PK), PathFormularioCredito, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Credito (idCredito (PK), PathFormularioCredito, monto, MontoAnterior, FechaRecibido, EstadoRevision, ReenvioSolicitado, ParteReenvio, Aprobado (Si-No), FechaResolucion, MotivoRechazo, MensajeSolicitudReenvio, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Mismas columnas de revisión que Subsidio: el emprendedor lo completa con su Nº de expediente y el Área lo revisa
 create table Credito (
 idCredito int auto_increment primary key,
-PathFormularioCredito varchar(1024) not null,
+PathFormularioCredito varchar(1024) not null, -- documento completo: hojas 1 a 7, presupuestos y documentación del garante
 monto decimal (12, 2) not null,-- maximo 9.000.000.000,00
-FechaRecibido date not null,
+MontoAnterior decimal (12, 2) null, -- monto del envío anterior, si el reenvío del formulario trajo un monto distinto
+FechaRecibido date not null default (current_date),
+EstadoRevision tinyint not null default 0, -- 0: Sin revisar, 1: En proceso, 2: Finalizado (solo con Aprobado en True o False)
+ReenvioSolicitado boolean not null default False, -- True: el Área pidió reenviar el formulario (solo así el emprendedor puede reenviarlo); vuelve a False al recibirlo
+ParteReenvio enum('Completo', 'Titular', 'Garante') null, -- qué parte se pidió reenviar: todo, solo hojas 1 a 6 y presupuestos, o solo la hoja y documentos del garante
 Aprobado boolean null, -- null = sin ver/pendiente, True= Aprobado, False= Rechazado
 FechaResolucion date null,
-MensajeResolucion varchar(512) null, -- Para explicar por qué se rechazó o notas de la aprobación
+MotivoRechazo varchar(512) null, -- lo que escribió el empleado al rechazar (también se envía por correo al emprendedor)
+MensajeSolicitudReenvio varchar(512) null, -- Para explicar por qué se solicitó el reenvio de formulario
 
 PathDirectorioFacturas varchar(1024) null,-- null hasta que se apruebe el credito
 FacturasEntregadas boolean null default 0, -- hasta 30 dias desde la parobación
@@ -299,12 +304,16 @@ FechaFacturasValidadas date null,
 PuestaMarchaAcreditada boolean null default 0,-- hasta 90 dias desde la aprobación
 FechaPuestaMarcha date null,
 idSolicitudInicio int not null,
-idEmpleadoRevisor int null,
+idEmpleadoRevisor int null, -- aprobó o rechazó el formulario
 CONSTRAINT fk_Credito_SolicitudInicio
 	FOREIGN KEY (idSolicitudInicio) REFERENCES SolicitudInicio (idSolicitudInicio),
 CONSTRAINT fk_Credito_Empleado
 	FOREIGN KEY (idEmpleadoRevisor) REFERENCES Empleado (idEmpleado),
 -- Check para evitar cargar Fecha de aprovación si Aprobado es null
+-- Finalizado solo con resolución, y toda resolución deja el crédito finalizado
+CONSTRAINT chk_estado_revision_cred CHECK (
+	(Aprobado IS NULL AND EstadoRevision IN (0, 1)) OR (Aprobado IS NOT NULL AND EstadoRevision = 2)
+    ),
 CONSTRAINT chk_aprobacion_fecha_cred CHECK (
 	((Aprobado = TRUE OR Aprobado = FALSE) AND FechaResolucion IS NOT NULL) OR 
     (Aprobado IS NULL AND FechaResolucion IS NULL)
@@ -319,18 +328,19 @@ CONSTRAINT chk_marcha_solo_aprobado_cred CHECK (
     )
 );
 
--- Garante (idGarante (PK), NombreCompleto, DNI, Teléfono, Correo, PathFotocopiaDNIautenticada, ConstanciaCuil,  PathCertificadoResidencia, PathBoletaImpuesto, PathCopiaResiboSueldo, idCredito (FK))
+-- Garante (idGarante (PK), NombreCompleto, DNI, Cuil, Telefono, Correo, PathFormularioGarante, idCredito (FK))
+-- Un garante por crédito: el primer envío agrega la fila y cada reenvío la actualiza (el trigger registra qué cambió; no se borra).
+-- Si un crédito viejo tiene varias filas, el garante vigente es el de mayor idGarante
 create table Garante (
 idGarante int auto_increment primary key,
-NombreCompleto varchar (70) not null, 
+NombreCompleto varchar (70) not null,
 DNI varchar (15) not null,
-Teléfono varchar(25) not null, 
-Correo varchar(150) not null, 
-PathFotocopiaDNIautenticada varchar(1024) not null,
-ConstanciaCuil varchar(1024) not null,
-PathCertificadoResidencia varchar(1024) not null,
-PathBoletaImpuesto varchar(1024) not null,
-PathCopiaResiboSueldo varchar(1024) not null, -- El ultimo del mes
+Cuil varchar (11) not null,
+Telefono varchar(25) not null,
+Correo varchar(150) not null,
+-- PDF con la hoja de datos del garante (con su firma) y sus 5 documentos: fotocopia de DNI autenticada, constancia de CUIL,
+-- certificado de residencia, boleta de impuesto y recibo de sueldo (el último del mes). También van al final del PathFormularioCredito.
+PathFormularioGarante varchar(1024) not null,
 idCredito int not null,
 CONSTRAINT fk_Garante_Credito
 	FOREIGN KEY (idCredito) REFERENCES Credito (idCredito)

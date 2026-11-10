@@ -31,6 +31,8 @@ GRANT UPDATE (EmprendimientoLatitud, EmprendimientoLongitud) ON ProyectoEmprendi
 GRANT INSERT ON ProyectoEmprendimientos2026.Auditoria TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Expediente TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.Garante TO 'ministerio_api'@'localhost';
+-- Garante: el reenvío del crédito actualiza sus datos y su PDF (no idCredito)
+GRANT UPDATE (NombreCompleto, DNI, Cuil, Telefono, Correo, PathFormularioGarante) ON ProyectoEmprendimientos2026.Garante TO 'ministerio_api'@'localhost';
 GRANT INSERT ON ProyectoEmprendimientos2026.NotificacionVista TO 'ministerio_api'@'localhost';
 
 -- Añadimos permisos especificos para ciertas tablas

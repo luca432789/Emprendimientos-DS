@@ -176,6 +176,7 @@ function inicializarPanelPorRol(rol) {
         'creditos-sin-revisar': 'Solicitudes de Créditos',
         'inicio-en-revision': 'En Revisión - Inicio',
         'subsidio-en-revision': 'En Revisión - Subsidio',
+        'creditos-en-revision': 'En Revisión - Créditos',
         'estadisticas': 'Estadísticas'
     };
     const seccionPedida = window.location.hash.slice(1);
@@ -639,7 +640,7 @@ function cargarSección(codigoSeccion, tituloSeccion) {
     // ======================================================================
     else if (codigoSeccion === 'subsidio-sin-revisar' || codigoSeccion === 'creditos-sin-revisar') {
         filtrosTabla.style.display = 'none';
-        // Subsidios: además del PDF, el botón "Comenzar revisión"
+        // Además del PDF, el botón "Comenzar revisión" (y en el crédito, el PDF del garante)
         const esSubsidio = codigoSeccion === 'subsidio-sin-revisar';
 
         zonaRender.innerHTML = `
@@ -650,7 +651,7 @@ function cargarSección(codigoSeccion, tituloSeccion) {
                         <th>Emprendimiento / Solicitante</th>
                         <th>Monto</th>
                         <th>Recibido</th>
-                        <th style="text-align:center;">${esSubsidio ? 'Acción' : 'Formulario'}</th>
+                        <th style="text-align:center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo-ayudas">
@@ -661,9 +662,10 @@ function cargarSección(codigoSeccion, tituloSeccion) {
         fetchAyudasSinRevisar(esSubsidio ? 'subsidio' : 'credito');
     }
     // ======================================================================
-    // SUBSIDIOS EN REVISIÓN (compartida por todo el Área)
+    // SUBSIDIOS Y CRÉDITOS EN REVISIÓN (compartida por todo el Área)
     // ======================================================================
-    else if (codigoSeccion === 'subsidio-en-revision') {
+    else if (codigoSeccion === 'subsidio-en-revision' || codigoSeccion === 'creditos-en-revision') {
+        const tipoAyuda = codigoSeccion === 'subsidio-en-revision' ? 'subsidio' : 'credito';
         filtrosTabla.style.display = 'none';
 
         zonaRender.innerHTML = `
@@ -679,12 +681,12 @@ function cargarSección(codigoSeccion, tituloSeccion) {
                         <th style="text-align:center;">Acción</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-cuerpo-subsidios-revision">
-                    <tr><td colspan="7" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando subsidios en revisión...</td></tr>
+                <tbody id="tabla-cuerpo-ayudas-revision">
+                    <tr><td colspan="7" style="text-align:center; color:gray; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando ${tipoAyuda === 'subsidio' ? 'subsidios' : 'créditos'} en revisión...</td></tr>
                 </tbody>
             </table>
         `;
-        cargarSubsidiosEnRevision();
+        cargarAyudasEnRevision(tipoAyuda);
     }
     // ======================================================================
     // CASO 7: HISTORIAL DE AUDITORÍA (SOLO ADMINISTRADORES)

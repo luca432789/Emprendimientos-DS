@@ -231,7 +231,7 @@ function iniciarNotificaciones(token, tipoUsuario, idUsuario) {
                     .reduce((suma, seccion) => suma + (contadores[seccion] || 0), 0);
                 ponerContador(document.getElementById('categoria-sin-revisar'), sinRevisar);
                 ponerContador(document.getElementById('categoria-en-revision'),
-                    (contadores['inicio-en-revision'] || 0) + (contadores['subsidio-en-revision'] || 0));
+                    (contadores['inicio-en-revision'] || 0) + (contadores['subsidio-en-revision'] || 0) + (contadores['creditos-en-revision'] || 0));
                 avisarPublicacionesNuevas(datos.pendientes || []);
                 return;
             }
@@ -293,7 +293,9 @@ const SECCIONES_PANEL = {
     'inicio-sin-revisar': 'Solicitudes de Inicio',
     'subsidio-sin-revisar': 'Solicitudes de Subsidio',
     'creditos-sin-revisar': 'Solicitudes de Créditos',
-    'inicio-en-revision': 'En Revisión - Inicio'
+    'inicio-en-revision': 'En Revisión - Inicio',
+    'subsidio-en-revision': 'En Revisión - Subsidio',
+    'creditos-en-revision': 'En Revisión - Créditos'
 };
 
 // Si ya estamos en el Panel de Control, se abre la sección sin recargar la página;

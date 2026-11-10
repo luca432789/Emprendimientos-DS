@@ -431,24 +431,6 @@
     background: #d6d6d6;
 }
 
-.formulario-inicio .documentos-garante {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 20px;
-}
-
-.formulario-inicio .documentos-garante input[type='file'] {
-    display: block;
-    width: 100%;
-    margin-top: 8px;
-}
-
-@media (max-width: 650px) {
-    .formulario-inicio .documentos-garante {
-        grid-template-columns: 1fr;
-    }
-}
-
 .formulario-inicio .revision {
     margin-top: 35px;
 }
@@ -604,4 +586,153 @@
     .formulario-inicio .encabezado-oficial .gobierno {
         font-size: 22px;
     }
+}
+
+/* ---------- Formulario de Créditos ---------- */
+/* Recomendación de completarlo junto al garante (antes de verificar el expediente) */
+.aviso-garante {
+    background: #fff4e5;
+    border-left: 4px solid #d35400;
+    padding: 12px 18px;
+    margin: 0 0 22px;
+    line-height: 1.5;
+}
+
+.aviso-garante p + p {
+    margin-top: 6px;
+}
+
+.aviso-garante i {
+    color: #d35400;
+}
+
+/* Carátula: el nombre completo del Ministerio es largo */
+.formulario-inicio .encabezado-oficial .ministerio:first-child {
+    font-size: 18px;
+    margin: 0 0 6px;
+}
+
+/* Hoja 5: fecha arriba a la derecha y "QUEDA UD. DEBIDAMENTE NOTIFICADO." centrado */
+.formulario-inicio .fecha-notificacion {
+    text-align: right;
+    margin-top: 0;
+}
+
+.formulario-inicio .notificado-centrado {
+    text-align: center;
+    font-size: 18px;
+}
+
+/* Hoja 6: incisos del artículo 17 (llevan su letra en el texto) */
+.formulario-inicio .lista-incisos {
+    list-style: none;
+    margin-top: 0;
+}
+
+.formulario-inicio .lista-incisos li {
+    margin: 2px 0;
+}
+
+/* Hoja 7: un botón por cada documento del garante */
+.formulario-inicio .documentos-garante {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.formulario-inicio .documento-garante {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border: 1px dashed #aaa;
+    border-radius: 6px;
+}
+
+.formulario-inicio .documento-garante.con-archivo {
+    border-style: solid;
+    border-color: #2e7d32;
+    background: #f1f8f1;
+}
+
+.formulario-inicio .nombre-documento {
+    font-weight: 600;
+}
+
+.formulario-inicio .boton-adjuntar {
+    position: relative;
+    margin: 0;
+    padding: 8px 18px;
+    background: #2f4e78;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.formulario-inicio .boton-adjuntar:hover {
+    background: #24406a;
+}
+
+.formulario-inicio .boton-adjuntar:focus-within {
+    outline: 2px solid var(--azul);
+    outline-offset: 2px;
+}
+
+/* El input queda invisible dentro del botón, pero se puede enfocar (para avisar si falta) */
+.formulario-inicio .archivo-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.formulario-inicio .archivo-elegido {
+    font-size: 14px;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.formulario-inicio .con-archivo .archivo-elegido {
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+@media (max-width: 650px) {
+    .formulario-inicio .documento-garante {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+}
+
+/* Envío del crédito: va debajo de las hojas (en un reenvío parcial se muestra solo una parte) */
+.formulario-inicio .envio-credito {
+    background: white;
+    padding: 30px 60px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Reenvío parcial: qué parte se completa y cuál se conserva */
+.formulario-inicio .aviso-parte-reenvio {
+    background: #fff4e5;
+    border-left: 4px solid #d35400;
+    padding: 12px 18px;
+    margin: 0 0 25px;
+    line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+    .formulario-inicio .envio-credito {
+        padding: 24px 16px;
+    }
+}
+
+/* .hoja usa display:flex: sin esto, hidden no la ocultaría */
+.formulario-inicio .hoja[hidden] {
+    display: none;
 }

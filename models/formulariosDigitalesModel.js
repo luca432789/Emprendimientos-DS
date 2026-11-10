@@ -103,47 +103,36 @@ export const modelRestriccionNuevaSolicitud = async (dni, correo, conexion = poo
     return null;
 };
 
-// Busca la solicitud de inicio vinculada al usuario emprendedor logueado
-// Emprendimientos con emprendedor asignado, para que Área / Administrador elijan
-// a nombre de cuál cargan un pedido de subsidio o crédito
-export const modelEmprendimientosParaAyuda = async () => {
-    const [filas] = await pool.query(
-        `SELECT e.idEmprendimiento, e.Nombre, e.NroProyecto, e.Departamento,
-                em.Nombre AS NombreEmprendedor, em.Apellido AS ApellidoEmprendedor, em.DNI
-         FROM Emprendimiento e
-         INNER JOIN Emprendedor em ON em.idEmprendimiento = e.idEmprendimiento
-         ORDER BY e.Nombre, e.idEmprendimiento;`
-    );
-    return filas;
+// Subsidio y Crédito: el emprendedor se identifica con el Nº de expediente, el correo y el DNI de su solicitud de inicio
+// y completa el formulario de la ayuda que eligió. Ambas tablas tienen las mismas columnas de revisión.
+const tablasAyuda = {
+    Subsidio: { tabla: 'Subsidio', id: 'idSubsidio', path: 'PathFormularioSub', nombre: 'subsidio' },
+    Credito: { tabla: 'Credito', id: 'idCredito', path: 'PathFormularioCredito', nombre: 'crédito' }
 };
 
-// Solicitud de inicio del emprendimiento elegido (solo si tiene emprendedor asignado)
-export const modelObtenerSolicitudDeEmprendimiento = async (idEmprendimiento) => {
-    const [filas] = await pool.query(
-        `SELECT e.idSolicitudInicio
-         FROM Emprendimiento e
-         INNER JOIN Emprendedor em ON em.idEmprendimiento = e.idEmprendimiento
-         WHERE e.idEmprendimiento = ?;`,
-        [idEmprendimiento]
-    );
-    return filas[0]?.idSolicitudInicio;
-};
-
-// Subsidio: el emprendedor se identifica con el Nº de expediente, el correo y el DNI de su solicitud de inicio.
-// Devuelve la solicitud con sus datos y el último subsidio enviado (si hay), o undefined si no coinciden los tres.
-export const modelBuscarSolicitudParaSubsidio = async (nroExpediente, correo, dni) => {
+// Devuelve la solicitud con sus datos y el último pedido enviado de esa ayuda (si hay), o undefined si no coinciden los tres.
+// Crédito: también la parte que el Área pidió reenviar y el garante vigente (el de mayor idGarante), para el reenvío
+// (sus datos se vuelven a cargar en el formulario)
+export const modelBuscarSolicitudParaAyuda = async (tipo, nroExpediente, correo, dni) => {
+    const { tabla, id, path } = tablasAyuda[tipo];
+    const esCredito = tipo === 'Credito';
     const [filas] = await pool.query(
         `SELECT s.idSolicitudInicio, s.AprobacionArea, s.EnvioMinistro, s.MensajeResolucionFinal, x.NroExpediente,
                 d.PersonaNombre, d.PersonaApellido, d.PersonaDNI, d.PersonaDepartamento, d.PersonaLocalidad,
                 d.PersonaDomicilio, d.PersonaTeléfono AS PersonaTelefono, d.PersonaCorreo, d.EmprendimientoNombre,
                 d.EmprendimientoDepto, d.EmprendimientoLocalidad, d.EmprendimientoActPrincipal, d.EmprendimientoRubro,
-                d.EleccionAyuda, sub.idSubsidio, sub.Aprobado AS SubsidioAprobado, sub.EstadoRevision AS SubsidioEstado,
-                sub.ReenvioSolicitado, sub.MensajeSolicitudReenvio
+                d.EleccionAyuda, a.${id} AS idAyuda, a.Aprobado AS AyudaAprobado, a.EstadoRevision AS AyudaEstado,
+                a.ReenvioSolicitado, a.MensajeSolicitudReenvio, a.monto AS AyudaMonto, a.${path} AS AyudaPath,
+                ${esCredito
+                    ? `a.ParteReenvio, g.PathFormularioGarante AS GarantePath, g.NombreCompleto AS GaranteNombre, g.DNI AS GaranteDNI,
+                       g.Cuil AS GaranteCuil, g.Telefono AS GaranteTelefono, g.Correo AS GaranteCorreo`
+                    : 'NULL AS ParteReenvio, NULL AS GarantePath'}
          FROM Expediente x
          INNER JOIN SolicitudInicio s ON s.idSolicitudInicio = x.idSolicitudInicio
          INNER JOIN DatosSolicitudInicio d ON d.idSolicitudInicio = s.idSolicitudInicio
-         LEFT JOIN Subsidio sub ON sub.idSubsidio =
-              (SELECT MAX(u.idSubsidio) FROM Subsidio u WHERE u.idSolicitudInicio = s.idSolicitudInicio)
+         LEFT JOIN ${tabla} a ON a.${id} =
+              (SELECT MAX(u.${id}) FROM ${tabla} u WHERE u.idSolicitudInicio = s.idSolicitudInicio)
+         ${esCredito ? 'LEFT JOIN Garante g ON g.idGarante = (SELECT MAX(h.idGarante) FROM Garante h WHERE h.idCredito = a.idCredito)' : ''}
          WHERE x.NroExpediente = ? AND LOWER(TRIM(d.PersonaCorreo)) = LOWER(?) AND UPPER(TRIM(d.PersonaDNI)) = UPPER(?)
          LIMIT 1;`,
         [nroExpediente, correo, dni]
@@ -151,83 +140,88 @@ export const modelBuscarSolicitudParaSubsidio = async (nroExpediente, correo, dn
     return filas[0];
 };
 
-const errorSubsidio = (mensaje, codigo) => Object.assign(new Error(mensaje), { codigo });
+const errorAyuda = (mensaje, codigo) => Object.assign(new Error(mensaje), { codigo });
 
-export const MENSAJE_SUBSIDIO_EN_REVISION = 'Ya recibimos su formulario de subsidio y el Área lo está revisando. '
+export const mensajeAyudaEnRevision = (tipo) => `Ya recibimos su formulario de ${tablasAyuda[tipo].nombre} y el Área lo está revisando. `
     + 'Solo puede volver a enviarlo si el Área se lo solicita por correo.';
 
-// Registra el subsidio de la solicitud. Si ya hay uno sin finalizar, solo lo reemplaza cuando el Área pidió
+// Registra el subsidio o el crédito de la solicitud. Si ya hay uno sin finalizar, solo lo reemplaza cuando el Área pidió
 // el reenvío (ReenvioSolicitado), y devuelve el PDF anterior para borrarlo.
+// En el crédito también se guarda el garante: el primer envío agrega su fila y los reenvíos la actualizan (devuelve el
+// PDF anterior del garante para borrarlo). En un reenvío parcial, parteReenvio es la parte que se armó ('Titular' sin
+// datos del garante, 'Garante' con ellos).
 // Las condiciones se vuelven a comprobar con las filas bloqueadas, por si cambiaron desde la verificación.
-export const modelRegistrarSubsidioDeSolicitud = async (idSolicitudInicio, pathFormulario, monto, datosAuditoria) => {
+export const modelRegistrarAyudaDeSolicitud = async (tipo, idSolicitudInicio, pathFormulario, monto, datosAuditoria, garante = null, parteReenvio = null) => {
+    const { tabla, id, path, nombre } = tablasAyuda[tipo];
     return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
         const [[solicitud]] = await conexion.query(
             'SELECT AprobacionArea, EnvioMinistro, MensajeResolucionFinal FROM SolicitudInicio WHERE idSolicitudInicio = ? FOR UPDATE;',
             [idSolicitudInicio]
         );
         if (!solicitud || Number(solicitud.AprobacionArea) !== 1 || Number(solicitud.EnvioMinistro) !== 0 || solicitud.MensajeResolucionFinal) {
-            throw errorSubsidio('La solicitud ya no admite el envío del formulario de subsidio.', 'SOLICITUD_NO_DISPONIBLE');
+            throw errorAyuda(`La solicitud ya no admite el envío del formulario de ${nombre}.`, 'SOLICITUD_NO_DISPONIBLE');
         }
 
         const [[previo]] = await conexion.query(
-            `SELECT idSubsidio, PathFormularioSub, Aprobado, EstadoRevision, ReenvioSolicitado FROM Subsidio
-             WHERE idSolicitudInicio = ? ORDER BY idSubsidio DESC LIMIT 1 FOR UPDATE;`,
+            `SELECT ${id} AS idAyuda, ${path} AS pathFormulario, Aprobado, EstadoRevision, ReenvioSolicitado,
+                    ${tipo === 'Credito' ? 'ParteReenvio' : 'NULL AS ParteReenvio'} FROM ${tabla}
+             WHERE idSolicitudInicio = ? ORDER BY ${id} DESC LIMIT 1 FOR UPDATE;`,
             [idSolicitudInicio]
         );
         if (previo && (previo.Aprobado !== null || Number(previo.EstadoRevision) === 2)) {
-            throw errorSubsidio('El subsidio de este expediente ya fue resuelto y no admite cambios.', 'SUBSIDIO_FINALIZADO');
+            throw errorAyuda(`El ${nombre} de este expediente ya fue resuelto y no admite cambios.`, 'AYUDA_FINALIZADA');
         }
-
         if (previo && !Number(previo.ReenvioSolicitado)) {
-            throw errorSubsidio(MENSAJE_SUBSIDIO_EN_REVISION, 'REENVIO_NO_SOLICITADO');
+            throw errorAyuda(mensajeAyudaEnRevision(tipo), 'REENVIO_NO_SOLICITADO');
+        }
+        // El formulario se armó con la parte pedida al verificar: si el Área cambió el pedido mientras tanto, se vuelve a empezar
+        if (previo && tipo === 'Credito' && (previo.ParteReenvio || 'Completo') !== (parteReenvio || 'Completo')) {
+            throw errorAyuda('El Área cambió el pedido de reenvío mientras completaba el formulario. Vuelva a verificar sus datos y complete la parte que se le solicita.', 'REENVIO_CAMBIADO');
         }
 
+        let idAyuda;
         if (previo) {
             // MontoAnterior va antes que monto: MySQL asigna en orden y así toma el monto del envío anterior.
             // Recibido el reenvío, se cierra el pedido (el Área puede volver a pedirlo).
             await conexion.query(
-                `UPDATE Subsidio
-                 SET PathFormularioSub = ?, MontoAnterior = IF(monto <> ?, monto, MontoAnterior), monto = ?,
+                `UPDATE ${tabla}
+                 SET ${path} = ?, MontoAnterior = IF(monto <> ?, monto, MontoAnterior), monto = ?,
                      FechaRecibido = CURRENT_DATE(), ReenvioSolicitado = 0
-                 WHERE idSubsidio = ?;`,
-                [pathFormulario, monto, monto, previo.idSubsidio]
+                 WHERE ${id} = ?;`,
+                [pathFormulario, monto, monto, previo.idAyuda]
             );
-            return { idSubsidio: previo.idSubsidio, pathAnterior: previo.PathFormularioSub };
+            idAyuda = previo.idAyuda;
+        } else {
+            const [resultado] = await conexion.query(
+                `INSERT INTO ${tabla} (${path}, monto, FechaRecibido, idSolicitudInicio) VALUES (?, ?, CURRENT_DATE(), ?);`,
+                [pathFormulario, monto, idSolicitudInicio]
+            );
+            idAyuda = resultado.insertId;
         }
 
-        const [resultado] = await conexion.query(
-            'INSERT INTO Subsidio (PathFormularioSub, monto, FechaRecibido, idSolicitudInicio) VALUES (?, ?, CURRENT_DATE(), ?);',
-            [pathFormulario, monto, idSolicitudInicio]
-        );
-        return { idSubsidio: resultado.insertId, pathAnterior: null };
-    });
-};
-
-const tablasAyuda = {
-    Subsidio: { tabla: 'Subsidio', id: 'idSubsidio', path: 'PathFormularioSub' },
-    Credito: { tabla: 'Credito', id: 'idCredito', path: 'PathFormularioCredito' }
-};
-
-// Indica si ya hay un pedido del mismo tipo sin resolver para esa solicitud
-export const modelTienePedidoPendiente = async (tipo, idSolicitudInicio) => {
-    const { tabla } = tablasAyuda[tipo];
-    const [filas] = await pool.query(
-        `SELECT 1 FROM ${tabla} WHERE idSolicitudInicio = ? AND Aprobado IS NULL LIMIT 1;`,
-        [idSolicitudInicio]
-    );
-    return filas.length > 0;
-};
-
-// Subsidio / Credito: registra el pedido con la ruta del PDF generado
-export const modelRegistrarPedidoAyuda = async (tipo, pathFormulario, monto, idSolicitudInicio, datosAuditoria) => {
-    const { tabla, path } = tablasAyuda[tipo];
-
-    return ejecutarConAuditoria(datosAuditoria, async (conexion) => {
-        const [resultado] = await conexion.query(
-            `INSERT INTO ${tabla} (${path}, monto, FechaRecibido, idSolicitudInicio)
-             VALUES (?, ?, CURRENT_DATE(), ?);`,
-            [pathFormulario, monto, idSolicitudInicio]
-        );
-        return resultado.insertId;
+        // El crédito tiene un solo garante: en el reenvío se actualiza su fila (el trigger registra qué cambió)
+        let garantePathAnterior = null;
+        if (garante) {
+            const [[vigente]] = await conexion.query(
+                'SELECT idGarante, PathFormularioGarante FROM Garante WHERE idCredito = ? ORDER BY idGarante DESC LIMIT 1;',
+                [idAyuda]
+            );
+            const valores = [garante.nombre, garante.dni, garante.cuil, garante.telefono, garante.correo, garante.pathFormulario];
+            if (vigente) {
+                await conexion.query(
+                    `UPDATE Garante SET NombreCompleto = ?, DNI = ?, Cuil = ?, Telefono = ?, Correo = ?, PathFormularioGarante = ?
+                     WHERE idGarante = ?;`,
+                    [...valores, vigente.idGarante]
+                );
+                garantePathAnterior = vigente.PathFormularioGarante;
+            } else {
+                await conexion.query(
+                    `INSERT INTO Garante (NombreCompleto, DNI, Cuil, Telefono, Correo, PathFormularioGarante, idCredito)
+                     VALUES (?, ?, ?, ?, ?, ?, ?);`,
+                    [...valores, idAyuda]
+                );
+            }
+        }
+        return { idAyuda, pathAnterior: previo?.pathFormulario ?? null, garantePathAnterior };
     });
 };

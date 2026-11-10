@@ -12,6 +12,6 @@
     <% }) %>
 </table>
 
-<p class="titulo-seccion">2.&nbsp; DESTINO DEL SUBSIDIO <small>(mencione los bienes solicitados en el proyecto)</small></p>
+<p class="titulo-seccion">2.&nbsp; DESTINO DEL <%= esCredito ? 'CREDITO' : 'SUBSIDIO' %> <small>(mencione los bienes solicitados en el proyecto)</small></p>
 <p class="subtitulo-seccion">a) ACTIVO FIJO <small>(maquinarias y herramientas)</small></p>
 <%- include('../tabla-solicitados.ejs', { filas: filasActivoFijo }) %>

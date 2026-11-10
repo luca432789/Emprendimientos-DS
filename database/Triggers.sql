@@ -1,4 +1,4 @@
--- use ProyectoEmprendimientos2026;
+use ProyectoEmprendimientos2026;
 
 -- ------------------------------------------------------------------------------------------------------------------------
 -- Seccion de TRIGGERS ------------------------------------------------------------------------------------------------------
@@ -699,7 +699,7 @@ DELIMITER ;
 -- END IF;
 
 -- TRIGGERS DE CREDITO - AUDITORIA ----------------------------------------------------------------------------------------------------------------------------------------
--- Credito (idCredito (PK), PathFormularioCredito, monto, FechaRecibido, Aprobado (Si-No), FechaResolucion, MensajeResolucion, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
+-- Credito (idCredito (PK), PathFormularioCredito, monto, MontoAnterior, FechaRecibido, EstadoRevision, ReenvioSolicitado, ParteReenvio, Aprobado (Si-No), FechaResolucion, MotivoRechazo, MensajeSolicitudReenvio, PathDirectorioFacturas, FacturasEntregadas (Si-No), FechaFacturasValidadas, PuestaMarchaAcreditada (Si-No), FechaPuestaMarcha, idSolicitudInicio (FK), idEmpleadoRevisor (FK))
 -- Trigger Insert_Auditoria_Credito
 DELIMITER //
 CREATE TRIGGER tg_auditoria_Credito_insert
@@ -726,9 +726,10 @@ BEGIN
     IF (OLD.Aprobado IS NULL AND NEW.Aprobado IS NOT NULL) OR (OLD.Aprobado <> NEW.Aprobado) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito, 
-			CONCAT('Estado del Subsidio actualizado a: ', CASE WHEN NEW.Aprobado = 1 THEN 'OTORGADO' ELSE 'RECHAZADO' END,
-				' - Revisor/Ministro ID: ', COALESCE(NEW.idEmpleadoRevisor, 'N/C')),
+			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito,
+			CONCAT('Estado del Crédito actualizado a: ', CASE WHEN NEW.Aprobado = 1 THEN 'OTORGADO' ELSE 'RECHAZADO' END,
+				' - Revisor ID: ', COALESCE(NEW.idEmpleadoRevisor, 'N/C'),
+				IF(NEW.Aprobado = 0 AND NEW.MotivoRechazo IS NOT NULL, CONCAT(' - Motivo: ', NEW.MotivoRechazo), '')),
 			@usuario_ip);
     END IF;
 
@@ -736,8 +737,8 @@ BEGIN
     IF (OLD.FacturasEntregadas IS NULL AND NEW.FacturasEntregadas IS NOT NULL) OR (OLD.FacturasEntregadas <> NEW.FacturasEntregadas) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito, 
-			CONCAT('Rendición de facturas: ', CASE WHEN NEW.FacturasEntregadas = 1 THEN 'Entregadas y en revisión' ELSE 'Sin entregar/Retiradas' END), 
+			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito,
+			CONCAT('Rendición de facturas: ', CASE WHEN NEW.FacturasEntregadas = 1 THEN 'Entregadas y en revisión' ELSE 'Sin entregar/Retiradas' END),
             @usuario_ip);
     END IF;
 
@@ -745,17 +746,45 @@ BEGIN
     IF (OLD.PuestaMarchaAcreditada IS NULL AND NEW.PuestaMarchaAcreditada IS NOT NULL) OR (OLD.PuestaMarchaAcreditada <> NEW.PuestaMarchaAcreditada) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito, 
+			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito,
 			CONCAT('Verificación de campo: Puesta en marcha ', CASE WHEN NEW.PuestaMarchaAcreditada = 1 THEN 'ACREDITADA POSITIVA' ELSE 'NO ACREDITADA' END),
             @usuario_ip);
     END IF;
-    
-        -- 4. SEGURO DE INTEGRIDAD: Si se cambió el monto
-    IF (OLD.monto <> NEW.monto) THEN
+
+    -- 4. Reenvío del formulario (el emprendedor lo vuelve a completar porque el Área se lo pidió)
+    IF (OLD.PathFormularioCredito <> NEW.PathFormularioCredito) THEN
         INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
         VALUES (
-			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito, 
-			CONCAT('¡ALERTA DE CONTROL! Alteración de valor económico. Monto anterior: $', OLD.monto, ' -> Nuevo Monto: $', NEW.monto), 
+			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito,
+			CONCAT('Formulario de Crédito reenviado para Solicitud ID: ', NEW.idSolicitudInicio,
+				' (parte reenviada: ', COALESCE(NEW.ParteReenvio, 'Completo'), '). Monto solicitado: $', NEW.monto,
+				' (antes $', OLD.monto, '). Ubicacion del formulario: ', NEW.PathFormularioCredito),
+			@usuario_ip);
+    -- 5. SEGURO DE INTEGRIDAD: Si se cambió el monto sin reenviar el formulario
+    ELSEIF (OLD.monto <> NEW.monto) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito,
+			CONCAT('¡ALERTA DE CONTROL! Alteración de valor económico. Monto anterior: $', OLD.monto, ' -> Nuevo Monto: $', NEW.monto),
+			@usuario_ip);
+    END IF;
+
+    -- 6. Un empleado del Área comenzó la revisión (pasa a "En Revisión")
+    IF (OLD.EstadoRevision = 0 AND NEW.EstadoRevision = 1) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito,
+			CONCAT('Revisión del Crédito iniciada para Solicitud ID: ', NEW.idSolicitudInicio),
+			@usuario_ip);
+    END IF;
+
+    -- 7. El Área le pidió al emprendedor que reenvíe el formulario
+    IF (OLD.ReenvioSolicitado = 0 AND NEW.ReenvioSolicitado = 1) THEN
+        INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+        VALUES (
+			@usuario_id, 'UPDATE', 'Credito', NEW.idCredito,
+			CONCAT('Se solicitó al emprendedor el reenvío del formulario de Crédito (parte: ', COALESCE(NEW.ParteReenvio, 'Completo'), '): ',
+				COALESCE(NEW.MensajeSolicitudReenvio, '')),
 			@usuario_ip);
     END IF;
 END;
@@ -779,13 +808,32 @@ END;
 //
 DELIMITER ;
 -- Trigger Update_Auditoria_Garante
+-- El crédito tiene un solo garante: el reenvío del formulario actualiza su fila (datos y documento). Se registra qué cambió.
+-- No se puede pasar el garante a otro crédito.
 DELIMITER //
 CREATE TRIGGER tg_auditoria_Garante_update
 BEFORE UPDATE ON Garante
 FOR EACH ROW
 BEGIN
-    SIGNAL SQLSTATE '45000' 
-    SET MESSAGE_TEXT = 'Error de Seguridad: La tabla Garante es inmutable y no permite modificaciones.';
+    IF NOT (OLD.idCredito <=> NEW.idCredito) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error de Seguridad: El garante no se puede pasar a otro crédito.';
+    END IF;
+
+    INSERT INTO Auditoria (idUsuario, Accion, Tabla_Afectada, idRegistroAfectado, Detalle, DireccionIP)
+    VALUES (
+        @usuario_id, 'UPDATE', 'Garante', NEW.idGarante,
+        CONCAT('Garante del Crédito ID: ', NEW.idCredito, ' actualizado por el reenvío del formulario.',
+            IF(OLD.NombreCompleto <=> NEW.NombreCompleto, '', CONCAT(' Nombre: ', OLD.NombreCompleto, ' -> ', NEW.NombreCompleto, '.')),
+            IF(OLD.DNI <=> NEW.DNI, '', CONCAT(' DNI: ', OLD.DNI, ' -> ', NEW.DNI, '.')),
+            IF(OLD.Cuil <=> NEW.Cuil, '', CONCAT(' CUIL: ', OLD.Cuil, ' -> ', NEW.Cuil, '.')),
+            IF(OLD.Telefono <=> NEW.Telefono, '', CONCAT(' Teléfono: ', OLD.Telefono, ' -> ', NEW.Telefono, '.')),
+            IF(OLD.Correo <=> NEW.Correo, '', CONCAT(' Correo: ', OLD.Correo, ' -> ', NEW.Correo, '.')),
+            IF(OLD.NombreCompleto <=> NEW.NombreCompleto AND OLD.DNI <=> NEW.DNI AND OLD.Cuil <=> NEW.Cuil
+               AND OLD.Telefono <=> NEW.Telefono AND OLD.Correo <=> NEW.Correo, ' Mismos datos: solo se reemplazó su documento.', ''),
+            ' Ubicación del documento: ', NEW.PathFormularioGarante),
+        @usuario_ip
+    );
 END;
 //
 DELIMITER ;

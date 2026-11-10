@@ -1,8 +1,9 @@
 // ======================================================================
 // SUBSIDIOS Y CRÉDITOS (Empleado de Área / Administrador)
-// API: GET /api/ayudas/subsidio/sin-revisar  y  /api/ayudas/credito/sin-revisar
-// Subsidios: "Comenzar revisión" los pasa a "En Revisión" (compartida por todo el Área), donde se puede
+// API: /api/ayudas/subsidio/...  y  /api/ayudas/credito/...
+// "Comenzar revisión" los pasa a "En Revisión" (compartida por todo el Área), donde se puede
 // solicitar el reenvío del formulario o tomar la decisión (aprobar / rechazar).
+// En el crédito el reenvío puede pedir el formulario completo, solo la parte del titular o solo la del garante.
 // ======================================================================
 
 function escaparAyuda(texto) {
@@ -14,6 +15,19 @@ function escaparAyuda(texto) {
 const fechaAyuda = (valor) => valor ? new Date(valor).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : 'Sin fecha';
 const montoAyuda = (valor) => `$ ${Number(valor).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const idAyuda = (id) => `#${String(id).padStart(4, '0')}`;
+
+// Textos de cada tipo
+const AYUDAS_PANEL = {
+    subsidio: { nombre: 'subsidio', Nombre: 'Subsidio', plural: 'subsidios', seccion: 'En Revisión: Solicitudes de Subsidio', rechazo: 'Rechazado por Subsidio' },
+    credito: { nombre: 'crédito', Nombre: 'Crédito', plural: 'créditos', seccion: 'En Revisión: Solicitudes de Créditos', rechazo: 'Rechazado por Crédito' }
+};
+
+// Crédito: qué parte del formulario se pide reenviar
+const PARTES_REENVIO_CREDITO = {
+    Completo: 'Formulario completo (titular y garante)',
+    Titular: 'Solo la parte del titular: hojas 1 a 6 y presupuestos (se conserva lo del garante)',
+    Garante: 'Solo la parte del garante: hoja 7 y su documentación (se conserva lo del titular)'
+};
 
 const botonPdfAyuda = (direccion, texto = 'Ver PDF') => direccion
     ? `<a class="btn-filtro" style="padding:4px 10px; background-color:#2c3e50; color:#fff; text-decoration:none;" href="${escaparAyuda(encodeURI(direccion))}" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> ${texto}</a>`
@@ -35,10 +49,12 @@ async function pedidoAyuda(url, opciones = {}) {
     return datos;
 }
 
+const urlAyuda = (tipo, id, accion) => `/api/ayudas/${tipo}/${encodeURIComponent(id)}/${accion}`;
+
 async function fetchAyudasSinRevisar(tipo) {
     const tablaCuerpo = document.getElementById('tabla-cuerpo-ayudas');
     if (!tablaCuerpo) return;
-    const nombre = tipo === 'subsidio' ? 'subsidio' : 'crédito';
+    const { nombre } = AYUDAS_PANEL[tipo];
 
     try {
         const datos = await pedidoAyuda(`/api/ayudas/${tipo}/sin-revisar`);
@@ -60,17 +76,16 @@ async function fetchAyudasSinRevisar(tipo) {
                 <td style="text-align:center;">
                     <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
                         ${botonPdfAyuda(a.DireccionPDF)}
-                        ${tipo === 'subsidio'
-                            ? `<button type="button" class="btn-filtro btn-comenzar-subsidio" style="padding:4px 10px; background-color:#d35400; color:#fff;" data-id="${escaparAyuda(a.id)}">
-                                <i class="fa-solid fa-play"></i> Comenzar revisión
-                            </button>`
-                            : ''}
+                        ${a.DireccionPDFGarante ? botonPdfAyuda(a.DireccionPDFGarante, 'PDF del garante') : ''}
+                        <button type="button" class="btn-filtro btn-comenzar-ayuda" style="padding:4px 10px; background-color:#d35400; color:#fff;" data-id="${escaparAyuda(a.id)}">
+                            <i class="fa-solid fa-play"></i> Comenzar revisión
+                        </button>
                     </div>
                 </td>
             </tr>`).join('');
 
-        tablaCuerpo.querySelectorAll('.btn-comenzar-subsidio').forEach((boton) => {
-            boton.addEventListener('click', () => comenzarRevisionSubsidio(boton.dataset.id));
+        tablaCuerpo.querySelectorAll('.btn-comenzar-ayuda').forEach((boton) => {
+            boton.addEventListener('click', () => comenzarRevisionAyuda(tipo, boton.dataset.id));
         });
     } catch (error) {
         console.error(`Error cargando ${nombre}s sin revisar:`, error);
@@ -80,10 +95,11 @@ async function fetchAyudasSinRevisar(tipo) {
     }
 }
 
-async function comenzarRevisionSubsidio(id) {
+async function comenzarRevisionAyuda(tipo, id) {
+    const { nombre, seccion } = AYUDAS_PANEL[tipo];
     const confirmacion = await Swal.fire({
-        title: `¿Comenzar la revisión del subsidio ${idAyuda(id)}?`,
-        text: 'Pasará a "En Revisión: Solicitudes de Subsidio", donde cualquier empleado del Área puede continuarla.',
+        title: `¿Comenzar la revisión del ${nombre} ${idAyuda(id)}?`,
+        text: `Pasará a "${seccion}", donde cualquier empleado del Área puede continuarla.`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Sí, comenzar revisión',
@@ -93,39 +109,42 @@ async function comenzarRevisionSubsidio(id) {
     if (!confirmacion.isConfirmed) return;
 
     try {
-        const resultado = await pedidoAyuda(`/api/ayudas/subsidio/${encodeURIComponent(id)}/iniciar-revision`, { method: 'PUT' });
+        const resultado = await pedidoAyuda(urlAyuda(tipo, id, 'iniciar-revision'), { method: 'PUT' });
         await Swal.fire({ icon: 'success', title: 'Revisión comenzada', text: resultado.mensaje, confirmButtonColor: '#1a3a5f' });
     } catch (error) {
         await Swal.fire('Error', error.message, 'error');
     }
     window.actualizarNotificaciones?.();
-    fetchAyudasSinRevisar('subsidio');
+    fetchAyudasSinRevisar(tipo);
 }
 
 // ----------------------------------------------------------------------
 // EN REVISIÓN
 // ----------------------------------------------------------------------
-let subsidiosEnRevision = [];
+let ayudasEnRevision = [];
 
-async function cargarSubsidiosEnRevision() {
-    const cuerpo = document.getElementById('tabla-cuerpo-subsidios-revision');
+async function cargarAyudasEnRevision(tipo) {
+    const cuerpo = document.getElementById('tabla-cuerpo-ayudas-revision');
     if (!cuerpo) return;
+    const { plural } = AYUDAS_PANEL[tipo];
 
     try {
-        subsidiosEnRevision = await pedidoAyuda('/api/ayudas/subsidio/en-revision');
+        ayudasEnRevision = await pedidoAyuda(`/api/ayudas/${tipo}/en-revision`);
         if (!cuerpo.isConnected) return;
         window.actualizarNotificaciones?.();
-        if (!subsidiosEnRevision.length) {
-            cuerpo.innerHTML = '<tr><td colspan="7" style="text-align:center; color:gray; padding:20px;">No hay subsidios en revisión.</td></tr>';
+        if (!ayudasEnRevision.length) {
+            cuerpo.innerHTML = `<tr><td colspan="7" style="text-align:center; color:gray; padding:20px;">No hay ${plural} en revisión.</td></tr>`;
             return;
         }
 
-        cuerpo.innerHTML = subsidiosEnRevision.map((s) => {
+        cuerpo.innerHTML = ayudasEnRevision.map((s) => {
             const montoAnterior = s.MontoAnterior !== null && Number(s.MontoAnterior) !== Number(s.monto)
                 ? montoAyuda(s.MontoAnterior)
                 : '<span style="color:#94a3b8;">—</span>';
+            const parte = tipo === 'credito' && s.ParteReenvio && s.ParteReenvio !== 'Completo'
+                ? ` (${s.ParteReenvio === 'Titular' ? 'parte del titular' : 'parte del garante'})` : '';
             const estado = Number(s.ReenvioSolicitado)
-                ? '<span style="color:#b45309;"><i class="fa-solid fa-hourglass-half"></i> Esperando reenvío del emprendedor</span>'
+                ? `<span style="color:#b45309;"><i class="fa-solid fa-hourglass-half"></i> Esperando reenvío del emprendedor${parte}</span>`
                 : '<span style="color:#15803d;"><i class="fa-solid fa-magnifying-glass"></i> Para revisar</span>';
             return `
                 <tr>
@@ -139,49 +158,57 @@ async function cargarSubsidiosEnRevision() {
                     <td>${fechaAyuda(s.FechaRecibido)}</td>
                     <td>${estado}</td>
                     <td style="text-align:center;">
-                        <button type="button" class="btn-filtro btn-continuar-subsidio" style="padding:4px 10px;" data-id="${escaparAyuda(s.id)}">
+                        <button type="button" class="btn-filtro btn-continuar-ayuda" style="padding:4px 10px;" data-id="${escaparAyuda(s.id)}">
                             <i class="fa-solid fa-file-signature"></i> Continuar revisión
                         </button>
                     </td>
                 </tr>`;
         }).join('');
 
-        cuerpo.querySelectorAll('.btn-continuar-subsidio').forEach((boton) => {
+        cuerpo.querySelectorAll('.btn-continuar-ayuda').forEach((boton) => {
             boton.addEventListener('click', () => {
-                const subsidio = subsidiosEnRevision.find((s) => String(s.id) === boton.dataset.id);
-                if (subsidio) abrirRevisionSubsidio(subsidio);
+                const ayuda = ayudasEnRevision.find((s) => String(s.id) === boton.dataset.id);
+                if (ayuda) abrirRevisionAyuda(tipo, ayuda);
             });
         });
     } catch (error) {
-        console.error('Error cargando subsidios en revisión:', error);
+        console.error(`Error cargando ${plural} en revisión:`, error);
         if (cuerpo.isConnected) {
             cuerpo.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red; padding:20px;">${escaparAyuda(error.message)}</td></tr>`;
         }
     }
 }
 
-function htmlDatosSubsidio(s) {
+function htmlDatosAyuda(tipo, s) {
+    const { Nombre } = AYUDAS_PANEL[tipo];
     const montoAnterior = s.MontoAnterior !== null && Number(s.MontoAnterior) !== Number(s.monto)
         ? ` <small style="color:#64748b;">(antes ${montoAyuda(s.MontoAnterior)})</small>` : '';
+    const garante = tipo === 'credito'
+        ? `<div><b>Garante:</b> ${escaparAyuda(s.Garante || 'Sin garante')}</div>
+           <div><b>Documento del garante:</b> ${enlacePdfAyuda(s.DireccionPDFGarante)}</div>`
+        : '';
     return `
         <div style="text-align:left; margin:0 0 12px; padding:12px; background:#f1f5f9; border-radius:4px; line-height:1.6;">
-            <div><b>Subsidio de la Solicitud de Inicio:</b> #${escaparAyuda(s.idSolicitudInicio)}</div>
+            <div><b>${Nombre} de la Solicitud de Inicio:</b> #${escaparAyuda(s.idSolicitudInicio)}</div>
             <div><b>N° de expediente:</b> ${escaparAyuda(s.NroExpediente || 'Sin expediente')}</div>
             <div><b>Emprendimiento:</b> ${escaparAyuda(s.Emprendimiento || '')}</div>
             <div><b>Solicitante:</b> ${escaparAyuda(s.Solicitante || '')} · ${escaparAyuda(s.Correo || '')}</div>
             <div><b>Departamento:</b> ${escaparAyuda(s.Departamento || '')}</div>
             <div><b>Monto solicitado:</b> ${montoAyuda(s.monto)}${montoAnterior}</div>
             <div><b>Formulario de Inicio:</b> ${enlacePdfAyuda(s.DireccionPDFInicio)}</div>
-            <div><b>Formulario de Subsidio:</b> ${enlacePdfAyuda(s.DireccionPDF)}</div>
+            <div><b>Formulario de ${Nombre}:</b> ${enlacePdfAyuda(s.DireccionPDF)}</div>
+            ${garante}
         </div>`;
 }
 
 // Ventana "Continuar revisión": datos, PDFs y las tres acciones
-async function abrirRevisionSubsidio(s) {
+async function abrirRevisionAyuda(tipo, s) {
+    const { Nombre } = AYUDAS_PANEL[tipo];
     let accion = null;
+    const parte = tipo === 'credito' && s.ParteReenvio ? `<br><i>${escaparAyuda(PARTES_REENVIO_CREDITO[s.ParteReenvio] || '')}</i>` : '';
     const avisoReenvio = Number(s.ReenvioSolicitado)
         ? `<div style="text-align:left; margin:0 0 12px; padding:10px 12px; background:#fef3c7; border-radius:4px;">
-               <b>Reenvío solicitado, esperando al emprendedor:</b><br>
+               <b>Reenvío solicitado, esperando al emprendedor:</b>${parte}<br>
                <span style="white-space:pre-line;">${escaparAyuda(s.MensajeSolicitudReenvio || '')}</span><br>
                <button type="button" data-accion="correo" style="margin-top:6px; padding:0; border:0; background:none; color:#1a3a5f; text-decoration:underline; cursor:pointer;">
                    Volver a enviar el correo del pedido
@@ -190,10 +217,10 @@ async function abrirRevisionSubsidio(s) {
         : '';
 
     await Swal.fire({
-        title: `Revisión del Subsidio ${idAyuda(s.id)}`,
+        title: `Revisión del ${Nombre} ${idAyuda(s.id)}`,
         width: '660px',
         html: `
-            ${htmlDatosSubsidio(s)}
+            ${htmlDatosAyuda(tipo, s)}
             ${avisoReenvio}
             <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px;">
                 <button type="button" class="swal2-styled" data-accion="pdf" style="background:#2f4e78; color:#fff; margin:0;">
@@ -225,15 +252,15 @@ async function abrirRevisionSubsidio(s) {
 
     if (accion === 'correo') {
         try {
-            const datos = await pedidoAyuda(`/api/ayudas/subsidio/${encodeURIComponent(s.id)}/reenviar-correo`, { method: 'POST' });
+            const datos = await pedidoAyuda(urlAyuda(tipo, s.id, 'reenviar-correo'), { method: 'POST' });
             await Swal.fire({ icon: 'success', title: 'Correo enviado', text: datos.mensaje, confirmButtonColor: '#1a3a5f' });
         } catch (error) {
             await Swal.fire('Error', error.message, 'error');
         }
-        return abrirRevisionSubsidio(s);
+        return abrirRevisionAyuda(tipo, s);
     }
-    if (accion === 'reenvio') await abrirSolicitarReenvio(s);
-    if (accion === 'decision') await abrirDecisionSubsidio(s);
+    if (accion === 'reenvio') await abrirSolicitarReenvio(tipo, s);
+    if (accion === 'decision') await abrirDecisionAyuda(tipo, s);
 }
 
 // Pide el texto que va en el correo (de 10 a 512 caracteres)
@@ -243,19 +270,19 @@ async function pedirTextoCorreo({ titulo, explicacion, etiqueta, botonConfirmar,
         width: '620px',
         html: `
             <p style="text-align:left; margin:0 0 10px;">${explicacion}</p>
-            <label for="texto-correo-subsidio" style="display:block; text-align:left; font-weight:600;">${etiqueta}</label>
-            <textarea id="texto-correo-subsidio" class="swal2-textarea" maxlength="512" rows="5"
+            <label for="texto-correo-ayuda" style="display:block; text-align:left; font-weight:600;">${etiqueta}</label>
+            <textarea id="texto-correo-ayuda" class="swal2-textarea" maxlength="512" rows="5"
                 style="width:100%; box-sizing:border-box; margin:6px 0 0;"></textarea>
-            <small id="contador-correo-subsidio" style="display:block; text-align:right; color:#64748b;">0 / 512</small>`,
+            <small id="contador-correo-ayuda" style="display:block; text-align:right; color:#64748b;">0 / 512</small>`,
         focusConfirm: false,
         didOpen: () => {
-            const texto = document.getElementById('texto-correo-subsidio');
-            const contador = document.getElementById('contador-correo-subsidio');
+            const texto = document.getElementById('texto-correo-ayuda');
+            const contador = document.getElementById('contador-correo-ayuda');
             texto.addEventListener('input', () => { contador.textContent = `${texto.value.length} / 512`; });
             texto.focus();
         },
         preConfirm: () => {
-            const valor = document.getElementById('texto-correo-subsidio').value.trim();
+            const valor = document.getElementById('texto-correo-ayuda').value.trim();
             if (valor.length < 10) {
                 Swal.showValidationMessage('Escriba al menos 10 caracteres.');
                 return false;
@@ -270,55 +297,94 @@ async function pedirTextoCorreo({ titulo, explicacion, etiqueta, botonConfirmar,
     return ventana.isConfirmed ? ventana.value : null;
 }
 
-async function abrirSolicitarReenvio(s) {
+// Crédito: elegir qué parte del formulario debe reenviar el emprendedor
+async function elegirParteReenvioCredito(s) {
+    // Sin garante registrado (ej: carga histórica) no hay otra parte que conservar
+    if (!s.DireccionPDFGarante) return 'Completo';
+    const ventana = await Swal.fire({
+        title: `Solicitar reenvío · Crédito ${idAyuda(s.id)}`,
+        width: '620px',
+        html: `<p style="text-align:left; margin:0;">¿Qué parte del formulario de crédito debe volver a enviar el emprendedor?
+            Si pide solo una parte, la otra se conserva tal como está y el documento completo se vuelve a armar con las dos.</p>`,
+        input: 'radio',
+        inputOptions: PARTES_REENVIO_CREDITO,
+        inputValue: 'Completo',
+        inputValidator: (valor) => (valor ? undefined : 'Elija una opción.'),
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Volver',
+        confirmButtonColor: '#d35400',
+        didOpen: (popup) => {
+            // Una opción por renglón, alineadas a la izquierda
+            const opciones = popup.querySelector('.swal2-radio');
+            if (opciones) Object.assign(opciones.style, { flexDirection: 'column', alignItems: 'flex-start', gap: '8px' });
+        }
+    });
+    return ventana.isConfirmed ? ventana.value : null;
+}
+
+const textoParteCorreo = {
+    Completo: 'que vuelva a enviar el formulario de crédito completo (junto a su garante)',
+    Titular: 'que vuelva a enviar solo la parte del titular (hojas 1 a 6 y presupuestos); lo del garante se conserva',
+    Garante: 'que vuelva a enviar solo la parte del garante (hoja 7 y su documentación); lo del titular se conserva'
+};
+
+async function abrirSolicitarReenvio(tipo, s) {
+    const { nombre, Nombre } = AYUDAS_PANEL[tipo];
+    const parte = tipo === 'credito' ? await elegirParteReenvioCredito(s) : null;
+    if (tipo === 'credito' && !parte) return abrirRevisionAyuda(tipo, s);
+
     const mensaje = await pedirTextoCorreo({
-        titulo: `Solicitar reenvío · Subsidio ${idAyuda(s.id)}`,
+        titulo: `Solicitar reenvío · ${Nombre} ${idAyuda(s.id)}`,
         explicacion: `Se enviará un correo a <b>${escaparAyuda(s.Correo || 'el emprendedor')}</b> con el asunto
-            "<i>Solicitud de Subsidio de Emprendimiento - Reenvío</i>", solicitándole que vuelva a enviar el formulario de subsidio.
+            "<i>Solicitud de ${Nombre} de Emprendimiento - Reenvío</i>", solicitándole
+            ${parte ? `<b>${textoParteCorreo[parte]}</b>` : `que vuelva a enviar el formulario de ${nombre}`}.
             El correo incluye lo que escriba abajo, el N° de expediente (${escaparAyuda(s.NroExpediente || '')}) y el link al formulario.
             El emprendedor solo podrá reenviar el formulario una vez por cada pedido.`,
         etiqueta: '¿Qué le solicita al emprendedor?',
         botonConfirmar: '<i class="fa-solid fa-paper-plane"></i> Enviar pedido',
         color: '#d35400'
     });
-    if (!mensaje) return abrirRevisionSubsidio(s);
+    // "Volver": en el crédito con garante, a la elección de la parte; si no, a la revisión
+    if (!mensaje) return tipo === 'credito' && s.DireccionPDFGarante ? abrirSolicitarReenvio(tipo, s) : abrirRevisionAyuda(tipo, s);
 
     try {
-        const resultado = await pedidoAyuda(`/api/ayudas/subsidio/${encodeURIComponent(s.id)}/solicitar-reenvio`, {
+        const resultado = await pedidoAyuda(urlAyuda(tipo, s.id, 'solicitar-reenvio'), {
             method: 'POST',
-            body: JSON.stringify({ mensaje })
+            body: JSON.stringify(parte ? { mensaje, parte } : { mensaje })
         });
-        await mostrarResultadoCorreoSubsidio('Reenvío solicitado', resultado, s.id);
+        await mostrarResultadoCorreoAyuda(tipo, 'Reenvío solicitado', resultado, s.id);
     } catch (error) {
         await Swal.fire('Error', error.message, 'error');
     }
-    cargarSubsidiosEnRevision();
+    cargarAyudasEnRevision(tipo);
 }
 
-async function abrirDecisionSubsidio(s) {
+async function abrirDecisionAyuda(tipo, s) {
+    const { nombre, Nombre, rechazo } = AYUDAS_PANEL[tipo];
     const esperaReenvio = Number(s.ReenvioSolicitado)
         ? '<p style="color:#b45309;"><b>Atención:</b> hay un reenvío solicitado que el emprendedor todavía no envió.</p>'
         : '';
     const ventana = await Swal.fire({
-        title: `Tomar decisión · Subsidio ${idAyuda(s.id)}`,
+        title: `Tomar decisión · ${Nombre} ${idAyuda(s.id)}`,
         width: '660px',
-        html: `${htmlDatosSubsidio(s)}${esperaReenvio}
-            <p>Quien registre la decisión quedará guardado como el empleado revisor del subsidio.</p>`,
+        html: `${htmlDatosAyuda(tipo, s)}${esperaReenvio}
+            <p>Quien registre la decisión quedará guardado como el empleado revisor del ${nombre}.</p>`,
         showDenyButton: true,
         showCancelButton: true,
-        confirmButtonText: '<i class="fa-solid fa-check"></i> Aprobar subsidio',
-        denyButtonText: '<i class="fa-solid fa-xmark"></i> Rechazar subsidio',
+        confirmButtonText: `<i class="fa-solid fa-check"></i> Aprobar ${nombre}`,
+        denyButtonText: `<i class="fa-solid fa-xmark"></i> Rechazar ${nombre}`,
         cancelButtonText: 'Volver',
         confirmButtonColor: '#2ecc71',
         denyButtonColor: '#c0392b'
     });
-    if (ventana.isDismissed) return abrirRevisionSubsidio(s);
+    if (ventana.isDismissed) return abrirRevisionAyuda(tipo, s);
 
     let cuerpo;
     if (ventana.isConfirmed) {
         const confirmacion = await Swal.fire({
-            title: '¿Aprobar el subsidio?',
-            text: `Se aprobará el subsidio ${idAyuda(s.id)} por ${montoAyuda(s.monto)} (expediente ${s.NroExpediente || ''}). `
+            title: `¿Aprobar el ${nombre}?`,
+            text: `Se aprobará el ${nombre} ${idAyuda(s.id)} por ${montoAyuda(s.monto)} (expediente ${s.NroExpediente || ''}). `
                 + 'Después se podrá confirmar el envío de la solicitud al Ministro. Esta acción no se puede deshacer.',
             icon: 'warning',
             showCancelButton: true,
@@ -326,37 +392,37 @@ async function abrirDecisionSubsidio(s) {
             cancelButtonText: 'Volver',
             confirmButtonColor: '#2ecc71'
         });
-        if (!confirmacion.isConfirmed) return abrirDecisionSubsidio(s);
+        if (!confirmacion.isConfirmed) return abrirDecisionAyuda(tipo, s);
         cuerpo = { aprobado: 1 };
     } else {
         const motivo = await pedirTextoCorreo({
-            titulo: `Rechazar · Subsidio ${idAyuda(s.id)}`,
+            titulo: `Rechazar · ${Nombre} ${idAyuda(s.id)}`,
             explicacion: `Se enviará un correo a <b>${escaparAyuda(s.Correo || 'el emprendedor')}</b> con el asunto
-                "<i>Solicitud de Subsidio de Emprendimiento - Rechazo</i>", con los motivos que escriba abajo y el N° de expediente
-                (${escaparAyuda(s.NroExpediente || '')}). La solicitud de inicio quedará finalizada como "Rechazado por Subsidio".
+                "<i>Solicitud de ${Nombre} de Emprendimiento - Rechazo</i>", con los motivos que escriba abajo y el N° de expediente
+                (${escaparAyuda(s.NroExpediente || '')}). La solicitud de inicio quedará finalizada como "${rechazo}".
                 Esta acción no se puede deshacer.`,
             etiqueta: 'Motivo del rechazo',
             botonConfirmar: '<i class="fa-solid fa-xmark"></i> Rechazar y enviar correo',
             color: '#c0392b'
         });
-        if (!motivo) return abrirDecisionSubsidio(s);
+        if (!motivo) return abrirDecisionAyuda(tipo, s);
         cuerpo = { aprobado: 0, motivo };
     }
 
     try {
-        const resultado = await pedidoAyuda(`/api/ayudas/subsidio/${encodeURIComponent(s.id)}/resolver`, {
+        const resultado = await pedidoAyuda(urlAyuda(tipo, s.id, 'resolver'), {
             method: 'PUT',
             body: JSON.stringify(cuerpo)
         });
-        await mostrarResultadoCorreoSubsidio(cuerpo.aprobado ? 'Subsidio aprobado' : 'Subsidio rechazado', resultado, s.id);
+        await mostrarResultadoCorreoAyuda(tipo, `${Nombre} ${cuerpo.aprobado ? 'aprobado' : 'rechazado'}`, resultado, s.id);
     } catch (error) {
         await Swal.fire('Error', error.message, 'error');
     }
-    cargarSubsidiosEnRevision();
+    cargarAyudasEnRevision(tipo);
 }
 
 // Si el correo no salió, el cambio igual quedó guardado: se ofrece reintentar el envío
-async function mostrarResultadoCorreoSubsidio(titulo, resultado, idSubsidio) {
+async function mostrarResultadoCorreoAyuda(tipo, titulo, resultado, id) {
     if (resultado.correoEnviado !== false) {
         await Swal.fire({ icon: 'success', title: titulo, text: resultado.mensaje, confirmButtonColor: '#1a3a5f' });
         return;
@@ -376,7 +442,7 @@ async function mostrarResultadoCorreoSubsidio(titulo, resultado, idSubsidio) {
         if (!decision.isConfirmed) return;
 
         try {
-            const datos = await pedidoAyuda(`/api/ayudas/subsidio/${encodeURIComponent(idSubsidio)}/reenviar-correo`, { method: 'POST' });
+            const datos = await pedidoAyuda(urlAyuda(tipo, id, 'reenviar-correo'), { method: 'POST' });
             await Swal.fire({ icon: 'success', title: 'Correo enviado', text: datos.mensaje, confirmButtonColor: '#1a3a5f' });
             return;
         } catch (error) {

@@ -1,0 +1,3 @@
+<%# Firma (la del titular, o la que se pase en "firma", como la del garante): la imagen dibujada o, si no tiene firma, su nombre completo escrito %>
+<% const firmaHoja = typeof firma !== 'undefined' ? firma : datos.firma; %>
+<% if (firmaHoja.tipo === 'dibujo') { %><img class="firma-imagen" src="<%= firmaHoja.imagen %>" alt="Firma"><% } else { %><span class="firma-texto"><%= firmaHoja.texto %></span><% } %>

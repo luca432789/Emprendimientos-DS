@@ -1,5 +1,21 @@
 <img class="escudo" src="<%= escudo %>" alt="">
 
+<% if (esCredito) { %>
+<%# Crédito: como la hoja oficial, el nombre completo del Ministerio va primero y no tiene Beneficiarios ni Rubro %>
+<div class="titulos titulos-credito">
+    <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL, PROMOCION HUMANA Y RELACIONES INSTITUCIONALES CON LA COMUNIDAD</p>
+    <p class="subsecretaria">SUBSECRETARIA DE DESARROLLO SOCIAL</p>
+    <p class="gobierno">GOBIERNO DE LA PROVINCIA DE<br>SANTIAGO DEL ESTERO</p>
+    <p class="plan">PLAN PROVINCIAL SANTIAGO PRODUCTIVO</p>
+    <p class="presentacion">FORMULARIO DE PRESENTACIÓN DE PROYECTOS</p>
+    <p class="tipo">CREDITOS REINTEGRABLES</p>
+</div>
+
+<div class="campo"><span class="subrayado">Nombre del proyecto:</span><span class="relleno"><%= datos.nombreEmprendimiento %></span></div>
+<div class="campo"><span>Localidad:</span><span class="relleno"><%= datos.localidad %></span></div>
+<div class="campo"><span>Departamento:</span><span class="relleno"><%= datos.departamento %></span></div>
+<div class="campo campo-ultimo"><span>Actividad principal:</span><span class="relleno"><%= datos.rubro %></span></div>
+<% } else { %>
 <div class="titulos">
     <p class="subsecretaria">SUBSECRETARIA DE DESARROLLO SOCIAL</p>
     <p class="ministerio">MINISTERIO DE DESARROLLO SOCIAL</p>
@@ -20,6 +36,7 @@
 <table class="tabla-rubro">
     <tr><td>Rubro</td><td class="valor"><%= rubroEmprendimiento %></td></tr>
 </table>
+<% } %>
 
 <p class="declaracion-titular">
     El que suscribe <span class="relleno"><%= datos.nombreApellido %></span> DNI Nº <span class="relleno"><%= datos.dniCuit %></span>
