@@ -598,26 +598,48 @@ const responderError = (res, error, mensajeGeneral) => {
   return res.status(500).json({ error: mensajeGeneral });
 };
 
-// Los Formularios de Inicio solo se reciben lunes, miércoles y viernes; los demás días son de procesos administrativos.
+// Los Formularios de Inicio solo se reciben los días de DIAS_RECEPCION_INICIO del .env (por defecto lunes, miércoles y viernes);
+// los demás días son de procesos administrativos. Ej.: DIAS_RECEPCION_INICIO=lunes,martes,jueves (con o sin tildes).
 // El día se toma con la hora de Argentina, sin importar la zona horaria del servidor (Render usa UTC).
 // RESTRICCION_DIAS_INICIO=false en el .env la desactiva (por ejemplo, para una presentación); por defecto está activa.
-const DIAS_RECEPCION_INICIO = ['Mon', 'Wed', 'Fri'];
-export const MENSAJE_FUERA_DE_DIAS_INICIO = 'En procesos administrativos, envíe el formulario los días lunes, miércoles y viernes.';
-export const recibeFormulariosInicio = (fecha = new Date()) => process.env.RESTRICCION_DIAS_INICIO === 'false' || DIAS_RECEPCION_INICIO.includes(
-  new Intl.DateTimeFormat('en-US', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short' }).format(fecha)
+const SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const DIAS_RECEPCION_POR_DEFECTO = ['lunes', 'miércoles', 'viernes'];
+const sinTildes = (texto) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+const diasAvisados = new Set();
+
+// Días de la variable en el orden de la semana; los nombres que no son días se ignoran (con un aviso en la consola)
+const diasRecepcionInicio = () => {
+  const pedidos = (process.env.DIAS_RECEPCION_INICIO || '').split(',').map(sinTildes).filter(Boolean);
+  const desconocidos = pedidos.filter((dia) => !SEMANA.some((nombre) => sinTildes(nombre) === dia));
+  if (desconocidos.length && !diasAvisados.has(process.env.DIAS_RECEPCION_INICIO)) {
+    diasAvisados.add(process.env.DIAS_RECEPCION_INICIO);
+    console.warn(`DIAS_RECEPCION_INICIO: se ignoran "${desconocidos.join('", "')}" porque no son días de la semana.`);
+  }
+  const dias = SEMANA.filter((nombre) => pedidos.includes(sinTildes(nombre)));
+  return dias.length ? dias : DIAS_RECEPCION_POR_DEFECTO;
+};
+
+export const mensajeFueraDeDiasInicio = () => {
+  const dias = diasRecepcionInicio();
+  const lista = dias.length > 1 ? `${dias.slice(0, -1).join(', ')} y ${dias.at(-1)}` : dias[0];
+  return `En procesos administrativos, envíe el formulario los días ${lista}.`;
+};
+
+export const recibeFormulariosInicio = (fecha = new Date()) => process.env.RESTRICCION_DIAS_INICIO === 'false' || diasRecepcionInicio().map(sinTildes).includes(
+  sinTildes(new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'long' }).format(fecha))
 );
 
 // GET /api/formularios-digitales/inicio/disponible -> la página avisa antes de completar el formulario
 export const disponibilidadFormularioInicio = (req, res) => {
   const disponible = recibeFormulariosInicio();
-  res.json({ disponible, mensaje: disponible ? null : MENSAJE_FUERA_DE_DIAS_INICIO });
+  res.json({ disponible, mensaje: disponible ? null : mensajeFueraDeDiasInicio() });
 };
 
 // POST /api/formularios-digitales/inicio (público: todavía no es emprendedor)
 export const crearFormularioInicio = async (req, res) => {
   const tipoFormulario = 'Formulario de Inicio';
   try {
-    if (!recibeFormulariosInicio()) throw new ErrorValidacion(MENSAJE_FUERA_DE_DIAS_INICIO, 403);
+    if (!recibeFormulariosInicio()) throw new ErrorValidacion(mensajeFueraDeDiasInicio(), 403);
     const { imagenes = [], documentoExtranjero = false, tipoFormulario: _tipo, ...datos } = req.body;
 
     validarDocumentoYTelefono(datos, documentoExtranjero, true);

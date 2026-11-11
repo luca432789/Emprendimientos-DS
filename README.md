@@ -25,7 +25,9 @@ El servidor quedará disponible en `http://localhost:3000`. Para desarrollo con 
    DB_PASS="poner_aqui_la_clave_privada"
    DB_NAME=ProyectoEmprendimientos2026
    JWT_SECRET=****
-   # Formularios de Inicio solo lunes, miércoles y viernes. false = se reciben todos los días (ej. para una presentación)
+   # Días en que se reciben los Formularios de Inicio, separados por coma (por defecto lunes,miercoles,viernes)
+   DIAS_RECEPCION_INICIO=lunes,miercoles,viernes
+   # false = se reciben todos los días, sin importar DIAS_RECEPCION_INICIO (ej. para una presentación)
    RESTRICCION_DIAS_INICIO=true
 ```
 5. **Instalar Nodemon (Opcional):**
