@@ -67,7 +67,9 @@ services:
       SMTP_PORT: ${SMTP_PORT:-}
       CORREO_REMITENTE: ${CORREO_REMITENTE:-}
       TRUST_PROXY: ${TRUST_PROXY:-false}
-      # Formularios de Inicio solo lunes, miércoles y viernes; false = todos los días (ej. para una presentación)
+      # Días en que se reciben los Formularios de Inicio (vacío = lunes, miércoles y viernes)
+      DIAS_RECEPCION_INICIO: ${DIAS_RECEPCION_INICIO:-}
+      # false = Formularios de Inicio todos los días, sin importar DIAS_RECEPCION_INICIO (ej. para una presentación)
       RESTRICCION_DIAS_INICIO: ${RESTRICCION_DIAS_INICIO:-true}
     ports:
       - "${PUERTO_PUBLICO:-3000}:3000"
