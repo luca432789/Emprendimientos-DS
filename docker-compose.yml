@@ -67,6 +67,8 @@ services:
       SMTP_PORT: ${SMTP_PORT:-}
       CORREO_REMITENTE: ${CORREO_REMITENTE:-}
       TRUST_PROXY: ${TRUST_PROXY:-false}
+      # Formularios de Inicio solo lunes, miércoles y viernes; false = todos los días (ej. para una presentación)
+      RESTRICCION_DIAS_INICIO: ${RESTRICCION_DIAS_INICIO:-true}
     ports:
       - "${PUERTO_PUBLICO:-3000}:3000"
     depends_on:

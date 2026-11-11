@@ -66,6 +66,7 @@ Se completan en el archivo `.env`, que no se sube al repositorio.
 | `JWT_SECRET` | Sí | Clave para firmar las sesiones: una cadena larga y aleatoria (por ejemplo, la salida de `openssl rand -hex 32`) |
 | `APP_URL` | Sí | Dirección pública del sitio, sin barra final (por ejemplo `https://emprendedores.ejemplo.edu.ar`). Se usa en los enlaces de los correos |
 | `PUERTO_PUBLICO` | No | Puerto del servidor por el que se entra a la app. Por defecto `3000` |
+| `RESTRICCION_DIAS_INICIO` | No | Los Formularios de Inicio solo se reciben lunes, miércoles y viernes; los demás días el sitio avisa que son de procesos administrativos. `false` los recibe todos los días (por ejemplo, para una presentación). Por defecto `true` |
 | `TRUST_PROXY` | No | `1` si el sitio está detrás de un proxy inverso (nginx, Apache), para registrar en la auditoría la IP real de los usuarios. Por defecto `false` |
 | `SMTP_USER`, `SMTP_PASS` | Para enviar correos | Cuenta que envía los correos. Con Gmail, `SMTP_PASS` es una "contraseña de aplicación" de la cuenta |
 | `SMTP_HOST`, `SMTP_PORT` | No | Otro servidor de correo. Por defecto `smtp.gmail.com` y `465` |
