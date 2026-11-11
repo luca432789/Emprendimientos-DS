@@ -598,10 +598,26 @@ const responderError = (res, error, mensajeGeneral) => {
   return res.status(500).json({ error: mensajeGeneral });
 };
 
+// Los Formularios de Inicio solo se reciben lunes, miércoles y viernes; los demás días son de procesos administrativos.
+// El día se toma con la hora de Argentina, sin importar la zona horaria del servidor (Render usa UTC).
+// RESTRICCION_DIAS_INICIO=false en el .env la desactiva (por ejemplo, para una presentación); por defecto está activa.
+const DIAS_RECEPCION_INICIO = ['Mon', 'Wed', 'Fri'];
+export const MENSAJE_FUERA_DE_DIAS_INICIO = 'En procesos administrativos, envíe el formulario los días lunes, miércoles y viernes.';
+export const recibeFormulariosInicio = (fecha = new Date()) => process.env.RESTRICCION_DIAS_INICIO === 'false' || DIAS_RECEPCION_INICIO.includes(
+  new Intl.DateTimeFormat('en-US', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short' }).format(fecha)
+);
+
+// GET /api/formularios-digitales/inicio/disponible -> la página avisa antes de completar el formulario
+export const disponibilidadFormularioInicio = (req, res) => {
+  const disponible = recibeFormulariosInicio();
+  res.json({ disponible, mensaje: disponible ? null : MENSAJE_FUERA_DE_DIAS_INICIO });
+};
+
 // POST /api/formularios-digitales/inicio (público: todavía no es emprendedor)
 export const crearFormularioInicio = async (req, res) => {
   const tipoFormulario = 'Formulario de Inicio';
   try {
+    if (!recibeFormulariosInicio()) throw new ErrorValidacion(MENSAJE_FUERA_DE_DIAS_INICIO, 403);
     const { imagenes = [], documentoExtranjero = false, tipoFormulario: _tipo, ...datos } = req.body;
 
     validarDocumentoYTelefono(datos, documentoExtranjero, true);

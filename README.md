@@ -25,6 +25,8 @@ El servidor quedará disponible en `http://localhost:3000`. Para desarrollo con 
    DB_PASS="poner_aqui_la_clave_privada"
    DB_NAME=ProyectoEmprendimientos2026
    JWT_SECRET=****
+   # Formularios de Inicio solo lunes, miércoles y viernes. false = se reciben todos los días (ej. para una presentación)
+   RESTRICCION_DIAS_INICIO=true
 ```
 5. **Instalar Nodemon (Opcional):**
    Para el reinicio automatico del servidor al cambiar configuraciones de funciones, conexion, etc. instalar nodemon de manera global, ejecutando en la terminal:
