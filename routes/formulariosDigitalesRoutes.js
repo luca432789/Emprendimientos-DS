@@ -12,7 +12,7 @@ const router = express.Router();
 
 // POST /api/formularios-digitales/inicio -> SolicitudInicio + DatosSolicitudInicio (sin login)
 router.post('/formularios-digitales/inicio', crearFormularioInicio);
-// GET /api/formularios-digitales/inicio/disponible -> si hoy se reciben (lunes, miércoles y viernes) y el aviso si no
+// GET /api/formularios-digitales/inicio/disponible -> si hoy se reciben (días de DIAS_RECEPCION_INICIO del .env) y el aviso si no
 router.get('/formularios-digitales/inicio/disponible', disponibilidadFormularioInicio);
 
 // Subsidio y Crédito (sin login): el emprendedor se identifica con Nº de expediente, correo y DNI de su solicitud de inicio
