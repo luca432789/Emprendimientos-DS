@@ -49,6 +49,26 @@ const enviarConAvance = (url, cabeceras, cuerpo, mostrar) => new Promise((resolv
 });
 
 if (form) {
+  // Formulario de Inicio: solo se recibe algunos días (lo decide el servidor, con la hora de Argentina).
+  // Los demás días se avisa al entrar y no se puede enviar (el servidor también lo rechaza).
+  const avisoDias = document.querySelector('#aviso-dias-inicio');
+  if (avisoDias) {
+    fetch(`${apiBaseUrl}/api/formularios-digitales/inicio/disponible`)
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : null))
+      .then((estado) => {
+        if (!estado || estado.disponible) return;
+        avisoDias.textContent = estado.mensaje;
+        avisoDias.hidden = false;
+        const boton = form.querySelector('button[type="submit"]');
+        if (boton) {
+          boton.disabled = true;
+          boton.title = estado.mensaje;
+        }
+        if (window.Swal) Swal.fire({ icon: 'info', title: 'Formulario no disponible hoy', text: estado.mensaje, confirmButtonText: 'Entendido' });
+      })
+      .catch(() => {}); // si no se pudo consultar, el servidor igual lo controla al enviar
+  }
+
   const esFormularioCredito = form.querySelector('input[name="tipoFormulario"]')?.value === 'Formulario de Creditos Reintegrables';
   const esFormularioSubsidio = form.querySelector('input[name="tipoFormulario"]')?.value === 'Formulario de Subsidios no Reintegrables';
   const definicionesTablas = {

@@ -326,6 +326,19 @@
     margin: 35px 0 20px;
 }
 
+/* Aviso de los días en que no se reciben Formularios de Inicio (fuera de la clase .formulario-inicio: va arriba del form) */
+.aviso-dias-inicio {
+    max-width: 900px;
+    margin: 0 auto 18px;
+    padding: 12px 16px;
+    border-left: 4px solid #f59e0b;
+    border-radius: 4px;
+    background: #fff7ed;
+    color: #7c2d12;
+    font-weight: bold;
+    text-align: center;
+}
+
 /* Documentación que se pide adjuntar (hoja 2 del Formulario de Inicio) */
 .formulario-inicio .documentacion-solicitada {
     margin: 12px 0 16px;
