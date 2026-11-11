@@ -70,7 +70,7 @@ values ('Alberto', 'Sanchez', '22999098', 'Banda', 'Ardiles', 'Ardiles, B. los p
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Rubro (idRubro (PK), Nombre, IconoMapa)
 insert into Rubro (Nombre, IconoMapa)
-values ('Bombos artesanal', '/uploads/IconoMapa/Bombo.png'), -- 1
+values ('Bombos artesanales', '/uploads/IconoMapa/Bombo.png'), -- 1
 ('Telares artesanal', '/uploads/IconoMapa/Telares.png'), -- 2
 ('Muebles', '/uploads/IconoMapa/Muebles.png'), -- 3
 ('Carpinteria General', '/uploads/IconoMapa/Carpinteria - General.png'); -- 4

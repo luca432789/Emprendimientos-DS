@@ -56,3 +56,21 @@ Dentro de la carpeta **/database** encontraran los script necesarios para genera
    * **Username**: `ministerio_api`
    * **Default Schema**: `ProyectoEmprendimientos2026`
    * Haz clic en **Test Connection** e introduce la contraseña especificada en el script `Usuario Conexion.sql`.
+
+### Base de datos para presentaciones
+El archivo `Insert de datos presentacion.sql` carga datos completos para mostrar todas las funciones: solicitudes en cada etapa (sin expediente, en revisión, con Subsidio o Crédito, en el Ministro, rechazadas), emprendimientos con facturas en cada estado, publicaciones, productos y noticias. **Reemplaza a `Insert de datos.sql`: no ejecutar los dos.**
+
+1. Si ya existe la base `ProyectoEmprendimientos2026`, borrarla (se pierden sus datos): `drop database ProyectoEmprendimientos2026;`
+2. Ejecutar como `root`, en este orden:
+   - `a. Tablas.sql`
+   - `b. Triggers.sql`
+   - `c. Usuario Conexion.sql`
+   - `d. Insert de datos presentacion.sql`
+3. Con el `.env` configurado, desde la raíz del proyecto ejecutar:
+```bash
+   node database/preparar-archivos-presentacion.js
+```
+   Copia las imágenes de la carpeta `Adjunto/` a `uploads/` y genera los PDF (formularios de inicio, subsidios, créditos, garantes y facturas). Tarda un minuto y al final muestra *"Listo: todos los archivos referenciados en la base existen."* Hay que volver a ejecutarlo si se cambian imágenes de `Adjunto/` o si se borra `uploads/`.
+4. Para recibir Formularios de Inicio cualquier día durante la presentación, poner `RESTRICCION_DIAS_INICIO=false` en el `.env`.
+
+Los usuarios y contraseñas para la presentación están en [`database/Usuarios presentacion.md`](database/Usuarios%20presentacion.md). Las fechas se calculan desde el día en que se ejecuta el SQL, así que conviene cargarlo cerca de la presentación para que los plazos de facturas se vean como corresponde.
