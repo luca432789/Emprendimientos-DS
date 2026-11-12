@@ -172,7 +172,7 @@ function verPdfYFormulario(idSolicitud, urlPdf) {
                             });
 
                         } catch (error) {
-                            Swal.fire('Error', 'No se pudo guardar el expediente: ' + error.message, 'error');
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el expediente: ' + error.message });
                         }
                     }
                 });
@@ -331,8 +331,9 @@ function verPdfYRevisionArea(idSolicitud, urlPdf) {
             }
 
             const opcionesSelect = {};
+            // SweetAlert2 inserta las opciones como HTML: los nombres se escapan
             candidatos.forEach(compañero => {
-                opcionesSelect[compañero.idEmpleado] = `${compañero.Nombre} ${compañero.Apellido} · ${compañero.Cargo}`;
+                opcionesSelect[compañero.idEmpleado] = escaparDatoRevision(`${compañero.Nombre} ${compañero.Apellido} · ${compañero.Cargo}`);
             });
 
             const revisorActual = empleadoActual.cargo === 'Administrador'
@@ -403,7 +404,7 @@ function verPdfYRevisionArea(idSolicitud, urlPdf) {
             cargarSección('inicio-sin-revisar', 'Solicitudes de Inicio');
         } catch (error) {
             console.error('Error al iniciar revisión:', error);
-            Swal.fire('Error', `No se pudo procesar la revisión: ${error.message}`, 'error');
+            Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo procesar la revisión: ${error.message}` });
         }
     });
 }
@@ -542,7 +543,7 @@ async function abrirDecisionRevisionArea(solicitud) {
         await mostrarResultadoCorreoDecision(resultado, solicitud.id);
         cargarRevisionesAsignadas();
     } catch (error) {
-        Swal.fire('Error', `No se pudo guardar la decisión del Área: ${error.message}`, 'error');
+        Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo guardar la decisión del Área: ${error.message}` });
     }
 }
 
@@ -643,7 +644,7 @@ async function abrirRechazoFaltaFormulario(solicitud) {
         await mostrarResultadoCorreoDecision(resultado, solicitud.id, 'Solicitud rechazada');
         cargarRevisionesAsignadas();
     } catch (error) {
-        Swal.fire('Error', `No se pudo registrar el rechazo: ${error.message}`, 'error');
+        Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo registrar el rechazo: ${error.message}` });
     }
 }
 
@@ -734,7 +735,7 @@ async function abrirEnvioMinistro(solicitud) {
         cargarRevisionesAsignadas();
         await mostrarResultadoCorreoDecision(resultado, solicitud.id, 'Envío registrado');
     } catch (error) {
-        Swal.fire('Error', `No se pudo registrar el envío al Ministro: ${error.message}`, 'error');
+        Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo registrar el envío al Ministro: ${error.message}` });
     }
 }
 
@@ -754,7 +755,7 @@ async function pedirDatosProyectoAprobado(solicitud) {
         rubros = await respuesta.json();
         if (!respuesta.ok) throw new Error(rubros.error || 'No se pudieron cargar los rubros.');
     } catch (error) {
-        Swal.fire('Error', error.message, 'error');
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
         return null;
     }
     if (rubros.length === 0) {
@@ -892,7 +893,7 @@ async function abrirResolucionMinistro(solicitud) {
         else await mostrarResultadoCorreoDecision(resultado, solicitud.id, 'Resolución registrada');
         cargarRevisionesAsignadas();
     } catch (error) {
-        Swal.fire('Error', `No se pudo registrar la resolución del Ministro: ${error.message}`, 'error');
+        Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo registrar la resolución del Ministro: ${error.message}` });
     }
 }
 

@@ -111,7 +111,7 @@ async function aprobarPublicacion(idPublicacion) {
         await Swal.fire({ icon: 'success', title: 'Publicación aprobada', confirmButtonColor: '#1a3a5f' });
         fetchPublicacionesEnEspera();
     } catch (error) {
-        Swal.fire('Error', error.message, 'error');
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }
 }
 
@@ -136,6 +136,6 @@ async function rechazarPublicacion(idPublicacion) {
         await Swal.fire({ icon: 'success', title: 'Publicación rechazada', text: 'El emprendedor verá el motivo en su perfil.', confirmButtonColor: '#1a3a5f' });
         fetchPublicacionesEnEspera();
     } catch (error) {
-        Swal.fire('Error', error.message, 'error');
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }
 }

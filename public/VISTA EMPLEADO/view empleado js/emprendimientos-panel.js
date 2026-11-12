@@ -455,7 +455,7 @@ async function ejecutarAccionEmp(metodo, ruta, cuerpo, tituloExito) {
         const sinCorreo = datos.correoEnviado === false;
         await Swal.fire({ icon: sinCorreo ? 'warning' : 'success', title: tituloExito, text: datos.mensaje, confirmButtonColor: '#1a3a5f' });
     } catch (error) {
-        await Swal.fire('Error', error.message, 'error');
+        await Swal.fire({ icon: 'error', title: 'Error', text: error.message });
         abrirGestionEmprendimiento(EmpAdmin.idAbierto);
     }
     window.actualizarNotificaciones?.();

@@ -112,7 +112,7 @@ async function comenzarRevisionAyuda(tipo, id) {
         const resultado = await pedidoAyuda(urlAyuda(tipo, id, 'iniciar-revision'), { method: 'PUT' });
         await Swal.fire({ icon: 'success', title: 'Revisión comenzada', text: resultado.mensaje, confirmButtonColor: '#1a3a5f' });
     } catch (error) {
-        await Swal.fire('Error', error.message, 'error');
+        await Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }
     window.actualizarNotificaciones?.();
     fetchAyudasSinRevisar(tipo);
@@ -255,7 +255,7 @@ async function abrirRevisionAyuda(tipo, s) {
             const datos = await pedidoAyuda(urlAyuda(tipo, s.id, 'reenviar-correo'), { method: 'POST' });
             await Swal.fire({ icon: 'success', title: 'Correo enviado', text: datos.mensaje, confirmButtonColor: '#1a3a5f' });
         } catch (error) {
-            await Swal.fire('Error', error.message, 'error');
+            await Swal.fire({ icon: 'error', title: 'Error', text: error.message });
         }
         return abrirRevisionAyuda(tipo, s);
     }
@@ -355,7 +355,7 @@ async function abrirSolicitarReenvio(tipo, s) {
         });
         await mostrarResultadoCorreoAyuda(tipo, 'Reenvío solicitado', resultado, s.id);
     } catch (error) {
-        await Swal.fire('Error', error.message, 'error');
+        await Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }
     cargarAyudasEnRevision(tipo);
 }
@@ -416,7 +416,7 @@ async function abrirDecisionAyuda(tipo, s) {
         });
         await mostrarResultadoCorreoAyuda(tipo, `${Nombre} ${cuerpo.aprobado ? 'aprobado' : 'rechazado'}`, resultado, s.id);
     } catch (error) {
-        await Swal.fire('Error', error.message, 'error');
+        await Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }
     cargarAyudasEnRevision(tipo);
 }

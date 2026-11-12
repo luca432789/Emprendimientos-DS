@@ -112,7 +112,7 @@ function inicializarAdministracionRubros(zona) {
             document.getElementById('rub-vista-nuevo').innerHTML = rubVistaIcono(iconoNuevo);
         } catch (error) {
             selectorIcono.value = '';
-            Swal.fire('Icono no válido', error.message, 'warning');
+            Swal.fire({ icon: 'warning', title: 'Icono no válido', text: error.message });
         }
     });
 
@@ -128,7 +128,7 @@ function inicializarAdministracionRubros(zona) {
             Swal.fire({ icon: 'success', title: 'Rubro agregado', text: datos.mensaje, timer: 2500 });
             cargarRubrosAdmin(RubAdmin.pagina);
         } catch (error) {
-            Swal.fire('No se pudo agregar', error.message, 'warning');
+            Swal.fire({ icon: 'warning', title: 'No se pudo agregar', text: error.message });
         } finally {
             boton.disabled = false;
         }
